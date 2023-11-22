@@ -1,0 +1,17 @@
+#
+# $RCSfile: Makefile.maildrop,v $
+# $Revision: 1.7 $
+# $Date: 2009/12/08 03:59:52 $
+#
+
+EXEC=clean libdummy.so
+OBJS=libdummy.c
+MYCFLAGS=-g -Wall -DHAVE_STRNDUP -I../lib/libdgstr -I../lib/libdgmail -I../lib/libdgconfig
+CC=/usr/bin/gcc
+LDADD = -shared -lmilter -lpthread -ldl -ltokyotyrant -ltokyocabinet -lresolv -lnsl -lz -lbz2 -lrt -lpthread -lm -lc -ldgstr -ldgmail -ldgconfig -fPIC ../utils.o ../msy_config.o
+
+libdummy.so: $(OBJS)
+	$(CC) $(MYCFLAGS) $(LDFLAGS) $(CFLAGS) $(LDADD) -o $@ $(OBJS)
+
+clean:
+	rm -f libdummy.so
