@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(messasy, 3.00, report@@lists.sourceforge.jp)
+AC_INIT(messasy, 3.02, report@@lists.sourceforge.jp)
 AC_CONFIG_AUX_DIR(./shtool)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([client_side.h])

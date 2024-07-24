@@ -235,6 +235,7 @@ maildrop_init(struct cfentry **cfe, size_t *cfesize,
         }
         return -1;
     }
+    memset((char *)new_cfg + *cfgsize, '\0', new_cfgsize - *cfgsize);
     *cfg = new_cfg;
 
     /* cfe¤Î³ÈÄ¥ */

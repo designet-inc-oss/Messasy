@@ -74,7 +74,7 @@
 
 /* グローバル変数 */
 char msy_hostname[MAX_HOSTNAME_LEN + 1];
-struct modulehandle *mhandle_list;
+extern struct modulehandle *mhandle_list;
 extern struct cfentry cfe;
 
 #define MLFIPRIV        ((struct mlfiPriv *) smfi_getpriv(ctx))
@@ -113,7 +113,7 @@ int
 manager_init(void)
 {
     int                    so;
-    int                    on;
+    int                    on = 1;
     int                    ret;
     struct sockaddr_in     saddr;
     struct config          *cfg;

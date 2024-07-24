@@ -35,7 +35,7 @@
 #include "msy_config.h"
 
 /* ソフトウェアバージョン */
-#define VERSION              "3.00"
+#define VERSION              "3.02"
 
 #define IDENT   "messasy"
 

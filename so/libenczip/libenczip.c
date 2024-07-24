@@ -249,6 +249,7 @@ enczip_init(struct cfentry **cfe, size_t *cfesize,
         }
         return -1;
     }
+    memset((char *)new_cfg + *cfgsize, '\0', new_cfgsize - *cfgsize);
     *cfg = new_cfg;
 
     /* cfe¤Î³ÈÄ¥ */
@@ -1360,7 +1361,7 @@ enczip_close(unsigned int s_id, struct enczip *md, struct config * cfg)
     }
 
     /* ziptempfilepathÎÎ°è³ÎÊÝ*/
-    tempstr_len = (int) (strlen(enczcf->cf_enczipmaildir) +
+    tempstr_len = (int) (strlen(md->md_tempfilepath) +
                      strlen(msy_hostname) + ENCZIP_TEMPFILEPATH_LEN);
     tempstr = malloc(tempstr_len);
     if (tempstr == NULL) {

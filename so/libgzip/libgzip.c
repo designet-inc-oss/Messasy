@@ -241,6 +241,7 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
         }
         return -1;
     }
+    memset((char *)new_cfg + *cfgsize, '\0', new_cfgsize - *cfgsize);
     *cfg = new_cfg;
 
     /* cfeの拡張 */
@@ -1405,7 +1406,7 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
 
     /* コマンドの実行結果チェック*/
     /* ziptempfilepath領域確保*/
-    tempstr_len = strlen(gzcf->cf_gzipmaildir) +
+    tempstr_len = strlen(md->md_tempfilepath) +
                      strlen(msy_hostname) + ZIPTEMPFILEPATH_LEN;
     tempstr = malloc(tempstr_len);
     if (tempstr == NULL) {

@@ -919,6 +919,10 @@ conv_saveignoreheader(struct config *cfg)
         return R_SUCCESS;
     }
 
+    if (cfg->cf_saveignoreheader[0] == '\0') {
+        return R_SUCCESS;
+    }
+
     cfg->cf_saveignoreheader_regex = (regex_t *)malloc(sizeof(regex_t));
     if (cfg->cf_saveignoreheader_regex == NULL) {
         SYSLOGERROR(ERR_MALLOC, "conv_saveignoreheader", E_STR);
