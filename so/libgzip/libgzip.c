@@ -1770,8 +1770,9 @@ md_mkdir(unsigned int s_id, char *dirname)
  *
  * 引数
  *      unsigned int            セッションID
- *      struct gzip *       gzip構造体
+ *      struct gzip *           gzip構造体
  *      char *                  ファイル名の格納先
+ *      config *                設定変数
  *      int                     格納先の長さ
  *
  * 返り値
@@ -1784,7 +1785,7 @@ md_makesavefilename(struct gzip *md, char *filename,
 {
     /* ファイルのパス (/new/....) を作成する */
     snprintf(filename, filename_len, SAVEZIPFILENAME,
-                md->md_recvtime, stbuf.st_ino, msy_hostname);
+                md->md_recvtime, stbuf.st_ino, config->cf_msyhostname);
 
     return R_SUCCESS;
 }

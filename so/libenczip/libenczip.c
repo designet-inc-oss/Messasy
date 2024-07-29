@@ -94,7 +94,7 @@ static char * is_slashdelimiter(char *str);
 static struct enczip *md_struct_init(unsigned int, struct enczip_config *,
                                         time_t, struct strset *,
                                         struct strlist *, struct strlist *);
-static int md_makesavefilename(struct stat, struct enczip *, char *, int);
+static int md_makesavefilename(struct stat, struct enczip *, char *, int, struct config *);
 static int md_makedirlist(unsigned int, struct enczip *, struct strlist **);
 static int md_makedirbylist(unsigned int, struct enczip *, struct strlist *);
 static int md_makemaildir_tree(unsigned int, char *, int);
@@ -1475,7 +1475,7 @@ enczip_close(unsigned int s_id, struct enczip *md, struct config * cfg)
     md->md_tempfilepath = tempstr;
 
     /* 保存先のファイル名を作成 */
-    ret = md_makesavefilename(st, md, filename, sizeof(filename));
+    ret = md_makesavefilename(st, md, filename, sizeof(filename), cfg);
     if (ret != R_SUCCESS) {
         /* 一時ファイル削除 */
         unlink(md->md_tempfilepath);
@@ -1823,11 +1823,11 @@ md_mkdir(unsigned int s_id, char *dirname)
  */
 static int
 md_makesavefilename(struct stat stbuf, struct enczip *md,
-                    char *filename, int filename_len)
+                    char *filename, int filename_len, struct config * cfg)
 {
     /* ファイルのパス (/new/....) を作成する */
     snprintf(filename, filename_len, ENCZIPSAVEFILENAME,
-             md->md_recvtime, stbuf.st_ino, msy_hostname);
+             md->md_recvtime, stbuf.st_ino, cfg->cf_msyhostname);
     return R_SUCCESS;
 }
 
