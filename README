@@ -4,13 +4,13 @@
 
 
 What is Messasy
--------------
+--------------
   Messasy is a software that saves e-mails sent through MTA
   in cooperation with MTA via MILTER interface.
 
 
 Requirements
-------------
+-------------
   The following softwares are required.
 
   * Sendmail (8.10 or later) or Postfix (2.3 or later)
@@ -18,20 +18,20 @@ Requirements
 
 
 Installation
-------------
+-------------
   see the file INSTALL.
 
 
 Download
---------
+---------
   https://github.com/designet-inc-oss/Messasy
 
 
 Homepage
---------
+---------
   https://www.designet.co.jp/open_source/messasy
 
 
 Bug reports to
---------------
+---------------
   https://github.com/designet-inc-oss/Messasy/issues
