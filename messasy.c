@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,22 +12,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
-/*
- * $RCSfile: messasy.c,v $
- * $Revision: 1.52 $
- * $Date: 2009/10/30 04:07:38 $
- */
-
-/* add included header for make */
-//#include "config.h"
-//#include <config.h>
-//#include "./config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,8 +46,8 @@
 #include "messasy.h"
 #include "client_side.h"
 #include "msy_config.h"
-#include "msy_readmodule.h";
-#include "so/lib_lm.h";
+#include "msy_readmodule.h"
+#include "so/lib_lm.h"
 
 #ifdef OLD_CODE
     #include "maildrop.h"
@@ -72,14 +57,14 @@
 #include "utils.h"
 #include "log.h"
 
-/* ¥°¥í¡¼¥Ğ¥ëÊÑ¿ô */
+/* ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•° */
 char msy_hostname[MAX_HOSTNAME_LEN + 1];
 extern struct modulehandle *mhandle_list;
 extern struct cfentry cfe;
 
 #define MLFIPRIV        ((struct mlfiPriv *) smfi_getpriv(ctx))
 
-/* ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô°ìÍ÷ */
+/* ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ä¸€è¦§ */
 struct smfiDesc smfilter =
 {
     IDENT,
@@ -100,19 +85,19 @@ struct smfiDesc smfilter =
 /*
  * manager_init
  *
- * ´ÉÍı¥¤¥ó¥¿¥Õ¥§¡¼¥¹¤Îµ¯Æ°
+ * ç®¡ç†ã‚¤ãƒ³ã‚¿ãƒ•ã‚§ãƒ¼ã‚¹ã®èµ·å‹•
  *
- * °ú¿ô
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      ãªã—
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS Àµ¾ï
- *      R_ERROR   ¥·¥¹¥Æ¥à¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS æ­£å¸¸
+ *      R_ERROR   ã‚·ã‚¹ãƒ†ãƒ ã‚¨ãƒ©ãƒ¼
  */
 int
 manager_init(void)
 {
-    int                    so;
+    intptr_t               so;
     int                    on = 1;
     int                    ret;
     struct sockaddr_in     saddr;
@@ -122,14 +107,14 @@ manager_init(void)
 
     char f_name[] = "manager_init";
 
-    /* ¥½¥±¥Ã¥È¤ÎÄêµÁ */
-    so = socket(AF_INET, SOCK_STREAM, 0);
+    /* ã‚½ã‚±ãƒƒãƒˆã®å®šç¾© */
+    so = (intptr_t)socket(AF_INET, SOCK_STREAM, 0);
     if (so < 0) {
         SYSLOGERROR(ERR_SOCK, E_STR);
         return (R_ERROR);
     }
 
-    ret = setsockopt(so, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    ret = setsockopt((int)so, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     if (ret != 0) {
         SYSLOGERROR(ERR_SETSOCK_REUSE, E_STR);
     }
@@ -144,22 +129,22 @@ manager_init(void)
 
     config_release(cfg);
 
-    ret = bind(so, (struct sockaddr *)&saddr, sizeof(saddr));
+    ret = bind((int)so, (struct sockaddr *)&saddr, sizeof(saddr));
     if (ret != 0) {
         SYSLOGERROR(ERR_BIND, E_STR);
         close(so);
         return (R_ERROR);
     }
 
-    ret = listen(so, backlog);
+    ret = listen((int)so, backlog);
     if (ret != 0) {
         SYSLOGERROR(ERR_LISTEN, E_STR);
         close(so);
         return (R_ERROR);
     }
 
-    /* ´ÉÍı¥¤¥ó¥¿¥Õ¥§¡¼¥¹¤Îµ¯Æ° */
-    ret = pthread_create(&manager, NULL, manager_main, (void *)so);
+    /* ç®¡ç†ã‚¤ãƒ³ã‚¿ãƒ•ã‚§ãƒ¼ã‚¹ã®èµ·å‹• */
+    ret = pthread_create(&manager, NULL, manager_main, (void*)so);
     if (ret != 0) {
         SYSLOGERROR(ERR_THREAD_CREATE, f_name, E_STR);
         close(so);
@@ -172,10 +157,10 @@ manager_init(void)
 /*
  * mlfi_connect
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (CONNECT)
- * - ¥»¥Ã¥·¥ç¥óID¤ò¼èÆÀ¤¹¤ë
- * - ÀßÄê¥Õ¥¡¥¤¥ë¤ÎÆâÍÆ¤ò¼èÆÀ¤¹¤ë
- * - ¥×¥é¥¤¥Ù¡¼¥ÈÎÎ°è¤ò½àÈ÷¤¹¤ë
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (CONNECT)
+ * - ã‚»ãƒƒã‚·ãƒ§ãƒ³IDã‚’å–å¾—ã™ã‚‹
+ * - è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®å†…å®¹ã‚’å–å¾—ã™ã‚‹
+ * - ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆé ˜åŸŸã‚’æº–å‚™ã™ã‚‹
  */
 sfsistat
 mlfi_connect(SMFICTX *ctx, char *hostname, _SOCK_ADDR *hostaddr)
@@ -185,13 +170,13 @@ mlfi_connect(SMFICTX *ctx, char *hostname, _SOCK_ADDR *hostaddr)
     struct config *config;
     int error_action;
 
-    /* ¥»¥Ã¥·¥ç¥óID¤ò¼èÆÀ */
+    /* ã‚»ãƒƒã‚·ãƒ§ãƒ³IDã‚’å–å¾— */
     s_id = get_sessid();
 
-    /* ÀßÄê¥Õ¥¡¥¤¥ë¤ÎÆâÍÆ¤ò¼èÆÀ */
+    /* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®å†…å®¹ã‚’å–å¾— */
     config = config_retrieve();
 
-    /* ¥×¥é¥¤¥Ù¡¼¥ÈÎÎ°è¤ò³ÎÊİ */
+    /* ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆé ˜åŸŸã‚’ç¢ºä¿ */
     priv = malloc(sizeof(struct mlfiPriv));
     if (priv == NULL) {
         SYSLOGERROR(ERR_S_MALLOC, s_id, "mlfi_connect", E_STR);
@@ -202,7 +187,7 @@ mlfi_connect(SMFICTX *ctx, char *hostname, _SOCK_ADDR *hostaddr)
     priv->mlfi_sid = s_id;
     error_action = config->cf_erroraction_conv;
 
-    /* ¼õ¿®Æü»ş¤òÊİÂ¸ */
+    /* å—ä¿¡æ—¥æ™‚ã‚’ä¿å­˜ */
     priv->mlfi_recvtime = time(NULL);
     if (priv->mlfi_recvtime < 0) {
         SYSLOGERROR(ERR_S_TIME, s_id, E_STR);
@@ -211,10 +196,10 @@ mlfi_connect(SMFICTX *ctx, char *hostname, _SOCK_ADDR *hostaddr)
         return error_action;
     }
 
-    /* ¥¯¥é¥¤¥¢¥ó¥È¥¢¥É¥ì¥¹¾ğÊó¤òÊİÂ¸ */
+    /* ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹æƒ…å ±ã‚’ä¿å­˜ */
     memcpy(&priv->mlfi_clientaddr, hostaddr, sizeof(_SOCK_ADDR));
 
-    /* ¥×¥é¥¤¥Ù¡¼¥ÈÎÎ°è¤ò¥»¥Ã¥È */
+    /* ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆé ˜åŸŸã‚’ã‚»ãƒƒãƒˆ */
     smfi_setpriv(ctx, priv);
 
     return SMFIS_CONTINUE;
@@ -223,8 +208,8 @@ mlfi_connect(SMFICTX *ctx, char *hostname, _SOCK_ADDR *hostaddr)
 /*
  * mlfi_envfrom
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (MAIL FROM)
- * - Envelop From¥¢¥É¥ì¥¹¤òÊİÂ¸¤¹¤ë
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (MAIL FROM)
+ * - Envelop Fromã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’ä¿å­˜ã™ã‚‹
  */
 sfsistat
 mlfi_envfrom(SMFICTX *ctx, char **envfrom)
@@ -235,7 +220,7 @@ mlfi_envfrom(SMFICTX *ctx, char **envfrom)
 
     fromaddr = get_addrpart((unsigned char *) *envfrom);
     if (fromaddr == NULL) {
-        /* ¥á¥â¥ê¥¨¥é¡¼ */
+        /* ãƒ¡ãƒ¢ãƒªã‚¨ãƒ©ãƒ¼ */
         SYSLOGERROR(ERR_S_LIBFUNC, s_id, "get_addrpart", E_STR);
         exit(EXIT_MILTER);
     }
@@ -247,8 +232,8 @@ mlfi_envfrom(SMFICTX *ctx, char **envfrom)
 /*
  * mlfi_envrcpt
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (RCPT TO)
- * - Envelope To¥¢¥É¥ì¥¹¤òÊİÂ¸¤¹¤ë
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (RCPT TO)
+ * - Envelope Toã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’ä¿å­˜ã™ã‚‹
  */
 sfsistat
 mlfi_envrcpt(SMFICTX *ctx, char **rcptto)
@@ -257,11 +242,11 @@ mlfi_envrcpt(SMFICTX *ctx, char **rcptto)
     unsigned int s_id = priv->mlfi_sid;
     char *rcptaddr;
 
-    /* To¥¢¥É¥ì¥¹¤òÊİÂ¸ */
+    /* Toã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’ä¿å­˜ */
     rcptaddr = get_addrpart((unsigned char *) *rcptto);
 
     if (rcptaddr == NULL) {
-        /* ¥á¥â¥ê¥¨¥é¡¼ */
+        /* ãƒ¡ãƒ¢ãƒªã‚¨ãƒ©ãƒ¼ */
         SYSLOGERROR(ERR_S_LIBFUNC, s_id, "get_addrpart", E_STR);
         exit(EXIT_MILTER);
     }
@@ -275,10 +260,10 @@ mlfi_envrcpt(SMFICTX *ctx, char **rcptto)
 /*
  * mlfi_header
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (header)
- * - ¥Ø¥Ã¥À¥Á¥§¥Ã¥¯ (SaveIgnoreHeader) ¤ò¹Ô¤Ê¤¦
- * - °ì»ş¥Õ¥¡¥¤¥ë¤ò¥ª¡¼¥×¥ó¤¹¤ë
- * - ¥Ø¥Ã¥À¤ò½ñ¤­¹ş¤à
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (header)
+ * - ãƒ˜ãƒƒãƒ€ãƒã‚§ãƒƒã‚¯ (SaveIgnoreHeader) ã‚’è¡Œãªã†
+ * - ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚ªãƒ¼ãƒ—ãƒ³ã™ã‚‹
+ * - ãƒ˜ãƒƒãƒ€ã‚’æ›¸ãè¾¼ã‚€
  */
 sfsistat
 mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
@@ -288,12 +273,12 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
     int error_action = priv->config->cf_erroraction_conv;
     int ret;
     
-    /* ¥Ø¥Ã¥À¥Á¥§¥Ã¥¯ */
+    /* ãƒ˜ãƒƒãƒ€ãƒã‚§ãƒƒã‚¯ */
     if (priv->config->cf_saveignoreheader_regex != NULL) {
         ret = check_header_regex(headerf, headerv,
                                     priv->config->cf_saveignoreheader_regex);
         if (ret == R_POSITIVE) {
-            /* ¥Ş¥Ã¥Á¤·¤¿¤Î¤ÇÊİÂ¸ÂĞ¾İ³°¤È¤·¤ÆÃæ»ß */
+            /* ãƒãƒƒãƒã—ãŸã®ã§ä¿å­˜å¯¾è±¡å¤–ã¨ã—ã¦ä¸­æ­¢ */
             SYSLOGINFO(INFO_S_IGNOREHEADER, s_id, headerf);
 
 #ifdef OLD_CODE
@@ -305,16 +290,16 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         }
     }
 
-    /* ¥ª¡¼¥×¥ó */
+    /* ã‚ªãƒ¼ãƒ—ãƒ³ */
 #ifdef OLD_CODE
     if (priv->md == NULL) {
 #else    /* OLD_CODE */
     if (priv->header_existence == FALSE) {
-        /* ¥Ø¥Ã¥À¤¬°ìÅÙÆÉ¤ß¹ş¤Ş¤ì¤¿»ş */
+        /* ãƒ˜ãƒƒãƒ€ãŒä¸€åº¦èª­ã¿è¾¼ã¾ã‚ŒãŸæ™‚ */
         priv->header_existence = TRUE;
 #endif    /* OLD_CODE */
 
-        /* ÊİÂ¸ÂĞ¾İ¥¢¥É¥ì¥¹°ìÍ÷¤ÎºîÀ® */
+        /* ä¿å­˜å¯¾è±¡ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®ä½œæˆ */
         ret = make_savelist(&priv->mlfi_envfrom, priv->mlfi_rcptto_h,
                             &priv->mlfi_addrmatched_h, &priv->mlfi_addrmatched_t,
                             priv->config, s_id);
@@ -323,7 +308,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
             return error_action;
         }
 
-        /* ÊİÂ¸ÂĞ¾İ¥¢¥É¥ì¥¹¤¬¤Ê¤±¤ì¤ĞÃæ»ß */
+        /* ä¿å­˜å¯¾è±¡ã‚¢ãƒ‰ãƒ¬ã‚¹ãŒãªã‘ã‚Œã°ä¸­æ­¢ */
         if (priv->mlfi_addrmatched_h == NULL) {
             SYSLOGINFO(INFO_S_NOSAVEADDRESS, s_id);
             mlfi_abort(ctx);
@@ -331,7 +316,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         }
 
 #ifdef OLD_CODE
-        /* ¥á¡¼¥ëÊİÂ¸½èÍı¤ò³«»Ï */
+        /* ãƒ¡ãƒ¼ãƒ«ä¿å­˜å‡¦ç†ã‚’é–‹å§‹ */
         priv->md = maildrop_open(s_id, priv->config, priv->mlfi_recvtime,
                                     &(priv->mlfi_envfrom), priv->mlfi_rcptto_h,
                                     priv->mlfi_addrmatched_h);
@@ -352,7 +337,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
     }
 
 #ifdef OLD_CODE
-    /* ¥Ø¥Ã¥À½ñ¤­¹ş¤ß */
+    /* ãƒ˜ãƒƒãƒ€æ›¸ãè¾¼ã¿ */
     ret = maildrop_write_header(s_id, priv->md, headerf, headerv);
     if (ret != R_SUCCESS) {
         maildrop_abort(s_id, priv->md);
@@ -362,7 +347,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
 
 #endif     /* OLD_CODE */
 
-    /* ¥â¥¸¥å¡¼¥ëÆâ¤Î´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô¤Î¸Æ¤Ó½Ğ¤· */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å†…ã®é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°ã®å‘¼ã³å‡ºã— */
     ret = msy_exec_header(priv, headerf, headerv);
     if (ret != R_SUCCESS) {
         mlfi_abort(ctx);
@@ -375,8 +360,8 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
 /*
  * mlfi_body
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (body)
- * - ËÜÊ¸¤ò½ñ¤­¹ş¤à
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (body)
+ * - æœ¬æ–‡ã‚’æ›¸ãè¾¼ã‚€
  */
 sfsistat
 mlfi_body(SMFICTX *ctx, u_char *bodyp, size_t bodylen)
@@ -392,7 +377,7 @@ mlfi_body(SMFICTX *ctx, u_char *bodyp, size_t bodylen)
 
 #ifdef OLD_CODE
 
-    /* ¥Ü¥Ç¥£½ñ¤­¹ş¤ß */
+    /* ãƒœãƒ‡ã‚£æ›¸ãè¾¼ã¿ */
     ret = maildrop_write_body(s_id, priv->md, bodyp, bodylen);
     if (ret != R_SUCCESS) {
         maildrop_abort(s_id, priv->md);
@@ -401,7 +386,7 @@ mlfi_body(SMFICTX *ctx, u_char *bodyp, size_t bodylen)
     }
 #endif    /* OLD_CODE */
 
-    /* ¥â¥¸¥å¡¼¥ëÆâ¤Î´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô¤Î¸Æ¤Ó½Ğ¤· */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å†…ã®é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°ã®å‘¼ã³å‡ºã— */
     ret = msy_exec_body(priv,bodyp, bodylen);
     if (ret != R_SUCCESS) {
         mlfi_abort(ctx);
@@ -414,9 +399,9 @@ mlfi_body(SMFICTX *ctx, u_char *bodyp, size_t bodylen)
 /*
  * mlfi_eoh
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (header½ªÎ»)
- * - ¥á¡¼¥ëÊİÂ¸¤Î½ªÎ»½èÍı¤ò¹Ô¤Ê¤¦
- * - ¥ê¥½¡¼¥¹¤ò²òÊü¤¹¤ë
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (headerçµ‚äº†)
+ * - ãƒ¡ãƒ¼ãƒ«ä¿å­˜ã®çµ‚äº†å‡¦ç†ã‚’è¡Œãªã†
+ * - ãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã™ã‚‹
  */
 sfsistat
 mlfi_eoh(SMFICTX *ctx)
@@ -425,7 +410,7 @@ mlfi_eoh(SMFICTX *ctx)
     int error_action = priv->config->cf_erroraction_conv;
     int ret;
 
-    /* ¥â¥¸¥å¡¼¥ëÆâ¤Î´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô¤Î¸Æ¤Ó½Ğ¤· */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å†…ã®é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°ã®å‘¼ã³å‡ºã— */
     ret = msy_exec_eoh(priv);
     if (ret != R_SUCCESS) {
         mlfi_abort(ctx);
@@ -438,9 +423,9 @@ mlfi_eoh(SMFICTX *ctx)
 /*
  * mlfi_eom
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (DATA½ªÎ»)
- * - ¥á¡¼¥ëÊİÂ¸¤Î½ªÎ»½èÍı¤ò¹Ô¤Ê¤¦
- * - ¥ê¥½¡¼¥¹¤ò²òÊü¤¹¤ë
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (DATAçµ‚äº†)
+ * - ãƒ¡ãƒ¼ãƒ«ä¿å­˜ã®çµ‚äº†å‡¦ç†ã‚’è¡Œãªã†
+ * - ãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã™ã‚‹
  */
 sfsistat
 mlfi_eom(SMFICTX *ctx)
@@ -456,7 +441,7 @@ mlfi_eom(SMFICTX *ctx)
 
 #ifdef OLD_CODE
 
-    /* ¥¯¥í¡¼¥º */
+    /* ã‚¯ãƒ­ãƒ¼ã‚º */
     ret = maildrop_close(s_id, priv->md);
     if (ret != R_SUCCESS) {
         maildrop_abort(s_id, priv->md);
@@ -465,7 +450,7 @@ mlfi_eom(SMFICTX *ctx)
     }
 #endif    /* OLD_CODE */
 
-    /* ¥â¥¸¥å¡¼¥ëÆâ¤Î´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô¤Î¸Æ¤Ó½Ğ¤· */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å†…ã®é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°ã®å‘¼ã³å‡ºã— */
     ret = msy_exec_eom(priv);
     if (ret != R_SUCCESS) {
         mlfi_abort(ctx);
@@ -478,9 +463,9 @@ mlfi_eom(SMFICTX *ctx)
 /*
  * mlfi_abort
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (RSETÅù)
- * - ¥á¡¼¥ëÊİÂ¸¤ÎÃæ»ß½èÍı¤ò¹Ô¤Ê¤¦
- * - ¥ê¥½¡¼¥¹¤ò²òÊü¤¹¤ë
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (RSETç­‰)
+ * - ãƒ¡ãƒ¼ãƒ«ä¿å­˜ã®ä¸­æ­¢å‡¦ç†ã‚’è¡Œãªã†
+ * - ãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã™ã‚‹
  */
 sfsistat
 mlfi_abort(SMFICTX *ctx)
@@ -500,7 +485,7 @@ mlfi_abort(SMFICTX *ctx)
 #endif    /* OLD_CODE */
 
 
-    /* ¥â¥¸¥å¡¼¥ëÆâ¤Î´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô¤Î¸Æ¤Ó½Ğ¤· */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å†…ã®é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°ã®å‘¼ã³å‡ºã— */
     if (priv != NULL) {
         error_action = priv->config->cf_erroraction_conv;
     } else {
@@ -519,8 +504,8 @@ mlfi_abort(SMFICTX *ctx)
 /*
  * mlfi_close
  *
- * ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô (¥³¥Í¥¯¥·¥ç¥óÀÚÃÇ)
- * - ²¿¤â¤·¤Ê¤¤
+ * ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° (ã‚³ãƒã‚¯ã‚·ãƒ§ãƒ³åˆ‡æ–­)
+ * - ä½•ã‚‚ã—ãªã„
  */
 sfsistat
 mlfi_close(SMFICTX *ctx)
@@ -535,16 +520,13 @@ mlfi_close(SMFICTX *ctx)
 /*
  * eom_cleanup
  *
- * eom¤ò½ªÎ»¤¹¤ë»şÅÀ¤Ç¡¢Å¬Àµ¤Ê¾ğÊó¤ò³«Êü¤¹¤ë
- * ¢¨mlfi_eom¤«¤é¸Æ¤Ó½Ğ¤µ¤ì¤ë
- *   (¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô¤Ç¤Ï¤Ê¤¤)
+ * eomã‚’çµ‚äº†ã™ã‚‹æ™‚ç‚¹ã§ã€é©æ­£ãªæƒ…å ±ã‚’é–‹æ”¾ã™ã‚‹
+ * â€»mlfi_eomã‹ã‚‰å‘¼ã³å‡ºã•ã‚Œã‚‹
+ *   (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã§ã¯ãªã„)
  */
 sfsistat
 eom_cleanup(SMFICTX *ctx)
 {
-    int error_action;
-    int ret;
-
     struct mlfiPriv *priv = MLFIPRIV;
     sfsistat r = SMFIS_CONTINUE;
 
@@ -563,14 +545,7 @@ eom_cleanup(SMFICTX *ctx)
         priv->mlfi_addrmatched_h = NULL;
     }
 
-    /* ¥â¥¸¥å¡¼¥ëÆâ¤Î´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô¤Î¸Æ¤Ó½Ğ¤· */
-//    error_action = priv->config->cf_erroraction_conv;
-//    ret = msy_exec_abort(priv);
-//    if (ret != R_SUCCESS) {
-//        mlfi_cleanup(ctx);
-//        mlfi_freepriv(ctx);
-//        return error_action;
-//    }
+    priv->header_existence = FALSE;
 
     return r;
 }
@@ -578,9 +553,9 @@ eom_cleanup(SMFICTX *ctx)
 /*
  * mlfi_cleanup
  *
- * ¥×¥é¥¤¥Ù¡¼¥ÈÎÎ°è¤ò²òÊü¤¹¤ë
- * ¢¨mlfi_eom, mlfi_abort¤«¤é¸Æ¤Ó½Ğ¤µ¤ì¤ë
- *   (¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô¤Ç¤Ï¤Ê¤¤)
+ * ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆé ˜åŸŸã‚’è§£æ”¾ã™ã‚‹
+ * â€»mlfi_eom, mlfi_abortã‹ã‚‰å‘¼ã³å‡ºã•ã‚Œã‚‹
+ *   (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã§ã¯ãªã„)
  */
 sfsistat
 mlfi_cleanup(SMFICTX *ctx)
@@ -618,9 +593,9 @@ mlfi_cleanup(SMFICTX *ctx)
 /*
  * mlfi_freepriv
  *
- * ¥×¥é¥¤¥Ù¡¼¥ÈÎÎ°è¤ò²òÊü¤¹¤ë
- * ¢¨mlfi_close¤«¤é¸Æ¤Ó½Ğ¤µ¤ì¤ë
- *   (¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô¤Ç¤Ï¤Ê¤¤)
+ * ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆé ˜åŸŸã‚’è§£æ”¾ã™ã‚‹
+ * â€»mlfi_closeã‹ã‚‰å‘¼ã³å‡ºã•ã‚Œã‚‹
+ *   (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã§ã¯ãªã„)
  */
 sfsistat
 mlfi_freepriv(SMFICTX *ctx)
@@ -647,7 +622,7 @@ mlfi_freepriv(SMFICTX *ctx)
 /*
  * usage
  *
- * usage¥á¥Ã¥»¡¼¥¸¤òÉ½¼¨¤¹¤ë
+ * usageãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤ºã™ã‚‹
  */
 void
 usage(char *arg)
@@ -672,9 +647,9 @@ main(int argc, char *argv[])
 
     int ret;
 
-    /* ¥ª¥×¥·¥ç¥ó¥Á¥§¥Ã¥¯ */
+    /* ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãƒã‚§ãƒƒã‚¯ */
     switch (argc) {
-        /* °ú¿ô¤Ç»ØÄê¤µ¤ì¤Æ¤¤¤Ê¤¤¾ì¹ç */
+        /* å¼•æ•°ã§æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆ */
         case 1:
             snprintf(defaultconf, PATH_MAX, "%s/messasy.conf",
                      DEFAULT_CONFDIR);
@@ -686,7 +661,7 @@ main(int argc, char *argv[])
 
             break;
 
-        /* °ú¿ô¤Ç»ØÄê¤µ¤ì¤Æ¤¤¤ë¾ì¹ç */
+        /* å¼•æ•°ã§æŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆ */
         case 3:
             configfile = argv[1];
             module_configfile = argv[2];
@@ -697,10 +672,10 @@ main(int argc, char *argv[])
             exit(EXIT_MAIN);
     }
 
-    /* ´Ä¶­ÊÑ¿ô¤ÎÀßÄê */
+    /* ç’°å¢ƒå¤‰æ•°ã®è¨­å®š */
     set_environment(configfile);
 
-    /* ¥â¥¸¥å¡¼¥ëÀßÄê¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹ş¤ß */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®èª­ã¿è¾¼ã¿ */
     mhandle_list = NULL;
     ret = read_module_config(module_configfile);
     if (ret != R_SUCCESS) {
@@ -708,13 +683,13 @@ main(int argc, char *argv[])
         exit(EXIT_MAIN);
     }
 
-    /* ÀßÄê¥Õ¥¡¥¤¥ëÆÉ¤ß¹ş¤ß */
+    /* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿ */
     ret = reload_config();
     if (ret != R_SUCCESS) {
         exit(EXIT_MAIN);
     }
 
-    /* ´ÉÍı¥¤¥ó¥¿¥Õ¥§¡¼¥¹¤Îµ¯Æ° */
+    /* ç®¡ç†ã‚¤ãƒ³ã‚¿ãƒ•ã‚§ãƒ¼ã‚¹ã®èµ·å‹• */
     ret = manager_init();
     if (ret != R_SUCCESS) {
         exit (EXIT_MAIN);
@@ -722,21 +697,21 @@ main(int argc, char *argv[])
 
     config = config_retrieve();
 
-    /* ¥Û¥¹¥ÈÌ¾¤ò¥°¥í¡¼¥Ğ¥ëÊÑ¿ô¤ËÊİÂ¸ */
+    /* ãƒ›ã‚¹ãƒˆåã‚’ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ã«ä¿å­˜ */
     if (uname(&utsname) < 0) {
         SYSLOGERROR(ERR_UNAME, E_STR);
         exit(EXIT_MAIN);
     }
     strncpy(msy_hostname, utsname.nodename, MAX_HOSTNAME_LEN + 1);
 
-    /* ¥½¥±¥Ã¥È¤òÀßÄê */
+    /* ã‚½ã‚±ãƒƒãƒˆã‚’è¨­å®š */
     sprintf(connsock, CONNSOCK, config->cf_listenport, config->cf_listenip);
     if (smfi_setconn(connsock) == MI_FAILURE) {
         SYSLOGERROR(ERR_SETCONN, E_STR);
         exit(EXIT_MAIN);
     }
 
-    /* ¥¿¥¤¥à¥¢¥¦¥È¤òÀßÄê */
+    /* ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã‚’è¨­å®š */
     if (smfi_settimeout(config->cf_timeout) == MI_FAILURE) {
         SYSLOGERROR(ERR_SETTIMEOUT, E_STR);
         exit(EXIT_MAIN);
@@ -744,13 +719,13 @@ main(int argc, char *argv[])
 
     config_release(config);
 
-    /* ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô¤òÅĞÏ¿ */
+    /* ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã‚’ç™»éŒ² */
     if (smfi_register(smfilter) == MI_FAILURE) {
         SYSLOGERROR(ERR_REGISTER, E_STR);
         exit(EXIT_MAIN);
     }
 
-    /* libmilter¤ËÀ©¸æ¤ò°ú¤­ÅÏ¤¹ */
+    /* libmilterã«åˆ¶å¾¡ã‚’å¼•ãæ¸¡ã™ */
     if (smfi_main() == MI_FAILURE) {
         SYSLOGERROR(ERR_MLFISTART, E_STR);
         exit(EXIT_MAIN);

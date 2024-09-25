@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: $
- * $Revision: $
- * $Date: $
  */
 
 #define _XOPEN_SOURCE
@@ -52,6 +42,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stddef.h>
 
 // Messasy include file
 #include "../messasy.h"
@@ -59,7 +50,6 @@
 #include "../msy_readmodule.h"
 #include "../utils.h"
 #include "../log.h"
-//#include "lib_lm.h"
 #include "../lib_lm.h"
 
 // Header for my library
@@ -85,25 +75,25 @@ char msy_hostname[MAX_HOSTNAME_LEN + 1];
 struct cfentry dummy_cfe[] = {
     {
         "Dummy", CF_STRING, NULL,
-        OFFSET(struct dummy_config, cf_dummy), NULL
+        MESSASY_OFFSET(struct dummy_config, cf_dummy), NULL
     }
 };
 
 /*
  * dummy_init
  *
- * µ°«Ω:
- *    dummy•‚•∏•Â°º•Î§ŒΩÈ¥¸≤Ω¥ÿøÙ
+ * Ê©üËÉΩ:
+ *    dummy„É¢„Ç∏„É•„Éº„É´„ÅÆÂàùÊúüÂåñÈñ¢Êï∞
  *
- * ∞˙øÙ:
- *    struct cfentry **cfe      config entry πΩ¬§¬Œ
- *    size_t cfesize            config entry πΩ¬§¬Œ§Œ•µ•§•∫
- *    struct config  **cfg      config πΩ¬§¬Œ
- *    size_t cfgsize            config πΩ¬§¬Œ§Œ•µ•§•∫
+ * ÂºïÊï∞:
+ *    struct cfentry **cfe      config entry ÊßãÈÄ†‰Ωì
+ *    size_t cfesize            config entry ÊßãÈÄ†‰Ωì„ÅÆ„Çµ„Ç§„Ç∫
+ *    struct config  **cfg      config ÊßãÈÄ†‰Ωì
+ *    size_t cfgsize            config ÊßãÈÄ†‰Ωì„ÅÆ„Çµ„Ç§„Ç∫
  *
- *  ÷√Õ:
- *     0: ¿µæÔ
- *    -1: ∞€æÔ
+ * ËøîÂÄ§:
+ *     0: Ê≠£Â∏∏
+ *    -1: Áï∞Â∏∏
  */
 int
 dummy_init(struct cfentry **cfe, size_t *cfesize,
@@ -114,7 +104,7 @@ dummy_init(struct cfentry **cfe, size_t *cfesize,
     size_t new_cfesize, new_cfgsize;
     int ret, i;
 
-    // •‚•∏•Â°º•Î•Í•π•»§ÿ§Œƒ…≤√
+    // „É¢„Ç∏„É•„Éº„É´„É™„Çπ„Éà„Å∏„ÅÆËøΩÂä†
     ret = dummy_set_module_list(MYMODULE, HEADER_FUNC, &(*cfg)->cf_exec_header);
     if (ret != 0) {
         return -1;
@@ -132,7 +122,7 @@ dummy_init(struct cfentry **cfe, size_t *cfesize,
         return -1;
     }
 
-    // cfg§Œ≥»ƒ•
+    // cfg„ÅÆÊã°Âºµ
     new_cfgsize = *cfgsize + sizeof(struct dummy_config);
     new_cfg = (struct config *)realloc(*cfg, new_cfgsize);
     if(new_cfg == NULL) {
@@ -141,7 +131,7 @@ dummy_init(struct cfentry **cfe, size_t *cfesize,
     }
     *cfg = new_cfg;
 
-    // cfe§Œ≥»ƒ•
+    // cfe„ÅÆÊã°Âºµ
     new_cfesize = *cfesize + sizeof(dummy_cfe);
     new_cfe = (struct cfentry *)realloc(*cfe, new_cfesize);
     if(new_cfe == NULL) {
@@ -149,23 +139,23 @@ dummy_init(struct cfentry **cfe, size_t *cfesize,
         return (-1);
     }
 
-    // dummy_cfe§Œ•≥•‘°º
+    // dummy_cfe„ÅÆ„Ç≥„Éî„Éº
     memcpy(new_cfe + *cfesize / sizeof(struct cfentry),
            &dummy_cfe, sizeof(dummy_cfe));
 
-    // dataoffset§Œππø∑
+    // dataoffset„ÅÆÊõ¥Êñ∞
     for (i = 0; i < MAILDROP_CFECOUNT; i++) {
         new_cfe[(*cfesize / sizeof(struct cfentry)) + i].cf_dataoffset += *cfgsize;
     }
     *cfe = new_cfe;
 
-    // •‚•∏•Â°º•ÎÀË§ŒconfigπΩ¬§¬Œoffset§Ú≥ «º
+    // „É¢„Ç∏„É•„Éº„É´ÊØé„ÅÆconfigÊßãÈÄ†‰Ωìoffset„ÇíÊ†ºÁ¥ç
     ret = dummy_set_extra_config(MYMODULE, &(*cfg)->cf_extraconfig, *cfgsize);
     if (ret != 0) {
         return -1;
     }
 
-    // cfesize, cfgsize§Œππø∑
+    // cfesize, cfgsize„ÅÆÊõ¥Êñ∞
     *cfesize = new_cfesize;
     *cfgsize = new_cfgsize;
 
@@ -175,24 +165,24 @@ dummy_init(struct cfentry **cfe, size_t *cfesize,
 /*
  * dummy_set_module_list
  *
- * µ°«Ω:
- *    dummy•‚•∏•Â°º•ÎÕ—§Œ•‚•∏•Â°º•Î•Í•π•»∫Ó¿Æ
+ * Ê©üËÉΩ:
+ *    dummy„É¢„Ç∏„É•„Éº„É´Áî®„ÅÆ„É¢„Ç∏„É•„Éº„É´„É™„Çπ„Éà‰ΩúÊàê
  *
- * ∞˙øÙ:
- *    char *modname             •‚•∏•Â°º•ÎÃæ
- *    char *funcname            ¥ÿøÙÃæ
- *    struct modulelist **list  •‚•∏•Â°º•Î•Í•π•»
+ * ÂºïÊï∞:
+ *    char *modname             „É¢„Ç∏„É•„Éº„É´Âêç
+ *    char *funcname            Èñ¢Êï∞Âêç
+ *    struct modulelist **list  „É¢„Ç∏„É•„Éº„É´„É™„Çπ„Éà
  *
- *  ÷√Õ:
- *     0: ¿µæÔ
- *    -1: ∞€æÔ
+ * ËøîÂÄ§:
+ *     0: Ê≠£Â∏∏
+ *    -1: Áï∞Â∏∏
  */
 int
 dummy_set_module_list (char *modname, char *funcname, struct modulelist **list)
 {
     struct modulelist *new_list;
 
-    /* moduleÃæ§Œ•›•§•Û•ø§Ú≥ «º§π§ÎŒŒ∞Ë§Œ≥Œ › */
+    /* moduleÂêç„ÅÆ„Éù„Ç§„É≥„Çø„ÇíÊ†ºÁ¥ç„Åô„ÇãÈ†òÂüü„ÅÆÁ¢∫‰øù */
     new_list = (struct modulelist *)malloc(sizeof(struct modulelist));
     if(new_list == NULL) {
         SYSLOGERROR(ERR_MALLOC, "dummy_set_module_list", strerror(errno));
@@ -221,17 +211,17 @@ dummy_set_module_list (char *modname, char *funcname, struct modulelist **list)
 /*
  * dummy_set_extra_config
  *
- * µ°«Ω:
- *    dummy•‚•∏•Â°º•ÎÕ—§Œextra config§Œ∫Ó¿Æ
+ * Ê©üËÉΩ:
+ *    dummy„É¢„Ç∏„É•„Éº„É´Áî®„ÅÆextra config„ÅÆ‰ΩúÊàê
  *
- * ∞˙øÙ:
- *    char *modname                     •‚•∏•Â°º•ÎÃæ
- *    struct extra_config **ext_cfg     extra config •Í•π•»
- *    size_t cfgsize                    config πΩ¬§¬Œ§Œ•µ•§•∫(extra config §ﬁ§«§Œoffset)
+ * ÂºïÊï∞:
+ *    char *modname                     „É¢„Ç∏„É•„Éº„É´Âêç
+ *    struct extra_config **ext_cfg     extra config „É™„Çπ„Éà
+ *    size_t cfgsize                    config ÊßãÈÄ†‰Ωì„ÅÆ„Çµ„Ç§„Ç∫(extra config „Åæ„Åß„ÅÆoffset)
  *
- *  ÷√Õ:
- *     0: ¿µæÔ
- *    -1: ∞€æÔ
+ * ËøîÂÄ§:
+ *     0: Ê≠£Â∏∏
+ *    -1: Áï∞Â∏∏
  */
 int
 dummy_set_extra_config (char *modname, struct extra_config **ext_cfg,
@@ -239,7 +229,7 @@ dummy_set_extra_config (char *modname, struct extra_config **ext_cfg,
 {
     struct extra_config *new_cfg;
 
-    /* ≥∞…Ù•‚•∏•Â°º•Î§ŒconfigπΩ¬§¬Œ•›•§•Û•ø§Ú≥ «º§π§ÎŒŒ∞Ë§Œ≥Œ › */
+    /* Â§ñÈÉ®„É¢„Ç∏„É•„Éº„É´„ÅÆconfigÊßãÈÄ†‰Ωì„Éù„Ç§„É≥„Çø„ÇíÊ†ºÁ¥ç„Åô„ÇãÈ†òÂüü„ÅÆÁ¢∫‰øù */
     new_cfg = (struct extra_config *)malloc(sizeof(struct extra_config));
     if(new_cfg == NULL) {
         SYSLOGERROR(ERR_MALLOC, "dummy_set_module_list", strerror(errno));
@@ -262,13 +252,13 @@ dummy_set_extra_config (char *modname, struct extra_config **ext_cfg,
 /*
  * dummy_free_config
  *
- * µ°«Ω:
- *    dummy§ŒconfigŒŒ∞Ë§Úfree§π§Î¥ÿøÙ
- * ∞˙øÙ:
- *    mP     : privπΩ¬§¬Œ§Ú§ƒ§ §∞πΩ¬§¬Œ
- *  ÷√Õ:
- *     0: ¿µæÔ
- *    -1: ∞€æÔ
+ * Ê©üËÉΩ:
+ *    dummy„ÅÆconfigÈ†òÂüü„Çífree„Åô„ÇãÈñ¢Êï∞
+ * ÂºïÊï∞:
+ *    mP     : privÊßãÈÄ†‰Ωì„Çí„Å§„Å™„ÅêÊßãÈÄ†‰Ωì
+ * ËøîÂÄ§:
+ *     0: Ê≠£Â∏∏
+ *    -1: Áï∞Â∏∏
  */
 int
 dummy_free_config(struct config *cfg)
@@ -295,21 +285,21 @@ dummy_free_config(struct config *cfg)
 }
 
 /***** ***** ***** ***** *****
- * ∆‚…Ù¥ÿøÙ
+ * ÂÜÖÈÉ®Èñ¢Êï∞
  ***** ***** ***** ***** *****/
 
 /*
  * md_struct_init
  *
- * maildropπΩ¬§¬Œ§Œ≥Œ ›§»ΩÈ¥¸≤Ω§Úπ‘§ §¶
+ * maildropÊßãÈÄ†‰Ωì„ÅÆÁ¢∫‰øù„Å®ÂàùÊúüÂåñ„ÇíË°å„Å™„ÅÜ
  *
- * ∞˙øÙ
- *      unsigned int            •ª•√•∑•Á•ÛID
- *      struct config *         configπΩ¬§¬Œ§Œ•›•§•Û•ø
- *      time_t                  •·°º•ÎºıøÆª˛πÔ
+ * ÂºïÊï∞
+ *      unsigned int            „Çª„ÉÉ„Ç∑„Éß„É≥ID
+ *      struct config *         configÊßãÈÄ†‰Ωì„ÅÆ„Éù„Ç§„É≥„Çø
+ *      time_t                  „É°„Éº„É´Âèó‰ø°ÊôÇÂàª
  *
- *  ÷§Í√Õ
- *      struct maildrop *       maildropπΩ¬§¬Œ
+ * Ëøî„ÇäÂÄ§
+ *      struct maildrop *       maildropÊßãÈÄ†‰Ωì
  */
 static struct dummy *
 dummy_struct_init(unsigned int s_id, struct dummy_config *config, time_t time,
@@ -319,7 +309,7 @@ dummy_struct_init(unsigned int s_id, struct dummy_config *config, time_t time,
     struct dummy *md;
     //int ret;
 
-    /* ŒŒ∞Ë§Ú≥Œ › */
+    /* È†òÂüü„ÇíÁ¢∫‰øù */
     md = (struct dummy *)malloc(sizeof(struct dummy));
     if (md == NULL) {
         SYSLOGERROR(ERR_S_MALLOC, s_id, "md_struct_init", E_STR);
@@ -333,13 +323,13 @@ dummy_struct_init(unsigned int s_id, struct dummy_config *config, time_t time,
 /*
  * dummy_free
  *
- * maildropπΩ¬§¬Œ§Ú≤Ú ¸§π§Î
+ * maildropÊßãÈÄ†‰Ωì„ÇíËß£Êîæ„Åô„Çã
  *
- * ∞˙øÙ
- *      struct maildrop *       maildropπΩ¬§¬Œ§Œ•›•§•Û•ø
+ * ÂºïÊï∞
+ *      struct maildrop *       maildropÊßãÈÄ†‰Ωì„ÅÆ„Éù„Ç§„É≥„Çø
  *
- *  ÷§Í√Õ
- *      § §∑
+ * Ëøî„ÇäÂÄ§
+ *      „Å™„Åó
  */
 static void
 dummy_free(struct dummy *md)
@@ -362,48 +352,48 @@ dummy_free(struct dummy *md)
 /*
  * dummy_get_priv
  *
- * µ°«Ω:
- *    extraprivŒŒ∞Ë§¨§ §±§Ï§–∫Ó¿Æ§∑°¢
- *    §¢§Ï§–º´ ¨Õ—§ŒŒŒ∞Ë§ŒextraprivŒŒ∞Ë•›•§•Û•ø§Ú ÷§π¥ÿøÙ
- * ∞˙øÙ:
- *    priv: mlfiPrivπΩ¬§¬Œ§Œ•›•§•Û•ø(ª≤æ»≈œ§∑)
- *  ÷√Õ:
- *   º´ ¨Õ—§ŒextraprivπΩ¬§¬Œ§Œ•›•§•Û•ø
+ * Ê©üËÉΩ:
+ *    extraprivÈ†òÂüü„Åå„Å™„Åë„Çå„Å∞‰ΩúÊàê„Åó„ÄÅ
+ *    „ÅÇ„Çå„Å∞Ëá™ÂàÜÁî®„ÅÆÈ†òÂüü„ÅÆextraprivÈ†òÂüü„Éù„Ç§„É≥„Çø„ÇíËøî„ÅôÈñ¢Êï∞
+ * ÂºïÊï∞:
+ *    priv: mlfiPrivÊßãÈÄ†‰Ωì„ÅÆ„Éù„Ç§„É≥„Çø(ÂèÇÁÖßÊ∏°„Åó)
+ * ËøîÂÄ§:
+ *   Ëá™ÂàÜÁî®„ÅÆextraprivÊßãÈÄ†‰Ωì„ÅÆ„Éù„Ç§„É≥„Çø
  */
 struct extrapriv *
 dummy_get_priv(struct mlfiPriv **priv)
 {
-    struct extrapriv *p = NULL;      /* ∏°∫˜Õ— */
-    struct extrapriv *mp = NULL;     /* ø∑µ¨∫Ó¿ÆÕ— */
-    struct extrapriv *p_old = NULL;  /* ∏°∫˜√Ê°¢§“§»§ƒ¡∞§Œ•›•§•Û•ø ›¬∏Õ— */
+    struct extrapriv *p = NULL;      /* Ê§úÁ¥¢Áî® */
+    struct extrapriv *mp = NULL;     /* Êñ∞Ë¶è‰ΩúÊàêÁî® */
+    struct extrapriv *p_old = NULL;  /* Ê§úÁ¥¢‰∏≠„ÄÅ„Å≤„Å®„Å§Ââç„ÅÆ„Éù„Ç§„É≥„Çø‰øùÂ≠òÁî® */
 
     if (*priv != NULL) {
-        /* º´ ¨§ŒprivπΩ¬§¬Œ§¨§¢§Î§´∏°∫˜ */
+        /* Ëá™ÂàÜ„ÅÆprivÊßãÈÄ†‰Ωì„Åå„ÅÇ„Çã„ÅãÊ§úÁ¥¢ */
         for (p = (*priv)->mlfi_extrapriv; p != NULL; p = p->expv_next) {
             if (strcmp(MYMODULE, p->expv_modulename) == 0) {
-                /* §¢§√§ø§È•Í•ø°º•Û */
+                /* „ÅÇ„Å£„Åü„Çâ„É™„Çø„Éº„É≥ */
                 return (p);
             }
-            /* §“§»§ƒ¡∞§Œ•›•§•Û•ø≥ «º */
+            /* „Å≤„Å®„Å§Ââç„ÅÆ„Éù„Ç§„É≥„ÇøÊ†ºÁ¥ç */
             p_old = p;
         }
     }
-    /* º´ ¨Õ—§ŒextraprivŒŒ∞Ëø∑µ¨∫Ó¿Æ */
+    /* Ëá™ÂàÜÁî®„ÅÆextraprivÈ†òÂüüÊñ∞Ë¶è‰ΩúÊàê */
     mp = malloc(sizeof(struct extrapriv));
     if (mp == NULL) {
         SYSLOGERROR(ERR_MALLOC, "dummy_get_priv", E_STR);
         return (NULL);
     }
-    /* √Õ§Œ≥ «º */
+    /* ÂÄ§„ÅÆÊ†ºÁ¥ç */
     mp->expv_modulename = MYMODULE;
     mp->expv_next = NULL;
     mp->expv_modulepriv = NULL;
 
-    /* ≤ø§‚¬∏∫ﬂ§∑§∆§§§ §´§√§ø§È¿Ë∆¨§À•›•§•Û•ø§Ú…’§±§Î */
+    /* ‰Ωï„ÇÇÂ≠òÂú®„Åó„Å¶„ÅÑ„Å™„Åã„Å£„Åü„ÇâÂÖàÈ†≠„Å´„Éù„Ç§„É≥„Çø„Çí‰ªò„Åë„Çã */
     if (p_old == NULL) {
         (*priv)->mlfi_extrapriv = mp;
 
-    /* ¬∏∫ﬂ§∑§∆§§§Î§¨°¢º´ ¨Õ—§¨§ §´§√§ø§È∏Â§Ì§À§ƒ§±§Î */
+    /* Â≠òÂú®„Åó„Å¶„ÅÑ„Çã„Åå„ÄÅËá™ÂàÜÁî®„Åå„Å™„Åã„Å£„Åü„ÇâÂæå„Çç„Å´„Å§„Åë„Çã */
     } else if (p == NULL) {
         p_old->expv_next = mp;
     }
@@ -413,26 +403,26 @@ dummy_get_priv(struct mlfiPriv **priv)
 /*
  * dummy_priv_free
  *
- * µ°«Ω:
- *    §π§Ÿ§∆§ŒprivπΩ¬§¬Œ§Úfree§π§Î¥ÿøÙ
- * ∞˙øÙ:
- *     extrapriv:   ∞˙øÙ§ŒπΩ¬§¬Œ§Œ•›•§•Û•ø(ª≤æ»≈œ§∑)
- *  ÷√Õ:
- *    Ãµ§∑
+ * Ê©üËÉΩ:
+ *    „Åô„Åπ„Å¶„ÅÆprivÊßãÈÄ†‰Ωì„Çífree„Åô„ÇãÈñ¢Êï∞
+ * ÂºïÊï∞:
+ *     extrapriv:   ÂºïÊï∞„ÅÆÊßãÈÄ†‰Ωì„ÅÆ„Éù„Ç§„É≥„Çø(ÂèÇÁÖßÊ∏°„Åó)
+ * ËøîÂÄ§:
+ *    ÁÑ°„Åó
  */
 void
 dummy_priv_free(struct extrapriv *expv)
 {
 
-    /* NULL•¡•ß•√•Ø */
+    /* NULL„ÉÅ„Çß„ÉÉ„ÇØ */
     if (expv != NULL) {
-        /* maildrop_privŒŒ∞Ë§¨§¢§ÎæÏπÁ */
+        /* maildrop_privÈ†òÂüü„Åå„ÅÇ„ÇãÂ†¥Âêà */
         if (expv->expv_modulepriv != NULL) {
-            /* maildrop_privπΩ¬§¬Œ§Œfree */
+            /* maildrop_privÊßãÈÄ†‰Ωì„ÅÆfree */
             free(expv->expv_modulepriv);
             expv->expv_modulepriv = NULL;
         }
-        /* extraprivŒŒ∞Ë§Œfree */
+        /* extraprivÈ†òÂüü„ÅÆfree */
         free(expv);
         expv = NULL;
     }
@@ -448,16 +438,16 @@ dummy_abort(unsigned int s_id, struct dummy *md)
 /*
  * dummy_exec_header
  *
- * µ°«Ω:
- *    mlfi_header§«∏∆§–§Ï§Î¥ÿøÙ
- *    privŒŒ∞Ë§Œ≥Œ ›°¶•ÿ•√•¿æ Û§Œ•·•‚•Í≥ «º§π§Î¥ÿøÙ
- * ∞˙øÙ:
- *    priv   : privπΩ¬§¬Œ§Ú§ƒ§ §∞πΩ¬§¬Œ
- *    headerf: •ÿ•√•¿§Œπ‡Ã‹Ãæ
- *    headerv: •ÿ•√•¿§Œπ‡Ã‹§À¬–§π§Î√Õ
- *  ÷√Õ:
- *     0: ¿µæÔ
- *    -1: ∞€æÔ
+ * Ê©üËÉΩ:
+ *    mlfi_header„ÅßÂëº„Å∞„Çå„ÇãÈñ¢Êï∞
+ *    privÈ†òÂüü„ÅÆÁ¢∫‰øù„Éª„Éò„ÉÉ„ÉÄÊÉÖÂ†±„ÅÆ„É°„É¢„É™Ê†ºÁ¥ç„Åô„ÇãÈñ¢Êï∞
+ * ÂºïÊï∞:
+ *    priv   : privÊßãÈÄ†‰Ωì„Çí„Å§„Å™„ÅêÊßãÈÄ†‰Ωì
+ *    headerf: „Éò„ÉÉ„ÉÄ„ÅÆÈ†ÖÁõÆÂêç
+ *    headerv: „Éò„ÉÉ„ÉÄ„ÅÆÈ†ÖÁõÆ„Å´ÂØæ„Åô„ÇãÂÄ§
+ * ËøîÂÄ§:
+ *     0: Ê≠£Â∏∏
+ *    -1: Áï∞Â∏∏
  */
 int
 dummy_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
@@ -471,23 +461,23 @@ dummy_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
     //int                  ret = 0;
     //unsigned int         s_id = priv->mlfi_sid;
 
-    /* extraprivŒŒ∞Ë§ŒÕ≠Ãµ */
+    /* extraprivÈ†òÂüü„ÅÆÊúâÁÑ° */
     expv = dummy_get_priv(&priv);
-    /* dummy_get_priv§¨•®•È°º§Œª˛ */
+    /* dummy_get_priv„Åå„Ç®„É©„Éº„ÅÆÊôÇ */
     if (expv == NULL) {
         SYSLOGERROR(ERR_EXEC_FUNC, "dummy_exec_header", "dummy_get_priv");
-    /* dummy_privŒŒ∞Ë§¨§ §´§√§ø§È∫Ó¿Æ */
+    /* dummy_privÈ†òÂüü„Åå„Å™„Åã„Å£„Åü„Çâ‰ΩúÊàê */
     } else if (expv->expv_modulepriv == NULL) {
-        /* dummyŒŒ∞Ë */
+        /* dummyÈ†òÂüü */
         mypv = malloc(sizeof(struct dummy_priv));
         if (mypv == NULL) {
             SYSLOGERROR(ERR_MALLOC, "dummy_exec_header", E_STR);
             return(-1);
         }
-        /* 2§ƒ§Ú§ƒ§ §≤§Î */
+        /* 2„Å§„Çí„Å§„Å™„Åí„Çã */
         expv->expv_modulepriv = mypv;
 
-        /* º´ ¨§ŒconfigπΩ¬§¬Œ∏°∫˜ */ 
+        /* Ëá™ÂàÜ„ÅÆconfigÊßãÈÄ†‰ΩìÊ§úÁ¥¢ */ 
         if (priv->config->cf_extraconfig != NULL) { 
             for (p = priv->config->cf_extraconfig; p != NULL; p = p->excf_next) {
                 if (!strcmp(MYMODULE, p->excf_modulename)) {
@@ -495,10 +485,10 @@ dummy_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
                 }
             }
         }
-        /* πΩ¬§¬Œ§Ú§ƒ§ §≤§Î */
+        /* ÊßãÈÄ†‰Ωì„Çí„Å§„Å™„Åí„Çã */
         mypv->mypriv = mydat;
     }
-    /* maildropπΩ¬§¬Œ§Œ•›•§•Û•ø§Ú —øÙ§À≥ «º */
+    /* maildropÊßãÈÄ†‰Ωì„ÅÆ„Éù„Ç§„É≥„Çø„ÇíÂ§âÊï∞„Å´Ê†ºÁ¥ç */
     mydatp = ((struct dummy_priv *)expv->expv_modulepriv)->mypriv;
 
     return SMFIS_CONTINUE;
@@ -507,16 +497,16 @@ dummy_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
 /*
  * dummy_exec_body
  *
- * µ°«Ω:
- *    mlfi_body§«∏∆§–§Ï§Î¥ÿøÙ
- *    privŒŒ∞Ë§Œ≥Œ ›°¶•ÿ•√•¿æ Û§Œ•·•‚•Í≥ «º§π§Î¥ÿøÙ
- * ∞˙øÙ:
- *    *priv  : privπΩ¬§¬Œ§Ú§ƒ§ §∞πΩ¬§¬Œ(ª≤æ»≈œ§∑)
- *    *bodyp : mlfi_body§¨ºË∆¿§∑§ø•‹•«•£…Ù
- *    bodylen: bodyp§Œ•µ•§•∫
- *  ÷√Õ:
- *     0: ¿µæÔ
- *    -1: ∞€æÔ
+ * Ê©üËÉΩ:
+ *    mlfi_body„ÅßÂëº„Å∞„Çå„ÇãÈñ¢Êï∞
+ *    privÈ†òÂüü„ÅÆÁ¢∫‰øù„Éª„Éò„ÉÉ„ÉÄÊÉÖÂ†±„ÅÆ„É°„É¢„É™Ê†ºÁ¥ç„Åô„ÇãÈñ¢Êï∞
+ * ÂºïÊï∞:
+ *    *priv  : privÊßãÈÄ†‰Ωì„Çí„Å§„Å™„ÅêÊßãÈÄ†‰Ωì(ÂèÇÁÖßÊ∏°„Åó)
+ *    *bodyp : mlfi_body„ÅåÂèñÂæó„Åó„Åü„Éú„Éá„Ç£ÈÉ®
+ *    bodylen: bodyp„ÅÆ„Çµ„Ç§„Ç∫
+ * ËøîÂÄ§:
+ *     0: Ê≠£Â∏∏
+ *    -1: Áï∞Â∏∏
  */
 int
 dummy_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
@@ -526,9 +516,9 @@ dummy_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
 //    int                 ret = 0;
 //    unsigned int        s_id = priv->mlfi_sid;
 
-    /* extraprivŒŒ∞Ë§ŒÕ≠Ãµ */
+    /* extraprivÈ†òÂüü„ÅÆÊúâÁÑ° */
     expv = dummy_get_priv(&priv);
-    /* maildrop_get_priv§¨•®•È°º§Œª˛ */
+    /* maildrop_get_priv„Åå„Ç®„É©„Éº„ÅÆÊôÇ */
     if (expv == NULL) {
         SYSLOGERROR(ERR_EXEC_FUNC, "dummy_exec_body", "dummy_get_priv");
         return (-1);
@@ -544,15 +534,15 @@ dummy_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
 /*
  * dummy_exec_eom
  *
- * µ°«Ω:
- *    mlfi_eom§«∏∆§–§Ï§Î¥ÿøÙ
- *    mlfi_header§«≥ «º§∑§ø•ÿ•√•¿æ Û§ÚπΩ¬§¬Œ§À≥ «º§∑°¢
- *    DB§À≈–œø§π§Î¥ÿøÙ
- * ∞˙øÙ:
- *    priv: privπΩ¬§¬Œ§Ú§ƒ§ §∞πΩ¬§¬Œ(ª≤æ»≈œ§∑)
- *  ÷√Õ:
- *     0: ¿µæÔ
- *    -1: ∞€æÔ
+ * Ê©üËÉΩ:
+ *    mlfi_eom„ÅßÂëº„Å∞„Çå„ÇãÈñ¢Êï∞
+ *    mlfi_header„ÅßÊ†ºÁ¥ç„Åó„Åü„Éò„ÉÉ„ÉÄÊÉÖÂ†±„ÇíÊßãÈÄ†‰Ωì„Å´Ê†ºÁ¥ç„Åó„ÄÅ
+ *    DB„Å´ÁôªÈå≤„Åô„ÇãÈñ¢Êï∞
+ * ÂºïÊï∞:
+ *    priv: privÊßãÈÄ†‰Ωì„Çí„Å§„Å™„ÅêÊßãÈÄ†‰Ωì(ÂèÇÁÖßÊ∏°„Åó)
+ * ËøîÂÄ§:
+ *     0: Ê≠£Â∏∏
+ *    -1: Áï∞Â∏∏
  */
 int
 dummy_exec_eom(struct mlfiPriv *priv)
@@ -569,15 +559,15 @@ dummy_exec_eom(struct mlfiPriv *priv)
 /*
  * dummy_exec_abort
  *
- * µ°«Ω:
- *    mlfi_abort§‰exec_eom§«∏∆§–§Ï§Î¥ÿøÙ
- *    privπΩ¬§¬Œ§Ú¡¥§∆free§π§Î¥ÿøÙ
+ * Ê©üËÉΩ:
+ *    mlfi_abort„ÇÑexec_eom„ÅßÂëº„Å∞„Çå„ÇãÈñ¢Êï∞
+ *    privÊßãÈÄ†‰Ωì„ÇíÂÖ®„Å¶free„Åô„ÇãÈñ¢Êï∞
  *
- * ∞˙øÙ:
- *    priv: privπΩ¬§¬Œ§Ú§ƒ§ §∞πΩ¬§¬Œ
+ * ÂºïÊï∞:
+ *    priv: privÊßãÈÄ†‰Ωì„Çí„Å§„Å™„ÅêÊßãÈÄ†‰Ωì
  *
- *  ÷√Õ:
- *    0(R_SUCCESS): ¿µæÔ
+ * ËøîÂÄ§:
+ *    0(R_SUCCESS): Ê≠£Â∏∏
  */
 int
 dummy_exec_abort(struct mlfiPriv *priv)
@@ -587,34 +577,34 @@ dummy_exec_abort(struct mlfiPriv *priv)
     struct dummy        *md = NULL;
     unsigned int        s_id = priv->mlfi_sid;
 
-    /* º´ ¨§ŒŒŒ∞ËÕ≠Ãµ•¡•ß•√•Ø */
+    /* Ëá™ÂàÜ„ÅÆÈ†òÂüüÊúâÁÑ°„ÉÅ„Çß„ÉÉ„ÇØ */
     if (priv != NULL) {
-        /* º´ ¨§ŒprivπΩ¬§¬Œ§¨§¢§Î§´∏°∫˜ */
+        /* Ëá™ÂàÜ„ÅÆprivÊßãÈÄ†‰Ωì„Åå„ÅÇ„Çã„ÅãÊ§úÁ¥¢ */
         for (p = priv->mlfi_extrapriv; p != NULL; p = p->expv_next) {
             if (!strcmp(MYMODULE, p->expv_modulename)) {
                 break;
             }
             p_old = p;
         }
-        /* ∞Ï§ƒ¡∞§ŒŒŒ∞Ë§¨extraprivπΩ¬§¬Œ */
+        /* ‰∏Ä„Å§Ââç„ÅÆÈ†òÂüü„ÅåextraprivÊßãÈÄ†‰Ωì */
         if (p_old != NULL) {
             if (p != NULL) {
-                /* §“§»§ƒ¡∞§ŒπΩ¬§¬Œ§Œnext§Àfree§π§ÎπΩ¬§¬Œ§Œnext§Ú§ƒ§ §≤§Î */
+                /* „Å≤„Å®„Å§Ââç„ÅÆÊßãÈÄ†‰Ωì„ÅÆnext„Å´free„Åô„ÇãÊßãÈÄ†‰Ωì„ÅÆnext„Çí„Å§„Å™„Åí„Çã */
                 p_old->expv_next = p->expv_next;
                 md = ((struct dummy_priv *)p->expv_modulepriv)->mypriv;
-                /* •¢•‹°º•» */
+                /* „Ç¢„Éú„Éº„Éà */
                 dummy_abort(s_id, md);
                 dummy_priv_free(p);
             } else {
                p_old->expv_next = NULL;
             }
-        /* ∞Ï§ƒ¡∞§ŒŒŒ∞Ë§¨mlfiPrivπΩ¬§¬Œ */
+        /* ‰∏Ä„Å§Ââç„ÅÆÈ†òÂüü„ÅåmlfiPrivÊßãÈÄ†‰Ωì */
         } else {
             if (p != NULL) {
-                /* §“§»§ƒ¡∞§ŒπΩ¬§¬Œ§Œnext§Àfree§π§ÎπΩ¬§¬Œ§Œnext§Ú§ƒ§ §≤§Î */
+                /* „Å≤„Å®„Å§Ââç„ÅÆÊßãÈÄ†‰Ωì„ÅÆnext„Å´free„Åô„ÇãÊßãÈÄ†‰Ωì„ÅÆnext„Çí„Å§„Å™„Åí„Çã */
                 priv->mlfi_extrapriv = p->expv_next;
                 md = ((struct dummy_priv *)p->expv_modulepriv)->mypriv;
-                /* •¢•‹°º•» */
+                /* „Ç¢„Éú„Éº„Éà */
                 dummy_abort(s_id, md);
                 dummy_priv_free(p);
             } else {

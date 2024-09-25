@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: msy_config.c,v $
- * $Revision: 1.47 $
- * $Date: 2009/11/11 04:41:58 $
  */
 
 #include <stdio.h>
@@ -37,14 +27,12 @@
 #include <pthread.h>
 #include <errno.h>
 #include <dlfcn.h>
+#include <stddef.h> 
 
 #define SYSLOG_NAMES
 #include <libdgconfig.h>
 
 #include <ldap.h>
-
-/* add included header for make */
-//#include "config.h"
 
 #include "messasy.h"
 #include "msy_config.h"
@@ -52,7 +40,7 @@
 #include "log.h"
 #include "msy_readmodule.h"
 
-/* ¥×¥í¥È¥¿¥¤¥×Àë¸À */
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ */
 static char * is_timeout(int value);
 static char * is_commandmaxclients(int value);
 static char * is_erroraction(char *str);
@@ -75,115 +63,115 @@ static int set_dlsymbol(char *, void *, struct modulelist **);
 struct cfentry cfe[] = {
     {
         "ListenIP", CF_STRING,"127.0.0.1",
-        OFFSET(struct config, cf_listenip), is_ipaddr
+        MESSASY_OFFSET(struct config, cf_listenip), is_ipaddr
     },
     {
         "ListenPort", CF_INT_PLUS, "20026",
-        OFFSET(struct config, cf_listenport),is_port
+        MESSASY_OFFSET(struct config, cf_listenport),is_port
     },
     {
         "TimeOut", CF_INT_PLUS, "10",
-        OFFSET(struct config, cf_timeout), is_timeout
+        MESSASY_OFFSET(struct config, cf_timeout), is_timeout
     },
     {
         "SyslogFacility" , CF_STRING, "local1",
-        OFFSET(struct config, cf_syslogfacility), is_syslog_facility
+        MESSASY_OFFSET(struct config, cf_syslogfacility), is_syslog_facility
     },
     {
         "ErrorAction", CF_STRING, "tempfail",
-        OFFSET(struct config, cf_erroraction), is_erroraction
+        MESSASY_OFFSET(struct config, cf_erroraction), is_erroraction
     },
     {
         "CommandPort", CF_INT_PLUS, "17777",
-        OFFSET(struct config, cf_commandport), is_port
+        MESSASY_OFFSET(struct config, cf_commandport), is_port
     },
     {
         "AdminPassword", CF_STRING, NULL,
-        OFFSET(struct config, cf_adminpassword), NULL
+        MESSASY_OFFSET(struct config, cf_adminpassword), NULL
     },
     {
         "CommandMaxClients", CF_INT_PLUS, "16",
-        OFFSET(struct config, cf_commandmaxclients), is_commandmaxclients
+        MESSASY_OFFSET(struct config, cf_commandmaxclients), is_commandmaxclients
     },
     {
         "CommandTimeOut", CF_INT_PLUS, "300",
-        OFFSET(struct config, cf_commandtimeout), is_timeout
+        MESSASY_OFFSET(struct config, cf_commandtimeout), is_timeout
     },
     {
         "SavePolicy", CF_STRING, "both",
-        OFFSET(struct config, cf_savepolicy), is_savepolicy
+        MESSASY_OFFSET(struct config, cf_savepolicy), is_savepolicy
     },
     {
         "MyDomain", CF_STRING, NULL,
-        OFFSET(struct config, cf_mydomain), NULL
+        MESSASY_OFFSET(struct config, cf_mydomain), NULL
     },
     {
         "SaveMailAddress", CF_STRING, NULL,
-        OFFSET(struct config, cf_savemailaddress), NULL
+        MESSASY_OFFSET(struct config, cf_savemailaddress), NULL
     },
     {
         "SaveIgnoreHeader", CF_STRING, "",
-        OFFSET(struct config, cf_saveignoreheader), NULL
+        MESSASY_OFFSET(struct config, cf_saveignoreheader), NULL
     },
     {
         "DefaultDomain", CF_STRING, "localhost.localdomain",
-        OFFSET(struct config, cf_defaultdomain), is_not_null
+        MESSASY_OFFSET(struct config, cf_defaultdomain), is_not_null
     },
 
 #ifdef OLD_CODE
     {
         "MailDir", CF_STRING, NULL,
-        OFFSET(struct config, cf_maildir), is_writable_directory
+        MESSASY_OFFSET(struct config, cf_maildir), is_writable_directory
     },
     {
         "MailFolder", CF_STRING, NULL,
-        OFFSET(struct config, cf_mailfolder), is_mailfolder
+        MESSASY_OFFSET(struct config, cf_mailfolder), is_mailfolder
     },
     {
         "DotDelimiter", CF_STRING, ",",
-        OFFSET(struct config, cf_dotdelimiter), is_dotdelimiter
+        MESSASY_OFFSET(struct config, cf_dotdelimiter), is_dotdelimiter
     },
     {
         "SlashDelimiter", CF_STRING, "_",
-        OFFSET(struct config, cf_slashdelimiter), is_slashdelimiter
+        MESSASY_OFFSET(struct config, cf_slashdelimiter), is_slashdelimiter
     },
 #endif    /* OLD_CODE */
 
     {
         "LdapCheck", CF_INTEGER, "0",
-        OFFSET(struct config, cf_ldapcheck), is_boolean
+        MESSASY_OFFSET(struct config, cf_ldapcheck), is_boolean
     },
     {
         "LdapServer", CF_STRING, "127.0.0.1",
-        OFFSET(struct config, cf_ldapserver), is_ipaddr
+        MESSASY_OFFSET(struct config, cf_ldapserver), is_ipaddr
     },
     {
         "LdapPort", CF_INT_PLUS, "389",
-        OFFSET(struct config, cf_ldapport), is_port
+        MESSASY_OFFSET(struct config, cf_ldapport), is_port
     },
     {
         "LdapBindDn", CF_STRING, "",
-        OFFSET(struct config, cf_ldapbinddn), NULL
+        MESSASY_OFFSET(struct config, cf_ldapbinddn), NULL
     },
     {
         "LdapBindPassword", CF_STRING, "",
-        OFFSET(struct config, cf_ldapbindpassword), NULL
+        MESSASY_OFFSET(struct config, cf_ldapbindpassword), NULL
     },
     {
         "LdapBaseDn", CF_STRING, "",
-        OFFSET(struct config, cf_ldapbasedn), NULL
+        MESSASY_OFFSET(struct config, cf_ldapbasedn), NULL
     },
     {
         "LdapMailFilter", CF_STRING, "(mail=%M)",
-        OFFSET(struct config, cf_ldapmailfilter), NULL
+        MESSASY_OFFSET(struct config, cf_ldapmailfilter), NULL
     },
     {
         "LdapScope", CF_STRING, "subtree",
-        OFFSET(struct config, cf_ldapscope), is_ldapscope
+        MESSASY_OFFSET(struct config, cf_ldapscope), is_ldapscope
     },
     {
         "LdapTimeout", CF_INT_PLUS, "5",
-        OFFSET(struct config, cf_ldaptimeout), is_timeout
+        MESSASY_OFFSET(struct config, cf_ldaptimeout), is_timeout
     }
 };
 
@@ -199,55 +187,56 @@ struct config *cur_cfg = NULL;
 /*
  * set_environment
  *
- * ´Ä¶­ÊÑ¿ô¤òÀßÄê¤¹¤ë
+ * ç’°å¢ƒå¤‰æ•°ã‚’è¨­å®šã™ã‚‹
  *
- * °ú¿ô
- *      char *          ÀßÄê¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹
+ * å¼•æ•°
+ *      char *          è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 void
 set_environment(char *path)
 {
-    /* ÀßÄê¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹¤òÀÅÅªÊÑ¿ô¤Ë¥»¥Ã¥È */
-    strncpy(config_path, path, PATH_MAX + 1);
+    /* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ã‚’é™çš„å¤‰æ•°ã«ã‚»ãƒƒãƒˆ */
+    strncpy(config_path, path, PATH_MAX);
+    config_path[PATH_MAX] = '\0';
 
-    /* ¥í¥°½ĞÎÏ¥ì¥Ù¥ë¤òINFO¤ËÀßÄê */
+    /* ãƒ­ã‚°å‡ºåŠ›ãƒ¬ãƒ™ãƒ«ã‚’INFOã«è¨­å®š */
     dgconfig_loglevel = LOGLVL_INFO;
 
-    /* ¥í¥°½ĞÎÏÀè¤ò½é´ü²½ */
+    /* ãƒ­ã‚°å‡ºåŠ›å…ˆã‚’åˆæœŸåŒ– */
     dgloginit();
 }
 
 /*
  * init_config
  *
- * µ¡Ç½
- *     ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë¤ò³ÊÇ¼¤¹¤ë¹½Â¤ÂÎ¤Î½é´ü²½
+ * æ©Ÿèƒ½
+ *     ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ ¼ç´ã™ã‚‹æ§‹é€ ä½“ã®åˆæœŸåŒ–
  *
- * °ú¿ô
- *     ¤Ê¤·
+ * å¼•æ•°
+ *     ãªã—
  *
- * ÊÖ¤êÃÍ
- *     struct config *     Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *     struct config *     æ­£å¸¸
  */
 struct config *
 init_config()
 {
     struct config *cfg = NULL;
 
-    /* ¥á¥â¥ê³ÎÊİ */
+    /* ãƒ¡ãƒ¢ãƒªç¢ºä¿ */
     cfg = (struct config *)malloc(sizeof(struct config));
     if (cfg == NULL) {
         SYSLOGERROR(ERR_MALLOC, "init_config", E_STR);
         exit (EXIT_MAIN);
     }
 
-    /* ¹½Â¤ÂÎ¤ò0¤ÇËä¤á¤ë */
+    /* æ§‹é€ ä½“ã‚’0ã§åŸ‹ã‚ã‚‹ */
     memset(cfg, '\0', sizeof(struct config)); 
 
-    /* mutexÊÑ¿ô¤Î½é´ü²½ */
+    /* mutexå¤‰æ•°ã®åˆæœŸåŒ– */
     cfg->cf_ref_count_lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 
     return cfg;
@@ -256,14 +245,14 @@ init_config()
 /*
  * free_modulelist
  *
- * µ¡Ç½
- *¡¡¡¡¡¡¥â¥¸¥å¡¼¥ë¥ê¥¹¥È¤Î³«Êü
+ * æ©Ÿèƒ½
+ *ã€€ã€€ã€€ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒªã‚¹ãƒˆã®é–‹æ”¾
  *
- * °ú¿ô
- *      struct modulelist *list   ³«Êü¤¹¤ë¥â¥¸¥å¡¼¥ë¥ê¥¹¥È
+ * å¼•æ•°
+ *      struct modulelist *list   é–‹æ”¾ã™ã‚‹ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒªã‚¹ãƒˆ
  *
- * ÊÖ¤êÃÍ
- *             ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *             ãªã—
  *
  */
 void
@@ -280,14 +269,14 @@ free_modulelist(struct modulelist *list)
 /*
  * free_excf
  *
- * µ¡Ç½
- *      extra_config¤Î²òÊü
+ * æ©Ÿèƒ½
+ *      extra_configã®è§£æ”¾
  *
- * °ú¿ô
- *      struct extra_config *list   ²òÊü¤¹¤ë¥â¥¸¥å¡¼¥ë¥ê¥¹¥È
+ * å¼•æ•°
+ *      struct extra_config *list   è§£æ”¾ã™ã‚‹ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒªã‚¹ãƒˆ
  *
- * ÊÖ¤êÃÍ
- *             ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *             ãªã—
  *
  */
 void
@@ -304,14 +293,14 @@ free_excf(struct extra_config *list)
 /*
  * free_config
  *
- * µ¡Ç½
- *¡¡¡¡¡¡ÀßÄê¥Õ¥¡¥¤¥ë¤òÆÉ¤ß¹ş¤ó¤À¹½Â¤ÂÎ¤Î¥á¥â¥ê¤ò³«Êü¤¹¤ë¡£
+ * æ©Ÿèƒ½
+ *ã€€ã€€ã€€è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã‚“ã æ§‹é€ ä½“ã®ãƒ¡ãƒ¢ãƒªã‚’é–‹æ”¾ã™ã‚‹ã€‚
  *
- * °ú¿ô
- *      struct config *cfg       ³«Êü¤¹¤ëÀßÄê¥Õ¥¡¥¤¥ë¹½Â¤ÂÎ
+ * å¼•æ•°
+ *      struct config *cfg       é–‹æ”¾ã™ã‚‹è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«æ§‹é€ ä½“
  *
- * ÊÖ¤êÃÍ
- *             ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *             ãªã—
  *
  */
 void
@@ -327,13 +316,13 @@ free_config(struct config *cfg)
     }
 
 
-    /* extraconfig¤Î¥ê¥¹¥È³«Êü*/
+    /* extraconfigã®ãƒªã‚¹ãƒˆé–‹æ”¾*/
     for (p = mhandle_list; p != NULL; p = p->mh_next) {
 
-        /* ´Ø¿ôÌ¾¤ÎÀ¸À® */
+        /* é–¢æ•°åã®ç”Ÿæˆ */
         sprintf(funcname, "%s_free_config", p->mh_modulename);
 
-        /* ´Ø¿ô¥İ¥¤¥ó¥¿¤ÎÂåÆş */
+        /* é–¢æ•°ãƒã‚¤ãƒ³ã‚¿ã®ä»£å…¥ */
         func_pointer = dlsym(p->mh_ptr, funcname);
         if ((error =dlerror()) != NULL) {
             SYSLOGERROR(ERR_CREATE_FUNC_HANDLE, 
@@ -344,13 +333,13 @@ free_config(struct config *cfg)
         (*func_pointer)(cfg);
     }
 
-    /* exec¥Ï¥ó¥É¥é¡¼¤Î³«Êü*/
+    /* execãƒãƒ³ãƒ‰ãƒ©ãƒ¼ã®é–‹æ”¾*/
     free_modulelist(cfg->cf_exec_header);
     free_modulelist(cfg->cf_exec_body);
     free_modulelist(cfg->cf_exec_eom);
     free_modulelist(cfg->cf_exec_abort);
 
-    /* ¾åµ­¤Ëextraconfig¤Î¥ê¥¹¥È³«Êü¤·¤Ş¤·¤¿¤¿¤á¡¢ÀèÆ¬¤Î¥İ¥¤¥ó¥È¤À¤±¤ò³«Êü¤¹¤ë*/
+    /* ä¸Šè¨˜ã«extraconfigã®ãƒªã‚¹ãƒˆé–‹æ”¾ã—ã¾ã—ãŸãŸã‚ã€å…ˆé ­ã®ãƒã‚¤ãƒ³ãƒˆã ã‘ã‚’é–‹æ”¾ã™ã‚‹*/
     free_excf(cfg->cf_extraconfig);
 
     if (cfg->cf_listenip != NULL) {
@@ -432,12 +421,12 @@ free_config(struct config *cfg)
 /*
  * config_retrieve
  *
- * config¹½Â¤ÂÎ¤Î»²¾È¥«¥¦¥ó¥¿¤òÁı¤ä¤·¡¢¥İ¥¤¥ó¥¿¤òÊÖ¤¹
+ * configæ§‹é€ ä½“ã®å‚ç…§ã‚«ã‚¦ãƒ³ã‚¿ã‚’å¢—ã‚„ã—ã€ãƒã‚¤ãƒ³ã‚¿ã‚’è¿”ã™
  *
- * °ú¿ô
- *      ¤Ê¤·
- * ÊÖ¤êÃÍ
- *      struct config *         config¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      ãªã—
+ * è¿”ã‚Šå€¤
+ *      struct config *         configæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
  */
 struct config *
 config_retrieve()
@@ -446,9 +435,9 @@ config_retrieve()
 
     pthread_mutex_lock(&cur_cfg->cf_ref_count_lock);
 
-    /* »²¾È¥«¥¦¥ó¥¿¤òÁı¤ä¤¹ */
+    /* å‚ç…§ã‚«ã‚¦ãƒ³ã‚¿ã‚’å¢—ã‚„ã™ */
     cur_cfg->cf_ref_count++;
-    /* config¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿¤ò¼èÆÀ¤¹¤ë */
+    /* configæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿ã‚’å–å¾—ã™ã‚‹ */
     ret_ptr = cur_cfg;
 
     pthread_mutex_unlock(&cur_cfg->cf_ref_count_lock);
@@ -459,13 +448,13 @@ config_retrieve()
 /*
  * config_release
  *
- * config¹½Â¤ÂÎ¤Î»²¾È¥«¥¦¥ó¥¿¤ò¸º¤é¤¹
+ * configæ§‹é€ ä½“ã®å‚ç…§ã‚«ã‚¦ãƒ³ã‚¿ã‚’æ¸›ã‚‰ã™
  *
- * °ú¿ô
- *      struct config *         config¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
- *                              (config_retrieve()¤Ç¼èÆÀ¤µ¤ì¤¿¤â¤Î)
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      struct config *         configæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
+ *                              (config_retrieve()ã§å–å¾—ã•ã‚ŒãŸã‚‚ã®)
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  *
  */
 void
@@ -476,7 +465,7 @@ config_release(struct config *cfg)
     cfg->cf_ref_count--;
 
     if (cfg->cf_reloaded == TRUE && cfg->cf_ref_count < 1) {
-        /* Â¾¤ËÃ¯¤â»²¾È¤·¤Æ¤¤¤Ê¤±¤ì¤Ğ²òÊü */
+        /* ä»–ã«èª°ã‚‚å‚ç…§ã—ã¦ã„ãªã‘ã‚Œã°è§£æ”¾ */
         pthread_mutex_unlock(&cfg->cf_ref_count_lock);
         free_config(cfg);
         pthread_mutex_lock(&config_lock);
@@ -492,15 +481,15 @@ config_release(struct config *cfg)
 /*
  * reload_config
  *
- * ÀßÄê¥Õ¥¡¥¤¥ë¤ÎºÆÆÉ¤ß¹ş¤ß¤ò¹Ô¤Ê¤¦
+ * è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®å†èª­ã¿è¾¼ã¿ã‚’è¡Œãªã†
  *
- * °ú¿ô
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      ãªã—
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS       Àµ¾ï
- *      R_POSITIVE      ´û¤Ë¥ê¥í¡¼¥ÉÃæ
- *      R_ERROR         ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS       æ­£å¸¸
+ *      R_POSITIVE      æ—¢ã«ãƒªãƒ­ãƒ¼ãƒ‰ä¸­
+ *      R_ERROR         ã‚¨ãƒ©ãƒ¼
  */
 int
 reload_config()
@@ -511,12 +500,12 @@ reload_config()
 
     if (config_reloading == TRUE) {
 
-        /* ¥ê¥í¡¼¥ÉÃæ */
+        /* ãƒªãƒ­ãƒ¼ãƒ‰ä¸­ */
         SYSLOGERROR(ERR_CONFIG_RELOADING);
         return R_POSITIVE;
     }
 
-    /* ÀßÄê¥Õ¥¡¥¤¥ë¤òÆÉ¤ß¹ş¤ß */
+    /* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã¿ */
     ret = set_config(config_path, &cfg);
     if (ret != R_SUCCESS) {
         return R_ERROR;
@@ -526,7 +515,7 @@ reload_config()
         config_reloading = TRUE;
     }
 
-    /* ¥İ¥¤¥ó¥¿¤ò·Ò¤®ÊÑ¤¨ */
+    /* ãƒã‚¤ãƒ³ã‚¿ã‚’ç¹‹ãå¤‰ãˆ */
     pthread_mutex_lock(&config_lock);
     old = cur_cfg;
     cur_cfg = cfg;
@@ -535,14 +524,14 @@ reload_config()
     if (old != NULL) {
         pthread_mutex_lock(&old->cf_ref_count_lock);
         if (old->cf_ref_count < 1) {
-            /* Â¾¤ËÃ¯¤â»²¾È¤·¤Æ¤¤¤Ê¤±¤ì¤Ğ²òÊü */
+            /* ä»–ã«èª°ã‚‚å‚ç…§ã—ã¦ã„ãªã‘ã‚Œã°è§£æ”¾ */
             pthread_mutex_unlock(&old->cf_ref_count_lock);
             free_config(old);
             pthread_mutex_lock(&config_lock);
             config_reloading = FALSE;
             pthread_mutex_unlock(&config_lock);
         } else {
-            /* ²òÊü²ÄÇ½¤Ë¥Ş¡¼¥¯ */
+            /* è§£æ”¾å¯èƒ½ã«ãƒãƒ¼ã‚¯ */
             old->cf_reloaded = TRUE;
             pthread_mutex_unlock(&old->cf_ref_count_lock);
         }
@@ -554,15 +543,15 @@ reload_config()
 /*
  * is_timeout
  *
- * µ¡Ç½
- *     ¥¿¥¤¥à¥¢¥¦¥ÈÉÃ¿ô¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *     ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆç§’æ•°ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *     int value            ¥Á¥§¥Ã¥¯¤¹¤ëÃÍ 
+ * å¼•æ•°
+ *     int value            ãƒã‚§ãƒƒã‚¯ã™ã‚‹å€¤ 
  *
- * ÊÖ¤êÃÍ
- *      NULL                Àµ¾ï
- *      ERR_CONF_TIMEOUT    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                æ­£å¸¸
+ *      ERR_CONF_TIMEOUT    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_timeout(int value)
@@ -576,15 +565,15 @@ is_timeout(int value)
 /*
  * is_commandmaxclients
  *
- * µ¡Ç½
- *     Æ±»şÀÜÂ³²ÄÇ½¿ô¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *     åŒæ™‚æ¥ç¶šå¯èƒ½æ•°ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *     int value            ¥Á¥§¥Ã¥¯¤¹¤ëÃÍ 
+ * å¼•æ•°
+ *     int value            ãƒã‚§ãƒƒã‚¯ã™ã‚‹å€¤ 
  *
- * ÊÖ¤êÃÍ
- *      NULL                Àµ¾ï
- *      ERR_CONF_COMMANDMAXCLIENTS    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                æ­£å¸¸
+ *      ERR_CONF_COMMANDMAXCLIENTS    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_commandmaxclients(int value)
@@ -598,15 +587,15 @@ is_commandmaxclients(int value)
 /*
  * is_erroraction
  *
- * µ¡Ç½
- *     ¥¨¥é¡¼¥¢¥¯¥·¥ç¥ó¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *     ã‚¨ãƒ©ãƒ¼ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *      char *str      ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó 
+ * å¼•æ•°
+ *      char *str      ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ— 
  *
- * ÊÖ¤êÃÍ
- *      NULL                    Àµ¾ï 
- *      ERR_CONF_ERRORACTION    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                    æ­£å¸¸ 
+ *      ERR_CONF_ERRORACTION    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_erroraction(char *str)
@@ -626,15 +615,15 @@ is_erroraction(char *str)
 /*
  * is_savepolicy 
  *
- * µ¡Ç½
- *     ¥»¡¼¥Ö¥İ¥ê¥·¡¼¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *     ã‚»ãƒ¼ãƒ–ãƒãƒªã‚·ãƒ¼ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó    
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—    
  *
- * ÊÖ¤êÃÍ
- *      NULL                   Àµ¾ï
- *      ERR_CONF_SAVEPOLICY    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                   æ­£å¸¸
+ *      ERR_CONF_SAVEPOLICY    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_savepolicy(char *str)
@@ -659,15 +648,15 @@ is_savepolicy(char *str)
 /*
  * is_mailforder
  *
- * µ¡Ç½
- *    ¥á¡¼¥ë¥Õ¥©¥ë¥À¡¼¤Î¥Á¥§¥Ã¥¯ 
+ * æ©Ÿèƒ½
+ *    ãƒ¡ãƒ¼ãƒ«ãƒ•ã‚©ãƒ«ãƒ€ãƒ¼ã®ãƒã‚§ãƒƒã‚¯ 
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó    
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—    
  *
- * ÊÖ¤êÃÍ
- *      NULL                   Àµ¾ï
- *      ERR_CONF_MAILFOLDER    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                   æ­£å¸¸
+ *      ERR_CONF_MAILFOLDER    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_mailfolder(char *str)
@@ -675,28 +664,28 @@ is_mailfolder(char *str)
     char string[] = CHAR_MAILFOLDER;
     int  i, j;
 
-    /* Ê¸»úÎó¤ÎÀèÆ¬¤¬¡Ö.¡×¤Ç¤Ê¤¤¤³¤È¤Î³ÎÇ§ */
+    /* æ–‡å­—åˆ—ã®å…ˆé ­ãŒã€Œ.ã€ã§ãªã„ã“ã¨ã®ç¢ºèª */
     if (str[0] != '.') {
         return ERR_CONF_MAILFOLDER);
     }
 
     for (i = 0; str[i] != '\0'; i++) {
-        /*¡Ö.¡×¤¬Ï¢Â³¤·¤Æ¤¤¤Ê¤¤¤³¤È¤Î³ÎÇ§ */
+        /*ã€Œ.ã€ãŒé€£ç¶šã—ã¦ã„ãªã„ã“ã¨ã®ç¢ºèª */
         if ((str[i] == '.') && (str[i+1] == '.')) {
             return ERR_CONF_MAILFOLDER);
         }
-        /* ¥á¡¼¥ë¥Õ¥©¥ë¥À¤ÎÌ¾Á°¤È¤·¤ÆÅ¬ÀÚ¤ÊÊ¸»ú¤¬»È¤ï¤ì¤Æ¤¤¤ë¤³¤È¤Î³ÎÇ§ */
+        /* ãƒ¡ãƒ¼ãƒ«ãƒ•ã‚©ãƒ«ãƒ€ã®åå‰ã¨ã—ã¦é©åˆ‡ãªæ–‡å­—ãŒä½¿ã‚ã‚Œã¦ã„ã‚‹ã“ã¨ã®ç¢ºèª */
         for (j = 0; string[j] != '\0'; j++) {
             if (str[i] == string[j]) {
                 break;
             }
         }
-        /* Ê¸»ú¤¬¹çÃ×¤¹¤ë¤³¤È¤Ê¤¯È´¤±¤¿¾ì¹ç¡¢¥¨¥é¡¼ */
+        /* æ–‡å­—ãŒåˆè‡´ã™ã‚‹ã“ã¨ãªãæŠœã‘ãŸå ´åˆã€ã‚¨ãƒ©ãƒ¼ */
         if (string[j] == '\0') {
             return ERR_CONF_MAILFOLDER);
         }
     }
-    /* Ê¸»úÎó¤ÎºÇ¸å¤¬¡.¤Ç¤Ê¤¤¤³¤È¤Î³ÎÇ§ */
+    /* æ–‡å­—åˆ—ã®æœ€å¾ŒãŒãƒ‰ãƒƒãƒˆã§ãªã„ã“ã¨ã®ç¢ºèª */
     if (str[i-1] == '.') {
         return ERR_CONF_MAILFOLDER);
     }
@@ -706,15 +695,15 @@ is_mailfolder(char *str)
 /*
  * is_dotdelimiter
  *
- * µ¡Ç½
- *    .¤ÎÃÖ¤­´¹¤¨Ê¸»ú¤Î¥Á¥§¥Ã¥¯ 
+ * æ©Ÿèƒ½
+ *    .ã®ç½®ãæ›ãˆæ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ 
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó    
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—    
  *
- * ÊÖ¤êÃÍ
- *      NULL                     Àµ¾ï 
- *      ERR_CONF_DOTDELIMITER    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                     æ­£å¸¸ 
+ *      ERR_CONF_DOTDELIMITER    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_dotdelimiter(char *str)
@@ -722,18 +711,18 @@ is_dotdelimiter(char *str)
     char string[] = CHAR_DOT_DELIMITER;
     int i;
 
-    /* °ìÊ¸»ú¤Ç¤¢¤ë¤« */
+    /* ä¸€æ–‡å­—ã§ã‚ã‚‹ã‹ */
     if (str[1] != '\0') {
         return ERR_CONF_DOTDELIMITER);
     }
 
-    /* Ê¸»ú¥Á¥§¥Ã¥¯ */
+    /* æ–‡å­—ãƒã‚§ãƒƒã‚¯ */
     for (i = 0; string[i] != '\0'; i++ ) {
         if (str[0] == string[i]) {
             break;
         }
     }
-    /* ¹çÃ×¤¹¤ë¤³¤È¤Ê¤¯È´¤±¤Æ¤·¤Ş¤Ã¤¿¾ì¹ç¤Ï¡¢°ãÈ¿¤·¤¿Ê¸»ú */
+    /* åˆè‡´ã™ã‚‹ã“ã¨ãªãæŠœã‘ã¦ã—ã¾ã£ãŸå ´åˆã¯ã€é•åã—ãŸæ–‡å­— */
     if (string[i] == '\0' ) {
         return ERR_CONF_DOTDELIMITER);
     }
@@ -743,15 +732,15 @@ is_dotdelimiter(char *str)
 /*
  * is_slashdelimiter
  *
- * µ¡Ç½
- *    /¤ÎÃÖ¤­´¹¤¨Ê¸»ú¤Î¥Á¥§¥Ã¥¯ 
+ * æ©Ÿèƒ½
+ *    /ã®ç½®ãæ›ãˆæ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ 
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó    
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—    
  *
- * ÊÖ¤êÃÍ
- *      NULL                       Àµ¾ï
- *      ERR_CONF_SLASHDELIMITER    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                       æ­£å¸¸
+ *      ERR_CONF_SLASHDELIMITER    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_slashdelimiter(char *str)
@@ -759,18 +748,18 @@ is_slashdelimiter(char *str)
     char string[] = CHAR_SLASH_DELIMITER;
     int i;
 
-    /* °ìÊ¸»ú¤Ç¤¢¤ë¤« */
+    /* ä¸€æ–‡å­—ã§ã‚ã‚‹ã‹ */
     if (str[1] != '\0') {
         return ERR_CONF_SLASHDELIMITER);
     }
 
-    /* Ê¸»ú¥Á¥§¥Ã¥¯ */
+    /* æ–‡å­—ãƒã‚§ãƒƒã‚¯ */
     for (i = 0; string[i] != '\0'; i++ ) {
         if (str[0] == string[i]) {
             break;
         }
     }
-    /* ¹çÃ×¤¹¤ë¤³¤È¤Ê¤¯È´¤±¤Æ¤·¤Ş¤Ã¤¿¾ì¹ç¤Ï¡¢°ãÈ¿¤·¤¿Ê¸»ú */
+    /* åˆè‡´ã™ã‚‹ã“ã¨ãªãæŠœã‘ã¦ã—ã¾ã£ãŸå ´åˆã¯ã€é•åã—ãŸæ–‡å­— */
     if (string[i] == '\0' ) {
         return ERR_CONF_SLASHDELIMITEn;
     }
@@ -782,15 +771,15 @@ is_slashdelimiter(char *str)
 /*
  * is_not_null
  *
- * µ¡Ç½
- *    Ê¸»ú¤¬Æş¤Ã¤Æ¤¤¤ë¤«¤Î¥Á¥§¥Ã¥¯ 
+ * æ©Ÿèƒ½
+ *    æ–‡å­—ãŒå…¥ã£ã¦ã„ã‚‹ã‹ã®ãƒã‚§ãƒƒã‚¯ 
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó    
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—    
  *
- * ÊÖ¤êÃÍ
- *      NULL                 Àµ¾ï 
- *      ERR_CONF_DEFAULTDOMAIN    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                 æ­£å¸¸ 
+ *      ERR_CONF_DEFAULTDOMAIN    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_not_null(char *str)
@@ -804,15 +793,15 @@ is_not_null(char *str)
 /*
  * conv_erroraction
  *
- * µ¡Ç½
- *    erroraction¤òÊÑ´¹¤·¤Æ³ÊÇ¼¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    erroractionã‚’å¤‰æ›ã—ã¦æ ¼ç´ã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    struct config *cfg   ¥Ç¡¼¥¿¤ò³ÊÇ¼¤¹¤ë¹½Â¤ÂÎ    
+ * å¼•æ•°
+ *    struct config *cfg   ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹æ§‹é€ ä½“    
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS    À®¸ù
- *      R_ERROR      ¼ºÇÔ
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS    æˆåŠŸ
+ *      R_ERROR      å¤±æ•—
  */
 int
 conv_erroraction(struct config *cfg)
@@ -836,15 +825,15 @@ conv_erroraction(struct config *cfg)
 /*
  * conv_savepolicy
  *
- * µ¡Ç½
- *    savepolicy¤òÊÑ´¹¤·¤Æ³ÊÇ¼¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    savepolicyã‚’å¤‰æ›ã—ã¦æ ¼ç´ã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    struct config *cfg   ¥Ç¡¼¥¿¤ò³ÊÇ¼¤¹¤ë¹½Â¤ÂÎ    
+ * å¼•æ•°
+ *    struct config *cfg   ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹æ§‹é€ ä½“    
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS   À®¸ù
- *      R_ERROR     ¼ºÇÔ
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS   æˆåŠŸ
+ *      R_ERROR     å¤±æ•—
  */
 int
 conv_savepolicy(struct config *cfg)
@@ -872,15 +861,15 @@ conv_savepolicy(struct config *cfg)
 /*
  * conv_ldapscope
  *
- * µ¡Ç½
- *    ldapscope¤òÊÑ´¹¤·¤Æ³ÊÇ¼¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    ldapscopeã‚’å¤‰æ›ã—ã¦æ ¼ç´ã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    struct config *cfg   ¥Ç¡¼¥¿¤ò³ÊÇ¼¤¹¤ë¹½Â¤ÂÎ    
+ * å¼•æ•°
+ *    struct config *cfg   ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹æ§‹é€ ä½“    
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS    À®¸ù
- *      R_ERROR      ¼ºÇÔ 
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS    æˆåŠŸ
+ *      R_ERROR      å¤±æ•— 
  */
 int
 conv_ldapscope(struct config *cfg)
@@ -900,15 +889,15 @@ conv_ldapscope(struct config *cfg)
 /*
  * conv_saveignoreheader
  *
- * µ¡Ç½
- *    saveignoreheader¤òÊÑ´¹¤·¤Æ³ÊÇ¼¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    saveignoreheaderã‚’å¤‰æ›ã—ã¦æ ¼ç´ã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    struct config *cfg   ¥Ç¡¼¥¿¤ò³ÊÇ¼¤¹¤ë¹½Â¤ÂÎ    
+ * å¼•æ•°
+ *    struct config *cfg   ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹æ§‹é€ ä½“    
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS    À®¸ù
- *      R_ERROR      ¼ºÇÔ
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS    æˆåŠŸ
+ *      R_ERROR      å¤±æ•—
  */
 int
 conv_saveignoreheader(struct config *cfg)
@@ -947,48 +936,48 @@ conv_saveignoreheader(struct config *cfg)
 /*
  * conv_config
  *
- * µ¡Ç½
- *    config¤òÊÑ´¹¤·¤Æ³ÊÇ¼¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    configã‚’å¤‰æ›ã—ã¦æ ¼ç´ã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    struct config *cfg   ¥Ç¡¼¥¿¤ò³ÊÇ¼¤¹¤ë¹½Â¤ÂÎ    
+ * å¼•æ•°
+ *    struct config *cfg   ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹æ§‹é€ ä½“    
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS    Àµ¾ï
- *      R_ERROR    °Û¾ï
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS    æ­£å¸¸
+ *      R_ERROR    ç•°å¸¸
  */
 int
 conv_config(struct config *cfg)
 {
     int ret;
 
-    /* erroraction¤ÎÊÑ´¹ */
+    /* erroractionã®å¤‰æ› */
     ret = conv_erroraction(cfg);
     if (ret != R_SUCCESS) {
         SYSLOGWARNING(ERR_CONF_CONV_ERRORACTION);
         return R_ERROR;
     }
-    /* savepolicy¤ÎÊÑ´¹ */
+    /* savepolicyã®å¤‰æ› */
     ret = conv_savepolicy(cfg);
     if (ret != R_SUCCESS) {
         SYSLOGWARNING(ERR_CONF_CONV_SAVEPOLICY);
         return R_ERROR;
     }
-    /* ldapscopen¤ÎÊÑ´¹ */
+    /* ldapscopenã®å¤‰æ› */
     ret = conv_ldapscope(cfg);
     if (ret != R_SUCCESS) {
         SYSLOGWARNING(ERR_CONF_CONV_LDAPSCOPE);
         return R_ERROR;
     }
-    /* saveignoreheader¤ÎÊÑ´¹ */
+    /* saveignoreheaderã®å¤‰æ› */
     ret = conv_saveignoreheader(cfg);
     if (ret != R_SUCCESS) {
         SYSLOGWARNING(ERR_CONF_CONV_SAVEIGNOREHEADER);
         return R_ERROR;
     }
-    /* mydomain¤ò¥ê¥¹¥È¤Ë³ÊÇ¼ */
+    /* mydomainã‚’ãƒªã‚¹ãƒˆã«æ ¼ç´ */
     cfg->cf_mydomain_list = split_comma(cfg->cf_mydomain);
-    /* savemailaddress¤ò¥ê¥¹¥È¤Ë³ÊÇ¼ */
+    /* savemailaddressã‚’ãƒªã‚¹ãƒˆã«æ ¼ç´ */
     cfg->cf_savemailaddress_list = split_comma(cfg->cf_savemailaddress);
     
     return R_SUCCESS;
@@ -997,18 +986,18 @@ conv_config(struct config *cfg)
 /*
  * msy_module_init
  *
- * µ¡Ç½
- *      ³Æ¥â¥¸¥å¡¼¥ë¤Îinit´Ø¿ô¤ò¼Â¹Ô¤¹¤ë
+ * æ©Ÿèƒ½
+ *      å„ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®inité–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹
  *
- * °ú¿ô
- *      struct cfentry **cfe    config entry¹½Â¤ÂÎ(»²¾ÈÅÏ¤·)
- *      size_t cfesize          config entry¹½Â¤ÂÎ¤Î¥µ¥¤¥º(»²¾ÈÅÏ¤·)
- *      struct config  **cfg    config ¹½Â¤ÂÎ(»²¾ÈÅÏ¤·)
- *      size_t cfgsize          config ¹½Â¤ÂÎ¤Î¥µ¥¤¥º(»²¾ÈÅÏ¤·)
+ * å¼•æ•°
+ *      struct cfentry **cfe    config entryæ§‹é€ ä½“(å‚ç…§æ¸¡ã—)
+ *      size_t cfesize          config entryæ§‹é€ ä½“ã®ã‚µã‚¤ã‚º(å‚ç…§æ¸¡ã—)
+ *      struct config  **cfg    config æ§‹é€ ä½“(å‚ç…§æ¸¡ã—)
+ *      size_t cfgsize          config æ§‹é€ ä½“ã®ã‚µã‚¤ã‚º(å‚ç…§æ¸¡ã—)
  *
- * ÊÖ¤êÃÍ
- *             0        Àµ¾ï
- *             1        °Û¾ï
+ * è¿”ã‚Šå€¤
+ *             0        æ­£å¸¸
+ *             1        ç•°å¸¸
  *
  */
 int
@@ -1022,10 +1011,10 @@ msy_module_init(struct cfentry **cfe, size_t *cfesize, struct config **cfg, size
     int   (*func_pointer)(struct cfentry **, size_t *, struct config **, size_t *);
 
     for (p = mhandle_list; p != NULL; p = p->mh_next) {
-        /* ´Ø¿ôÌ¾¤ÎÀ¸À® */
+        /* é–¢æ•°åã®ç”Ÿæˆ */
         sprintf(funcname, "%s_init", p->mh_modulename);
 
-        /* ´Ø¿ô¥İ¥¤¥ó¥¿¤ÎÂåÆş */
+        /* é–¢æ•°ãƒã‚¤ãƒ³ã‚¿ã®ä»£å…¥ */
         func_pointer = dlsym(p->mh_ptr, funcname);
         if ((error = dlerror()) != NULL) {
             SYSLOGERROR(ERR_CREATE_FUNC_HANDLE, "msy_module_init", funcname, error);
@@ -1038,7 +1027,7 @@ msy_module_init(struct cfentry **cfe, size_t *cfesize, struct config **cfg, size
         }
     }
 
-    // ¥í¡¼¥É¤µ¤ì¤Æ¤¤¤ë¥â¥¸¥å¡¼¥ëËè¤Ëlist¤ò¸¡º÷¤·dlsym¤ò¹Ô¤¦
+    // ãƒ­ãƒ¼ãƒ‰ã•ã‚Œã¦ã„ã‚‹ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«æ¯ã«listã‚’æ¤œç´¢ã—dlsymã‚’è¡Œã†
     for (p = mhandle_list; p != NULL; p = p->mh_next) {
         ret = set_dlsymbol(p->mh_modulename, 
                            p->mh_ptr, &(*cfg)->cf_exec_header);
@@ -1067,7 +1056,7 @@ msy_module_init(struct cfentry **cfe, size_t *cfesize, struct config **cfg, size
         }
     }
 
-    /* offset¤«¤é³Æ¥â¥¸¥å¡¼¥ë¤Îconfig¥İ¥¤¥ó¥¿¤ò³ÊÇ¼¤¹¤ë */
+    /* offsetã‹ã‚‰å„ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®configãƒã‚¤ãƒ³ã‚¿ã‚’æ ¼ç´ã™ã‚‹ */
     for (excf = (*cfg)->cf_extraconfig; 
                  excf != NULL; excf = excf->excf_next) {
         excf->excf_config = (void *)((char *)*cfg + (size_t)excf->excf_config);
@@ -1079,17 +1068,17 @@ msy_module_init(struct cfentry **cfe, size_t *cfesize, struct config **cfg, size
 /*
  * set_dlsymbol
  *
- * µ¡Ç½
- *¡¡¡¡¡¡modulelist¤Ë´Ø¿ô¤Ø¤Î¥İ¥¤¥ó¥¿¤ò¥»¥Ã¥È
+ * æ©Ÿèƒ½
+ *ã€€ã€€ã€€modulelistã«é–¢æ•°ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‚’ã‚»ãƒƒãƒˆ
  *
- * °ú¿ô
- *      char *mh_modulename     dlopen¤µ¤ì¤Æ¤¤¤ë¥â¥¸¥å¡¼¥ë¤ÎÌ¾Á°
- *      void *dlptr             ¥â¥¸¥å¡¼¥ë¥Ï¥ó¥É¥ë
- *      struct modulelist *list ³Æ´Ø¿ô¤Î¥â¥¸¥å¡¼¥ë¥ê¥¹¥È
+ * å¼•æ•°
+ *      char *mh_modulename     dlopenã•ã‚Œã¦ã„ã‚‹ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®åå‰
+ *      void *dlptr             ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒãƒ³ãƒ‰ãƒ«
+ *      struct modulelist *list å„é–¢æ•°ã®ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒªã‚¹ãƒˆ
  *
- * ÊÖ¤êÃÍ
- *             0        Àµ¾ï
- *             1        °Û¾ï
+ * è¿”ã‚Šå€¤
+ *             0        æ­£å¸¸
+ *             1        ç•°å¸¸
  *
  */
 int
@@ -1102,7 +1091,7 @@ set_dlsymbol(char *mh_modulename, void *dlptr, struct modulelist **list)
     for (p = *list; p != NULL; p = p->mlist_next) {
         if (strcmp(mh_modulename, p->mlist_modulename) == 0) {
 
-            /* ´Ø¿ô¥İ¥¤¥ó¥¿¤ÎÂåÆş */
+            /* é–¢æ•°ãƒã‚¤ãƒ³ã‚¿ã®ä»£å…¥ */
             func_pointer = dlsym(dlptr, p->mlist_funcname);
             if ((error = dlerror()) != NULL) {
                 SYSLOGERROR(ERR_CREATE_FUNC_HANDLE, "set_dlsymbol",
@@ -1119,16 +1108,16 @@ set_dlsymbol(char *mh_modulename, void *dlptr, struct modulelist **list)
 /*
  * set_config
  *
- * µ¡Ç½
- *    config¤òÆÉ¤ß¹ş¤à½èÍı(Âç¸µ)
+ * æ©Ÿèƒ½
+ *    configã‚’èª­ã¿è¾¼ã‚€å‡¦ç†(å¤§å…ƒ)
  *
- * °ú¿ô
- *     *file  ÀßÄê¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹
- *    **cfg   ÆÉ¤ß¹ş¤ó¤ÀÀßÄê¥Õ¥¡¥¤¥ë¾ğÊó¤Î³ÊÇ¼Àè
+ * å¼•æ•°
+ *     *file  è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹
+ *    **cfg   èª­ã¿è¾¼ã‚“ã è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«æƒ…å ±ã®æ ¼ç´å…ˆ
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS       Àµ¾ï
- *      R_ERROR         ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS       æ­£å¸¸
+ *      R_ERROR         ã‚¨ãƒ©ãƒ¼
  */
 int
 set_config(char *file, struct config **cfg)
@@ -1139,13 +1128,13 @@ set_config(char *file, struct config **cfg)
     size_t cfgsize = sizeof(struct config);
     struct cfentry *new_cfe = NULL;
 
-    /* ¥í¥°¤Î½é´ü²½¡ÊÉ¸½à¥¨¥é¡¼½ĞÎÏ¤Ø¡Ë*/
+    /* ãƒ­ã‚°ã®åˆæœŸåŒ–ï¼ˆæ¨™æº–ã‚¨ãƒ©ãƒ¼å‡ºåŠ›ã¸ï¼‰*/
     dgloginit();
 
-    /* ÀßÄê¥Õ¥¡¥¤¥ë¤ò³ÊÇ¼¤¹¤ë¹½Â¤ÂÎ¤Î½é´ü²½ */
+    /* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ ¼ç´ã™ã‚‹æ§‹é€ ä½“ã®åˆæœŸåŒ– */
     *cfg = init_config();
 
-    /* cfe¹½Â¤ÂÎ¤ò¥Ò¡¼¥×ÎÎ°è¤Ø¥³¥Ô¡¼ */
+    /* cfeæ§‹é€ ä½“ã‚’ãƒ’ãƒ¼ãƒ—é ˜åŸŸã¸ã‚³ãƒ”ãƒ¼ */
     new_cfe = (struct cfentry *)malloc(cfesize);
     if(new_cfe == NULL) {
         SYSLOGERROR(ERR_MALLOC, "mlfi_connect", E_STR);
@@ -1153,7 +1142,7 @@ set_config(char *file, struct config **cfg)
     }
     memcpy(new_cfe, &cfe, cfesize);
 
-    /* ³Æ¥â¥¸¥å¡¼¥ë¤Îinit´Ø¿ô¤ò¼Â¹Ô */
+    /* å„ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®inité–¢æ•°ã‚’å®Ÿè¡Œ */
     ret = msy_module_init(&new_cfe, &cfesize, cfg, &cfgsize);
     if (ret != 0) {
         free(new_cfe);
@@ -1162,7 +1151,7 @@ set_config(char *file, struct config **cfg)
         return R_ERROR;
     }
     
-    /* ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹ş¤ß */ 
+    /* ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã®èª­ã¿è¾¼ã¿ */ 
     ret = read_config(file, new_cfe, 
                       cfesize / sizeof(struct cfentry), *cfg);
     if (ret != 0) {
@@ -1177,10 +1166,10 @@ set_config(char *file, struct config **cfg)
 
     free(new_cfe);
 
-    /* ¥³¥ó¥Õ¥£¥°¤ÎÃÍÊÑ¹¹ */
+    /* ã‚³ãƒ³ãƒ•ã‚£ã‚°ã®å€¤å¤‰æ›´ */
     msy_module_modconfig(cfg);
         
-    /* ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë¤ÎÉ¬¿ÜÃÍ¥Á¥§¥Ã¥¯ */
+    /* ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã®å¿…é ˆå€¤ãƒã‚§ãƒƒã‚¯ */
     if ((*cfg)->cf_adminpassword == NULL) {
         SYSLOGWARNING(ERR_CONF_ADMINPASSWORD);
         free_config(*cfg);
@@ -1212,10 +1201,10 @@ set_config(char *file, struct config **cfg)
         return R_ERROR;
     }
 
-    /* cf_msyhostname¤Î³ÊÇ¼ */
+    /* cf_msyhostnameã®æ ¼ç´ */
     (*cfg)->cf_msyhostname = msy_hostname;
 
-    /* ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë¤ÎÊÑ´¹¤È³ÊÇ¼ */
+    /* ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã®å¤‰æ›ã¨æ ¼ç´ */
     ret = conv_config(*cfg);
     if (ret != R_SUCCESS) {
         SYSLOGWARNING(ERR_CONF_CONVERT);
@@ -1223,7 +1212,7 @@ set_config(char *file, struct config **cfg)
         return R_ERROR;
     }
 
-    /* ¥·¥¹¥í¥°¥Õ¥¡¥·¥ê¥Æ¥£¤Î¥Á¥§¥Ã¥¯ */
+    /* ã‚·ã‚¹ãƒ­ã‚°ãƒ•ã‚¡ã‚·ãƒªãƒ†ã‚£ã®ãƒã‚§ãƒƒã‚¯ */
     msg = is_syslog_facility((*cfg)->cf_syslogfacility);
     if (msg != NULL) {
         SYSLOGWARNING("%s", msg);
@@ -1231,7 +1220,7 @@ set_config(char *file, struct config **cfg)
         return R_ERROR;
     }
     
-    /* ¥í¥°½ĞÎÏÀè¤ò¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë¤Ë¹ç¤ï¤»¤ÆÊÑ¹¹ */
+    /* ãƒ­ã‚°å‡ºåŠ›å…ˆã‚’ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã«åˆã‚ã›ã¦å¤‰æ›´ */
     dglogchange(IDENT, (*cfg)->cf_syslogfacility);
 
     return R_SUCCESS;
@@ -1240,18 +1229,18 @@ set_config(char *file, struct config **cfg)
 /*
  * msy_module_modconfig
  *
- * µ¡Ç½
- *¡¡¡¡¡¡³Æ¥â¥¸¥å¡¼¥ë¤Îmodconfig´Ø¿ô¤ò¼Â¹Ô¤¹¤ë
+ * æ©Ÿèƒ½
+ *ã€€ã€€ã€€å„ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®modconfigé–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹
  *
- * °ú¿ô
- *      struct cfentry **cfe    config entry¹½Â¤ÂÎ(»²¾ÈÅÏ¤·)
- *      size_t cfesize          config entry¹½Â¤ÂÎ¤Î¥µ¥¤¥º(»²¾ÈÅÏ¤·)
- *      struct config  **cfg    config ¹½Â¤ÂÎ(»²¾ÈÅÏ¤·)
- *      size_t cfgsize          config ¹½Â¤ÂÎ¤Î¥µ¥¤¥º(»²¾ÈÅÏ¤·)
+ * å¼•æ•°
+ *      struct cfentry **cfe    config entryæ§‹é€ ä½“(å‚ç…§æ¸¡ã—)
+ *      size_t cfesize          config entryæ§‹é€ ä½“ã®ã‚µã‚¤ã‚º(å‚ç…§æ¸¡ã—)
+ *      struct config  **cfg    config æ§‹é€ ä½“(å‚ç…§æ¸¡ã—)
+ *      size_t cfgsize          config æ§‹é€ ä½“ã®ã‚µã‚¤ã‚º(å‚ç…§æ¸¡ã—)
  *
- * ÊÖ¤êÃÍ
- *             0        Àµ¾ï
- *             1        °Û¾ï
+ * è¿”ã‚Šå€¤
+ *             0        æ­£å¸¸
+ *             1        ç•°å¸¸
  *
  */
 int
@@ -1265,10 +1254,10 @@ msy_module_modconfig(struct config **cfg)
 
     for (p = mhandle_list; p != NULL; p = p->mh_next) {
 
-        /* ´Ø¿ôÌ¾¤ÎÀ¸À® */
+        /* é–¢æ•°åã®ç”Ÿæˆ */
         sprintf(funcname, "%s_mod_extra_config", p->mh_modulename);
 
-        /* ´Ø¿ô¥İ¥¤¥ó¥¿¤ÎÂåÆş */
+        /* é–¢æ•°ãƒã‚¤ãƒ³ã‚¿ã®ä»£å…¥ */
         func_pointer = dlsym(p->mh_ptr, funcname);
         if ((error = dlerror()) != NULL) {
             SYSLOGERROR(ERR_CREATE_FUNC_HANDLE, 
@@ -1288,15 +1277,15 @@ msy_module_modconfig(struct config **cfg)
 /*
  * is_executable_file
  *
- * µ¡Ç½
- *    ZipCommand ¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *    ZipCommand ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *      char *str              ¥³¥Ş¥ó¥É¥Ñ¥¹
+ * å¼•æ•°
+ *      char *str              ã‚³ãƒãƒ³ãƒ‰ãƒ‘ã‚¹
  *
- * ÊÖ¤êÃÍ
- *      NULL                   Àµ¾ï
- *      ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸       °Û¾ï
+ * è¿”ã‚Šå€¤
+ *      NULL                   æ­£å¸¸
+ *      ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸       ç•°å¸¸
  */
 char *
 is_executable_file(char *str)
@@ -1305,37 +1294,98 @@ is_executable_file(char *str)
     char *space;
     char *cmd;
 
-    /* ½é´ü²½*/
+    /* åˆæœŸåŒ–*/
     space = NULL;
     cmd = NULL;
 
-    /* ¥³¥Ş¥ó¥É¤òcmd¤Ë¥³¥Ô¡¼¤¹¤ë*/
+    /* ã‚³ãƒãƒ³ãƒ‰ã‚’cmdã«ã‚³ãƒ”ãƒ¼ã™ã‚‹*/
     cmd = strdup(str);
     if (cmd == NULL) {
         return ERR_CONF_ALLOC;
     }
 
-    /* ¥³¥Ş¥ó¥É¥Õ¥¡¥¤¥ëÌ¾¤òÊ¬ÀÏ*/
-    /* ¥¹¥Ú¡¼¥¹¤òÃµ¤¹¤³¤È*/
+    /* ã‚³ãƒãƒ³ãƒ‰ãƒ•ã‚¡ã‚¤ãƒ«åã‚’åˆ†æ*/
+    /* ã‚¹ãƒšãƒ¼ã‚¹ã‚’æ¢ã™ã“ã¨*/
     space = strchr(cmd, (int)' ');
-    /* ¥³¥Ş¥ó¥É¥Õ¥¡¥¤¥ëÌ¾¤ò¶èÀÚ¤ê*/
+    /* ã‚³ãƒãƒ³ãƒ‰ãƒ•ã‚¡ã‚¤ãƒ«åã‚’åŒºåˆ‡ã‚Š*/
     if (space != NULL) {
         *space = '\0';
     }
 
-    /* ¥Õ¥¡¥¤¥ë¥³¥Ş¥ó¥ÉÂ¸ºß¥Á¥§¥Ã¥¯*/
+    /* ãƒ•ã‚¡ã‚¤ãƒ«ã‚³ãƒãƒ³ãƒ‰å­˜åœ¨ãƒã‚§ãƒƒã‚¯*/
     if (stat(cmd, &st) == -1) {
         free(cmd);
         return ERR_FILE_EXIST;
     }
 
-    /* ¥Õ¥¡¥¤¥ë¼Â¹Ô¸¢¸Â³ÎÇ§*/
+    /* ãƒ•ã‚¡ã‚¤ãƒ«å®Ÿè¡Œæ¨©é™ç¢ºèª*/
     if (access(cmd, X_OK) != 0) {
         free(cmd);
         return ERR_FILE_EXECUTE_PERMITION;
     }
 
-    /* Ê¸»úÎó¤Î³«Êü*/
+    /* æ–‡å­—åˆ—ã®é–‹æ”¾*/
+    free(cmd);
+
+    return (NULL);
+}
+
+/*
+ * is_executable_file_size
+ *
+ * æ©Ÿèƒ½
+ *    å®Ÿè¡Œãƒ•ã‚¡ã‚¤ãƒ«ã¨ãƒ•ã‚¡ã‚¤ãƒ«åã®é•·ã•ãƒã‚§ãƒƒã‚¯
+ *
+ * å¼•æ•°
+ *      char *str              ã‚³ãƒãƒ³ãƒ‰ãƒ‘ã‚¹
+ *
+ * è¿”ã‚Šå€¤
+ *      NULL                   æ­£å¸¸
+ *      ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸       ç•°å¸¸
+ */
+char *
+is_executable_file_size(char *str)
+{
+    struct stat st;
+    char *space;
+    char *cmd;
+
+    /* ã‚³ãƒãƒ³ãƒ‰ã®é•·ã•ãŒ1024ã‚ˆã‚Šå¤§ãã„å ´åˆ */
+    if (strlen(str) > 1024) {
+        return "File path is too long.";
+    }
+
+    /* åˆæœŸåŒ–*/
+    space = NULL;
+    cmd = NULL;
+
+    /* ã‚³ãƒãƒ³ãƒ‰ã‚’cmdã«ã‚³ãƒ”ãƒ¼ã™ã‚‹*/
+    cmd = strdup(str);
+    if (cmd == NULL) {
+        return ERR_CONF_ALLOC;
+    }
+
+    /* ã‚³ãƒãƒ³ãƒ‰ãƒ•ã‚¡ã‚¤ãƒ«åã‚’åˆ†æ*/
+    /* ã‚¹ãƒšãƒ¼ã‚¹ã‚’æ¢ã™ã“ã¨*/
+    space = strchr(cmd, (int)' ');
+    /* ã‚³ãƒãƒ³ãƒ‰ãƒ•ã‚¡ã‚¤ãƒ«åã‚’åŒºåˆ‡ã‚Š*/
+    if (space != NULL) {
+        *space = '\0';
+    }
+
+    /* ãƒ•ã‚¡ã‚¤ãƒ«ã‚³ãƒãƒ³ãƒ‰å­˜åœ¨ãƒã‚§ãƒƒã‚¯*/
+    if (stat(cmd, &st) == -1) {
+        free(cmd);
+        return ERR_FILE_EXIST;
+    }
+
+    /* ãƒ•ã‚¡ã‚¤ãƒ«å®Ÿè¡Œæ¨©é™ç¢ºèª*/
+    if (access(cmd, X_OK) != 0) {
+        free(cmd);
+        return ERR_FILE_EXECUTE_PERMITION;
+    }
+
+    /* æ–‡å­—åˆ—ã®é–‹æ”¾*/
     free(cmd);
 
     return (NULL);
@@ -1344,15 +1394,15 @@ is_executable_file(char *str)
 /*
  * is_usable_password
  *
- * µ¡Ç½
- *    ÅÏ¤·¤¿¥Ñ¥¹¥ï¡¼¥É¤ò¥Á¥§¥Ã¥¯¤¹¤ë
+ * æ©Ÿèƒ½
+ *    æ¸¡ã—ãŸãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹
  *
- * °ú¿ô
- *    *password                ¥Á¥§¥Ã¥¯¥Ñ¥¹¥ï¡¼¥É
+ * å¼•æ•°
+ *    *password                ãƒã‚§ãƒƒã‚¯ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰
  *
- * ÊÖ¤êÃÍ
- *      ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸       °Û¾ï
- *      NULL                   Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *      ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸       ç•°å¸¸
+ *      NULL                   æ­£å¸¸
  */
 char *
 is_usable_password(char *password) 
@@ -1361,43 +1411,43 @@ is_usable_password(char *password)
     char string[] = CHAR_PASSWORD;
     int i,j;
 
-    /* ¥Á¥§¥Ã¥¯¥Ñ¥¹¥ï¡¼¥ÉNULL*/
+    /* ãƒã‚§ãƒƒã‚¯ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰NULL*/
     is_null_msg = is_not_null(password);
     if (is_null_msg != NULL) {
         return ERR_PASSWORD_NULL;
     }
 
-    /* ¥Á¥§¥Ã¥¯µö²ÄÊ¸»ú*/
+    /* ãƒã‚§ãƒƒã‚¯è¨±å¯æ–‡å­—*/
     for (i = 0; password[i] != '\0'; i++) {
-        /* ¥Ñ¥¹¥ï¡¼¥É¤È¤·¤ÆÅ¬ÀÚ¤ÊÊ¸»ú¤¬»È¤ï¤ì¤Æ¤¤¤ë¤³¤È¤Î³ÎÇ§ */
+        /* ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦é©åˆ‡ãªæ–‡å­—ãŒä½¿ã‚ã‚Œã¦ã„ã‚‹ã“ã¨ã®ç¢ºèª */
         for (j = 0; string[j] != '\0'; j++) {
             if (password[i] == string[j]) {
                 break;
             }
         }
-        /* Ê¸»ú¤¬¹çÃ×¤¹¤ë¤³¤È¤Ê¤¯È´¤±¤¿¾ì¹ç¡¢¥¨¥é¡¼ */
+        /* æ–‡å­—ãŒåˆè‡´ã™ã‚‹ã“ã¨ãªãæŠœã‘ãŸå ´åˆã€ã‚¨ãƒ©ãƒ¼ */
         if (string[j] == '\0') {
             return (ERR_INVALID_PASSWORD);
         }
     }
-    /* À®¸ù½ªÎ»*/
+    /* æˆåŠŸçµ‚äº†*/
     return NULL;
 }
 
 /*
  * cmd_strrep
  *
- * ¥³¥Ş¥ó¥ÉÌ¾¡¢¥ª¥×¥·¥ç¥ó¤ò¶èÀÚ¤ê¤·¤Æ¡¢¥ê¥¹¥È¤Ë³ÊÇ¼¤¹¤ë
+ * ã‚³ãƒãƒ³ãƒ‰åã€ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã‚’åŒºåˆ‡ã‚Šã—ã¦ã€ãƒªã‚¹ãƒˆã«æ ¼ç´ã™ã‚‹
  *
- * °ú¿ô
- *      char *str              ¸µ¤ÎÊ¸»úÎó
- *      char *sep              ¶èÀÚ¤êÊ¸
- *      char **real            ³ÎÊİ¤·¤¿¥³¥Ş¥ó¥É¤ÎÎÎ°è¤Î¥İ¥¤¥ó¥È¤òÊİ»ı
+ * å¼•æ•°
+ *      char *str              å…ƒã®æ–‡å­—åˆ—
+ *      char *sep              åŒºåˆ‡ã‚Šæ–‡
+ *      char **real            ç¢ºä¿ã—ãŸã‚³ãƒãƒ³ãƒ‰ã®é ˜åŸŸã®ãƒã‚¤ãƒ³ãƒˆã‚’ä¿æŒ
  *      int epoo               extend part of option
  *
- * ÊÖ¤êÃÍ
- *      cmd_list       Àµ¾ï
- *      NULL           ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      cmd_list       æ­£å¸¸
+ *      NULL           ã‚¨ãƒ©ãƒ¼
  */
 char **
 cmd_strrep(char *str, char sep, char **real, int epoo)
@@ -1408,39 +1458,39 @@ cmd_strrep(char *str, char sep, char **real, int epoo)
     char **cmd_list;
     char *p;
 
-    /* ½é´ü²½*/
+    /* åˆæœŸåŒ–*/
     len = 1;
     i = 0;
     cmd = NULL;
     cmd_list = NULL;
 
-    /* epoo ¤ÎÃÍ¥¨¥é¡¼*/
+    /* epoo ã®å€¤ã‚¨ãƒ©ãƒ¼*/
     if (epoo < 1) {
         SYSLOGERROR(ERR_EXTEND_PART_OPTION_NUM, "cmd_strrep");
         return NULL;
     }
 
-    /*ÍøÍÑ¤·¤Æ¤¤¤ë¥³¥Ş¥ó¥É¤ÎÎÎ°è¤ò³ÎÊİ¤¹¤ë*/
+    /*åˆ©ç”¨ã—ã¦ã„ã‚‹ã‚³ãƒãƒ³ãƒ‰ã®é ˜åŸŸã‚’ç¢ºä¿ã™ã‚‹*/
     cmd = strdup(str);
     if (cmd == NULL) {
         SYSLOGERROR(ERR_MALLOC, "cmd_strrep", E_STR);        
         return NULL;
     }
 
-    /* p¥İ¥¤¥ó¥È¤òcmd¤ÎÀèÆ¬¤ËÁ«°Ü*/
+    /* pãƒã‚¤ãƒ³ãƒˆã‚’cmdã®å…ˆé ­ã«é·ç§»*/
     p = cmd;
 
-    /* sep¤Î¿ô¤ò·×»»¤¹¤ë*/
+    /* sepã®æ•°ã‚’è¨ˆç®—ã™ã‚‹*/
     while (*p != '\0') {
-        /*sep¤òÃµ¤¹*/
+        /*sepã‚’æ¢ã™*/
         if(*p == sep) {
             len++;
         }
-        /* ¥ë¡¼¥×¤Î¥İ¥¤¥ó¥È¾å¤¬¤ë*/
+        /* ãƒ«ãƒ¼ãƒ—ã®ãƒã‚¤ãƒ³ãƒˆä¸ŠãŒã‚‹*/
         p++;
     }
 
-    /*Ê¸»úÎóÇÛÎó¤Î³ÎÊİ*/
+    /*æ–‡å­—åˆ—é…åˆ—ã®ç¢ºä¿*/
     cmd_list = (char **)malloc(sizeof(char *) * (len + epoo));
     if (cmd_list == NULL) {
         SYSLOGERROR(ERR_MALLOC, cmd_strrep, E_STR);
@@ -1448,34 +1498,34 @@ cmd_strrep(char *str, char sep, char **real, int epoo)
         return NULL;
     }
 
-    /* p¥İ¥¤¥ó¥È¤òcmd¤ÎÀèÆ¬¤Ë¼¨¤¹*/
+    /* pãƒã‚¤ãƒ³ãƒˆã‚’cmdã®å…ˆé ­ã«ç¤ºã™*/
     p = cmd;
     cmd_list[i] = p;
     i++;
 
-    /*·«¤êÊÖ¤·¤ÇÊ¸»úÎó¤ÎÊ¬ÀÏ*/
+    /*ç¹°ã‚Šè¿”ã—ã§æ–‡å­—åˆ—ã®åˆ†æ*/
     while (*p != '\0') {
-        /*sep¤òÃµ¤¹*/
+        /*sepã‚’æ¢ã™*/
         if(*p == sep) {
             *p = '\0';
-            /*¼¡¤ÎÊ¸»úÎó¤ËÁ«°Ü*/
+            /*æ¬¡ã®æ–‡å­—åˆ—ã«é·ç§»*/
             p++;
-            /*ÇÛÎó¤Ë³ÊÇ¼¤¹¤ë*/
+            /*é…åˆ—ã«æ ¼ç´ã™ã‚‹*/
             cmd_list[i] = p;
             i++;
             continue;
         }
 
-        /* ¥ë¡¼¥×¤Î¥İ¥¤¥ó¥È¾å¤¬¤ë*/
+        /* ãƒ«ãƒ¼ãƒ—ã®ãƒã‚¤ãƒ³ãƒˆä¸ŠãŒã‚‹*/
         p++;
     }
 
-    /* »Ä¤Ã¤¿²Õ½ê¤ËNULL¤òÀßÄê¤¹¤ë*/
+    /* æ®‹ã£ãŸç®‡æ‰€ã«NULLã‚’è¨­å®šã™ã‚‹*/
     for (i = 0; i < epoo; i++) {
         cmd_list[len + i] = NULL;
     }
 
-    /* real command¡¢argscommand¤òÊÖ¤¹*/
+    /* real commandã€argscommandã‚’è¿”ã™*/
     *real = cmd;
     return cmd_list;
 }

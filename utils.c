@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: utils.c,v $
- * $Revision: 1.19 $
- * $Date: 2009/10/27 08:31:08 $
  */
 
 #include <stdio.h>
@@ -45,17 +35,17 @@ static pthread_mutex_t serial_lock = PTHREAD_MUTEX_INITIALIZER;
 /*
  * push_strlist
  *
- * µ¡Ç½
- *      strlist¤ËÃÍ¤òÁŞÆş
- *      ³ÊÇ¼¤¹¤ëÊ¸»úÎó¤Ë¤Ä¤¤¤Æ¤Ï¡¢ÎÎ°è¤ò alloc ¤·¤Ş¤¹
+ * æ©Ÿèƒ½
+ *      strlistã«å€¤ã‚’æŒ¿å…¥
+ *      æ ¼ç´ã™ã‚‹æ–‡å­—åˆ—ã«ã¤ã„ã¦ã¯ã€é ˜åŸŸã‚’ alloc ã—ã¾ã™
  *
- * °ú¿ô
- *      **listhead  strlist¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
- *      **listtail  strlist¤ÎËöÈø¥İ¥¤¥ó¥¿
- *      *str        ³ÊÇ¼¤¹¤ëÊ¸»úÎó
+ * å¼•æ•°
+ *      **listhead  strlistã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
+ *      **listtail  strlistã®æœ«å°¾ãƒã‚¤ãƒ³ã‚¿
+ *      *str        æ ¼ç´ã™ã‚‹æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS   Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS   æ­£å¸¸
  */
 int
 push_strlist(struct strlist **listhead, struct strlist **listtail, char *str)
@@ -64,7 +54,7 @@ push_strlist(struct strlist **listhead, struct strlist **listtail, char *str)
     char *string;
     char f_name[] = "push_strlist";
 
-    /* strlist ¹½Â¤ÂÎ¤ÎÀ¸À® */
+    /* strlist æ§‹é€ ä½“ã®ç”Ÿæˆ */
     inslist = make_strlist();
 
     string = strdup(str);
@@ -73,16 +63,16 @@ push_strlist(struct strlist **listhead, struct strlist **listtail, char *str)
         exit(EXIT_UTILS);
     }
 
-    /* Ê¸»úÎó¤ò¹½Â¤ÂÎ¤Ø³ÊÇ¼ */
+    /* æ–‡å­—åˆ—ã‚’æ§‹é€ ä½“ã¸æ ¼ç´ */
     strset_set(&(inslist->ss_data), string);
 
-    /* ¥ê¥¹¥È¤ÎºîÀ® */
+    /* ãƒªã‚¹ãƒˆã®ä½œæˆ */
     if (*listhead == NULL) {
-        /* ÀèÆ¬¤ËÄÉ²Ã */
+        /* å…ˆé ­ã«è¿½åŠ  */
         *listhead = inslist;
         *listtail = inslist;
     } else {
-        /* ËöÈø¤ËÁŞÆş */
+        /* æœ«å°¾ã«æŒ¿å…¥ */
         (*listtail)->next = inslist;
         *listtail = inslist;
     }
@@ -93,30 +83,30 @@ push_strlist(struct strlist **listhead, struct strlist **listtail, char *str)
 /*
  * uniq_push_strlist
  *
- * µ¡Ç½
- *      strlist¤ËÃÍ¤òÁŞÆş¤¹¤ë¡Ê½ÅÊ£¤·¤¿¾ì¹ç¤Ï¥ê¥¹¥È¤ËÄÉ²Ã¤·¤Ş¤»¤ó¡Ë
- *      ³ÊÇ¼¤¹¤ëÊ¸»úÎó¤Ë¤Ä¤¤¤Æ¤Ï¡¢ÎÎ°è¤ò alloc ¤·¤Ş¤¹
+ * æ©Ÿèƒ½
+ *      strlistã«å€¤ã‚’æŒ¿å…¥ã™ã‚‹ï¼ˆé‡è¤‡ã—ãŸå ´åˆã¯ãƒªã‚¹ãƒˆã«è¿½åŠ ã—ã¾ã›ã‚“ï¼‰
+ *      æ ¼ç´ã™ã‚‹æ–‡å­—åˆ—ã«ã¤ã„ã¦ã¯ã€é ˜åŸŸã‚’ alloc ã—ã¾ã™
  *
- * °ú¿ô
- *      **listhead  strlist¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
- *      **listtail  strlist¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
- *      *str        ¸¡º÷Ê¸»úÎó
+ * å¼•æ•°
+ *      **listhead  strlistã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
+ *      **listtail  strlistã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
+ *      *str        æ¤œç´¢æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS   Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS   æ­£å¸¸
  */
 int
 uniq_push_strlist(struct strlist **listhead, struct strlist **listtail, char *str)
 {
     int ret;
 
-    /* ½ÅÊ£¤Î¸¡º÷ */
+    /* é‡è¤‡ã®æ¤œç´¢ */
     ret = search_strlist(*listhead, str);
     if (ret == R_FOUND) {
         return (R_SUCCESS);
     }
 
-    /* ½ÅÊ£¤¬¤Ê¤±¤ì¤Ğ¥ê¥¹¥È¤ËÄÉ²Ã */
+    /* é‡è¤‡ãŒãªã‘ã‚Œã°ãƒªã‚¹ãƒˆã«è¿½åŠ  */
     push_strlist(listhead, listtail, str);
 
     return (R_SUCCESS);
@@ -125,16 +115,16 @@ uniq_push_strlist(struct strlist **listhead, struct strlist **listtail, char *st
 /*
  * search_strlist
  *
- * µ¡Ç½
- *      strlist¤«¤éÊ¸»úÎó¤ò¸¡º÷¤¹¤ë¡Ê´°Á´°ìÃ×¡Ë
+ * æ©Ÿèƒ½
+ *      strlistã‹ã‚‰æ–‡å­—åˆ—ã‚’æ¤œç´¢ã™ã‚‹ï¼ˆå®Œå…¨ä¸€è‡´ï¼‰
  *
- * °ú¿ô
- *      *strlist   strlist¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
- *      *str       ¸¡º÷Ê¸»úÎó
+ * å¼•æ•°
+ *      *strlist   strlistã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
+ *      *str       æ¤œç´¢æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      R_FOUND    ¸«¤Ä¤«¤Ã¤¿
- *      R_NOTFOUND ¸«¤Ä¤«¤é¤Ê¤«¤Ã¤¿
+ * è¿”ã‚Šå€¤
+ *      R_FOUND    è¦‹ã¤ã‹ã£ãŸ
+ *      R_NOTFOUND è¦‹ã¤ã‹ã‚‰ãªã‹ã£ãŸ
  */
 int
 search_strlist(struct strlist *strlist, char *str)
@@ -142,7 +132,7 @@ search_strlist(struct strlist *strlist, char *str)
     struct strlist *tmplist;
     int ret;
 
-    /* ¸¡º÷ */
+    /* æ¤œç´¢ */
     for (tmplist = strlist; tmplist != NULL; tmplist = tmplist->next) {
         ret = strcmp(str, tmplist->ss_data.ss_str);
         if (ret == 0) {
@@ -156,14 +146,14 @@ search_strlist(struct strlist *strlist, char *str)
 /*
  * free_strlist
  *
- * µ¡Ç½
- *      strlist¤Î²òÊü
+ * æ©Ÿèƒ½
+ *      strlistã®è§£æ”¾
  *
- * °ú¿ô
- *      *strlist  strlist¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      *strlist  strlistã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 void
 free_strlist(struct strlist *strlist)
@@ -183,14 +173,14 @@ free_strlist(struct strlist *strlist)
 /*
  * make_strlist
  *
- * µ¡Ç½
- *      ¶õ¤Îstrlist¤òÀ¸À®
+ * æ©Ÿèƒ½
+ *      ç©ºã®strlistã‚’ç”Ÿæˆ
  *
- * °ú¿ô
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      ãªã—
  *
- * ÊÖ¤êÃÍ
- *      strlist:  Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *      strlist:  æ­£å¸¸
  */
 struct strlist *
 make_strlist(void)
@@ -198,7 +188,7 @@ make_strlist(void)
     struct strlist *list;
     char f_name[] = "make_strlist";
 
-    /* strlist¤ÎÀ¸À® */
+    /* strlistã®ç”Ÿæˆ */
     list = malloc(sizeof(struct strlist));
     if (list == NULL) {
         SYSLOGERROR(ERR_MALLOC, f_name, E_STR);
@@ -213,14 +203,14 @@ make_strlist(void)
 /*
  * split_comma
  *
- * µ¡Ç½
- *      Ê¸»úÎó¤ò¥³¥ó¥Ş¤ÇÀÚ¤êÊ¬¤± strlist ¤Ë¤¹¤ë
+ * æ©Ÿèƒ½
+ *      æ–‡å­—åˆ—ã‚’ã‚³ãƒ³ãƒã§åˆ‡ã‚Šåˆ†ã‘ strlist ã«ã™ã‚‹
  *
- * °ú¿ô
- *      str: Ê¸»úÎó
+ * å¼•æ•°
+ *      str: æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      list:  Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *      list:  æ­£å¸¸
  */
 struct strlist *
 split_comma (char *str)
@@ -246,14 +236,14 @@ split_comma (char *str)
 /*
  * get_serialno
  *
- * µ¡Ç½
- *      ¥·¥ê¥¢¥ëÈÖ¹æ¤òÈ¯¹Ô¤¹¤ë
+ * æ©Ÿèƒ½
+ *      ã‚·ãƒªã‚¢ãƒ«ç•ªå·ã‚’ç™ºè¡Œã™ã‚‹
  *
- * °ú¿ô
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      ãªã—
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 unsigned int
 get_serialno()
@@ -263,7 +253,7 @@ get_serialno()
     pthread_mutex_lock(&serial_lock);
     serialno++;
 
-    /* ¾å°Ì16bit¤òÇË´ş */
+    /* ä¸Šä½16bitã‚’ç ´æ£„ */
     serialno &= 0x0000ffff;
     retserial = serialno;
     pthread_mutex_unlock(&serial_lock);
@@ -274,14 +264,14 @@ get_serialno()
 /*
  * get_sessid
  *
- * µ¡Ç½
- *      ¥»¥Ã¥·¥ç¥óID¤òÀ¸À®¤¹¤ë
+ * æ©Ÿèƒ½
+ *      ã‚»ãƒƒã‚·ãƒ§ãƒ³IDã‚’ç”Ÿæˆã™ã‚‹
  *
- * °ú¿ô
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      ãªã—
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 unsigned int
 get_sessid()
@@ -293,7 +283,7 @@ get_sessid()
     serial = get_serialno();
     pid = getpid();
 
-    /* ¾å°Ì16bit PID ²¼°Ì16bit SerialNo */
+    /* ä¸Šä½16bit PID ä¸‹ä½16bit SerialNo */
     pid = pid << 16;
     sessid = serial + pid;
 
@@ -303,14 +293,14 @@ get_sessid()
 /*
  * replace_delimiter
  *
- * µ¡Ç½
- *      Ê¸»úÎóÃæ¤Ë´Ş¤Ş¤ì¤ëÆÃÄê¤ÎÊ¸»ú¤ò¡¢»ØÄê¤µ¤ì¤¿Ê¸»ú¤ËÃÖ¤­´¹¤¨¤ë
- * °ú¿ô
- *      char *          Ê¸»úÎó
- *      char            ÃÖ¤­´¹¤¨ÂĞ¾İ¤ÎÊ¸»ú
- *      char            ÃÖ¤­´¹¤¨¤¿¸å¤ÎÊ¸»ú
- * ÊÖ¤êÃÍ
- *              ¤Ê¤·
+ * æ©Ÿèƒ½
+ *      æ–‡å­—åˆ—ä¸­ã«å«ã¾ã‚Œã‚‹ç‰¹å®šã®æ–‡å­—ã‚’ã€æŒ‡å®šã•ã‚ŒãŸæ–‡å­—ã«ç½®ãæ›ãˆã‚‹
+ * å¼•æ•°
+ *      char *          æ–‡å­—åˆ—
+ *      char            ç½®ãæ›ãˆå¯¾è±¡ã®æ–‡å­—
+ *      char            ç½®ãæ›ãˆãŸå¾Œã®æ–‡å­—
+ * è¿”ã‚Šå€¤
+ *              ãªã—
  */
 void
 replace_delimiter(char *str, char old_delim, char new_delim)
@@ -325,15 +315,15 @@ replace_delimiter(char *str, char old_delim, char new_delim)
 /*
  * str_replace_format
  *
- * Ê¸»úÎóÃæ¤Î¥Õ¥©¡¼¥Ş¥Ã¥ÈÊ¸»ú (%X) ¤òÃÖ¤­´¹¤¨¡¢
- * ¿·¤¿¤ÊÎÎ°è¤Ë³ÊÇ¼¤¹¤ë
+ * æ–‡å­—åˆ—ä¸­ã®ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆæ–‡å­— (%X) ã‚’ç½®ãæ›ãˆã€
+ * æ–°ãŸãªé ˜åŸŸã«æ ¼ç´ã™ã‚‹
  *
- * °ú¿ô
- *      char *                  Ê¸»úÎó
- *      struct strformat *      ÃÖ¤­´¹¤¨°ìÍ÷
- *      int                     ÃÖ¤­´¹¤¨°ìÍ÷¤ÎÇÛÎó¤ÎÄ¹¤µ
- * ÊÖ¤êÃÍ
- *      char *                  ÊÑ´¹¸å¤ÎÊ¸»úÎó
+ * å¼•æ•°
+ *      char *                  æ–‡å­—åˆ—
+ *      struct strformat *      ç½®ãæ›ãˆä¸€è¦§
+ *      int                     ç½®ãæ›ãˆä¸€è¦§ã®é…åˆ—ã®é•·ã•
+ * è¿”ã‚Šå€¤
+ *      char *                  å¤‰æ›å¾Œã®æ–‡å­—åˆ—
  */
 char *
 str_replace_format(char *str, struct strformat *sf, int sfcount)
@@ -352,7 +342,7 @@ str_replace_format(char *str, struct strformat *sf, int sfcount)
             exit(EXIT_MILTER);
         }
 
-        /* "%\0" ¤Î¾ì¹ç */
+        /* "%\0" ã®å ´åˆ */
         if (*(leader + 1) == '\0') {
             chaser = leader;
 
@@ -404,17 +394,17 @@ str_replace_format(char *str, struct strformat *sf, int sfcount)
 /*
  * attch_strlist
  *
- * µ¡Ç½
- *    strlist¤òstrlist¤Ë¤¯¤Ã¤Ä¤±¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    strlistã‚’strlistã«ãã£ã¤ã‘ã‚‹å‡¦ç†
  *
- * °ú¿ô
+ * å¼•æ•°
  *     struct strlist **listhead
  *     struct strlist **listtail
  *     struct strlist *attachlist
  *
- * ÊÖ¤êÃÍ
- *     R_ERROR    ¼ºÇÔ
- *     R_SUCCESS  À®¸ù
+ * è¿”ã‚Šå€¤
+ *     R_ERROR    å¤±æ•—
+ *     R_SUCCESS  æˆåŠŸ
  */
 int
 attach_strlist(struct strlist **listhead, struct strlist **listtail,

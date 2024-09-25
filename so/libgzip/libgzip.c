@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: $
- * $Revision: $
- * $Date: $
  */
 
 #define _XOPEN_SOURCE
@@ -37,8 +27,6 @@
 #include <syslog.h>
 #include <errno.h>
 #include <time.h>
-//#include <tcutil.h>
-//#include <tcrdb.h>
 #include <dlfcn.h>
 #include <regex.h>
 #include <libdgstr.h>
@@ -53,6 +41,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/wait.h>
+#include <stddef.h>
 
 /* Messasy include file */
 #include "messasy.h"
@@ -65,7 +55,7 @@
 /* Header for my library */
 #include "libgzip.h"
 
-/* Èæ³ÓÊ¸»ú¤ÎÄêµÁ */
+/* æ¯”è¼ƒæ–‡å­—ã®å®šç¾© */
 #define CHAR_MAILDROP_MAILFOLDER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.%,_&-+ "
 #define CHAR_MAILDROP_DOT_DELIMITER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,-_ "
 #define CHAR_MAILDROP_SLASH_DELIMITER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,-_ "
@@ -78,7 +68,7 @@
 #define ABORT_FUNC      "gzip_exec_abort"
 #define MODCONF_FUNC    "gzip_exec_modconf"
 
-/* ¥×¥í¥È¥¿¥¤¥×Àë¸À */
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ */
 static int gzip_set_extra_config (char *, struct extra_config **, size_t);
 static int gzip_set_module_list (char *, char *, struct modulelist **);
 
@@ -110,41 +100,41 @@ char msy_hostname[MAX_HOSTNAME_LEN + 1];
 struct cfentry gzip_cfe[] = {
     {
         "GzipCommand", CF_STRING, "/usr/bin/gzip",
-        OFFSET(struct gzip_config, cf_gzipcommand), is_executable_file
+        MESSASY_OFFSET(struct gzip_config, cf_gzipcommand), is_executable_file
     },
     {
         "GzipMailDir", CF_STRING, NULL,
-        OFFSET(struct gzip_config, cf_gzipmaildir), is_writable_directory
+        MESSASY_OFFSET(struct gzip_config, cf_gzipmaildir), is_writable_directory
     },
     {
         "GzipMailFolder", CF_STRING, NULL,
-        OFFSET(struct gzip_config, cf_gzipmailfolder), is_mailfolder
+        MESSASY_OFFSET(struct gzip_config, cf_gzipmailfolder), is_mailfolder
     },
     {
         "GzipDotDelimiter", CF_STRING, ",",
-        OFFSET(struct gzip_config, cf_gzipdotdelimiter), is_dotdelimiter
+        MESSASY_OFFSET(struct gzip_config, cf_gzipdotdelimiter), is_dotdelimiter
     },
     {
         "GzipSlashDelimiter", CF_STRING, "_",
-        OFFSET(struct gzip_config, cf_gzipslashdelimiter), is_slashdelimiter
+        MESSASY_OFFSET(struct gzip_config, cf_gzipslashdelimiter), is_slashdelimiter
     }
 };
 
 /*
  * gzip_init
  *
- * µ¡Ç½:
- *    gzip¥â¥¸¥å¡¼¥ë¤Î½é´ü²½´Ø¿ô
+ * æ©Ÿèƒ½:
+ *    gzipãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®åˆæœŸåŒ–é–¢æ•°
  *
- * °ú¿ô:
- *    struct cfentry **cfe      config entry ¹½Â¤ÂÎ
- *    size_t cfesize            config entry ¹½Â¤ÂÎ¤Î¥µ¥¤¥º
- *    struct config  **cfg      config ¹½Â¤ÂÎ
- *    size_t cfgsize            config ¹½Â¤ÂÎ¤Î¥µ¥¤¥º
+ * å¼•æ•°:
+ *    struct cfentry **cfe      config entry æ§‹é€ ä½“
+ *    size_t cfesize            config entry æ§‹é€ ä½“ã®ã‚µã‚¤ã‚º
+ *    struct config  **cfg      config æ§‹é€ ä½“
+ *    size_t cfgsize            config æ§‹é€ ä½“ã®ã‚µã‚¤ã‚º
  *
- * ÊÖÃÍ:
- *     0: Àµ¾ï
- *    -1: °Û¾ï
+ * è¿”å€¤:
+ *     0: æ­£å¸¸
+ *    -1: ç•°å¸¸
  */
 int
 gzip_init(struct cfentry **cfe, size_t *cfesize,
@@ -156,14 +146,14 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
     int ret, i;
     struct modulelist *tmp_list;
 
-    /* ¥â¥¸¥å¡¼¥ë¥ê¥¹¥È¤Ø¤ÎÄÉ²Ã */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒªã‚¹ãƒˆã¸ã®è¿½åŠ  */
     ret = gzip_set_module_list(MYMODULE, HEADER_FUNC, &(*cfg)->cf_exec_header);
     if (ret != 0) {
         return -1;
     }
     ret = gzip_set_module_list(MYMODULE, BODY_FUNC, &(*cfg)->cf_exec_body);
     if (ret != 0) {
-        /* ¥Ø¥Ã¥À¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒ˜ãƒƒãƒ€ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_header->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_header;
             (*cfg)->cf_exec_header = (*cfg)->cf_exec_header->mlist_next;
@@ -173,13 +163,13 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
     }
     ret = gzip_set_module_list(MYMODULE, EOM_FUNC, &(*cfg)->cf_exec_eom);
     if (ret != 0) {
-        /* ¥Ø¥Ã¥À¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒ˜ãƒƒãƒ€ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_header->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_header;
             (*cfg)->cf_exec_header = (*cfg)->cf_exec_header->mlist_next;
             free(tmp_list);
         }
-        /* ¥Ü¥Ç¥£¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒœãƒ‡ã‚£ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_body->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_body;
             (*cfg)->cf_exec_body = (*cfg)->cf_exec_body->mlist_next;
@@ -189,19 +179,19 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
     }
     ret = gzip_set_module_list(MYMODULE, ABORT_FUNC, &(*cfg)->cf_exec_abort);
     if (ret != 0) {
-        /* ¥Ø¥Ã¥À¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒ˜ãƒƒãƒ€ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_header->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_header;
             (*cfg)->cf_exec_header = (*cfg)->cf_exec_header->mlist_next;
             free(tmp_list);
         }
-        /* ¥Ü¥Ç¥£¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒœãƒ‡ã‚£ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_body->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_body;
             (*cfg)->cf_exec_body = (*cfg)->cf_exec_body->mlist_next;
             free(tmp_list);
         }
-        /* eom¤Î¥á¥â¥ê³«Êü*/
+        /* eomã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_eom->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_eom;
             (*cfg)->cf_exec_eom = (*cfg)->cf_exec_eom->mlist_next;
@@ -210,30 +200,30 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
         return -1;
     }
 
-    /* cfg¤Î³ÈÄ¥ */
+    /* cfgã®æ‹¡å¼µ */
     new_cfgsize = *cfgsize + sizeof(struct gzip_config);
     new_cfg = (struct config *)realloc(*cfg, new_cfgsize);
     if(new_cfg == NULL) {
         SYSLOGERROR(ERR_MALLOC, "gzip_set_module_list", strerror(errno));
-        /* ¥Ø¥Ã¥À¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒ˜ãƒƒãƒ€ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_header->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_header;
             (*cfg)->cf_exec_header = (*cfg)->cf_exec_header->mlist_next;
             free(tmp_list);
         }
-        /* ¥Ü¥Ç¥£¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒœãƒ‡ã‚£ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_body->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_body;
             (*cfg)->cf_exec_body = (*cfg)->cf_exec_body->mlist_next;
             free(tmp_list);
         }
-        /* eom¤Î¥á¥â¥ê³«Êü*/
+        /* eomã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_eom->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_eom;
             (*cfg)->cf_exec_eom = (*cfg)->cf_exec_eom->mlist_next;
             free(tmp_list);
         }
-        /* abort¤Î¥á¥â¥ê³«Êü*/
+        /* abortã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_abort->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_abort;
             (*cfg)->cf_exec_abort = (*cfg)->cf_exec_abort->mlist_next;
@@ -244,30 +234,30 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
     memset((char *)new_cfg + *cfgsize, '\0', new_cfgsize - *cfgsize);
     *cfg = new_cfg;
 
-    /* cfe¤Î³ÈÄ¥ */
+    /* cfeã®æ‹¡å¼µ */
     new_cfesize = *cfesize + sizeof(gzip_cfe);
     new_cfe = (struct cfentry *)realloc(*cfe, new_cfesize);
     if(new_cfe == NULL) {
         SYSLOGERROR(ERR_MALLOC, "gzip_set_module_list", strerror(errno));
-        /* ¥Ø¥Ã¥À¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒ˜ãƒƒãƒ€ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_header->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_header;
             (*cfg)->cf_exec_header = (*cfg)->cf_exec_header->mlist_next;
             free(tmp_list);
         }
-        /* ¥Ü¥Ç¥£¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒœãƒ‡ã‚£ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_body->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_body;
             (*cfg)->cf_exec_body = (*cfg)->cf_exec_body->mlist_next;
             free(tmp_list);
         }
-        /* eom¤Î¥á¥â¥ê³«Êü*/
+        /* eomã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_eom->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_eom;
             (*cfg)->cf_exec_eom = (*cfg)->cf_exec_eom->mlist_next;
             free(tmp_list);
         }
-        /* abort¤Î¥á¥â¥ê³«Êü*/
+        /* abortã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_abort->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_abort;
             (*cfg)->cf_exec_abort = (*cfg)->cf_exec_abort->mlist_next;
@@ -276,49 +266,49 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
         return -1;
     }
 
-    /* gzip_cfe¤Î¥³¥Ô¡¼ */
+    /* gzip_cfeã®ã‚³ãƒ”ãƒ¼ */
     memcpy(new_cfe + *cfesize / sizeof(struct cfentry),
            &gzip_cfe, sizeof(gzip_cfe));
 
-    /* dataoffset¤Î¹¹¿· */
+    /* dataoffsetã®æ›´æ–° */
     for (i = 0; i < MAILDROP_CFECOUNT; i++) {
         new_cfe[(*cfesize / sizeof(struct cfentry)) + i].cf_dataoffset += *cfgsize;
     }
     *cfe = new_cfe;
 
-    /* ¥â¥¸¥å¡¼¥ëËè¤Îconfig¹½Â¤ÂÎoffset¤ò³ÊÇ¼ */
+    /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«æ¯ã®configæ§‹é€ ä½“offsetã‚’æ ¼ç´ */
     ret = gzip_set_extra_config(MYMODULE, &(*cfg)->cf_extraconfig, *cfgsize);
     if (ret != 0) {
-        /* ¥Ø¥Ã¥À¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒ˜ãƒƒãƒ€ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_header->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_header;
             (*cfg)->cf_exec_header = (*cfg)->cf_exec_header->mlist_next;
             free(tmp_list);
         }
-        /* ¥Ü¥Ç¥£¤Î¥á¥â¥ê³«Êü*/
+        /* ãƒœãƒ‡ã‚£ã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_body->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_body;
             (*cfg)->cf_exec_body = (*cfg)->cf_exec_body->mlist_next;
             free(tmp_list);
         }
-        /* eom¤Î¥á¥â¥ê³«Êü*/
+        /* eomã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_eom->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_eom;
             (*cfg)->cf_exec_eom = (*cfg)->cf_exec_eom->mlist_next;
             free(tmp_list);
         }
-        /* abort¤Î¥á¥â¥ê³«Êü*/
+        /* abortã®ãƒ¡ãƒ¢ãƒªé–‹æ”¾*/
         if (strcmp((*cfg)->cf_exec_abort->mlist_modulename, MYMODULE) == 0) {
             tmp_list = (*cfg)->cf_exec_abort;
             (*cfg)->cf_exec_abort = (*cfg)->cf_exec_abort->mlist_next;
             free(tmp_list);
         }
-        /* realloc¤·¤¿¥³¥ó¥Õ¥£¥°ÎÎ°è¤ò»Ä¤Ã¤Æ¡¢Â¾¤Î¥¿¥¹¥¯¤ò»ÈÍÑ¤¿¤á¤Ç¤¹¡£*/
+        /* reallocã—ãŸã‚³ãƒ³ãƒ•ã‚£ã‚°é ˜åŸŸã‚’æ®‹ã£ã¦ã€ä»–ã®ã‚¿ã‚¹ã‚¯ã‚’ä½¿ç”¨ãŸã‚ã§ã™ã€‚*/
 
         return -1;
     }
 
-    /* cfesize, cfgsize¤Î¹¹¿· */
+    /* cfesize, cfgsizeã®æ›´æ–° */
     *cfesize = new_cfesize;
     *cfgsize = new_cfgsize;
 
@@ -328,24 +318,24 @@ gzip_init(struct cfentry **cfe, size_t *cfesize,
 /*
  * gzip_set_module_list
  *
- * µ¡Ç½:
- *    gzip¥â¥¸¥å¡¼¥ëÍÑ¤Î¥â¥¸¥å¡¼¥ë¥ê¥¹¥ÈºîÀ®
+ * æ©Ÿèƒ½:
+ *    gzipãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ç”¨ã®ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒªã‚¹ãƒˆä½œæˆ
  *
- * °ú¿ô:
- *    char *modname             ¥â¥¸¥å¡¼¥ëÌ¾
- *    char *funcname            ´Ø¿ôÌ¾
- *    struct modulelist **list  ¥â¥¸¥å¡¼¥ë¥ê¥¹¥È
+ * å¼•æ•°:
+ *    char *modname             ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å
+ *    char *funcname            é–¢æ•°å
+ *    struct modulelist **list  ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒªã‚¹ãƒˆ
  *
- * ÊÖÃÍ:
- *     0: Àµ¾ï
- *    -1: °Û¾ï
+ * è¿”å€¤:
+ *     0: æ­£å¸¸
+ *    -1: ç•°å¸¸
  */
 int
 gzip_set_module_list(char *modname, char *funcname, struct modulelist **list)
 {
     struct modulelist *new_list;
 
-    /* moduleÌ¾¤Î¥İ¥¤¥ó¥¿¤ò³ÊÇ¼¤¹¤ëÎÎ°è¤Î³ÎÊİ */
+    /* moduleåã®ãƒã‚¤ãƒ³ã‚¿ã‚’æ ¼ç´ã™ã‚‹é ˜åŸŸã®ç¢ºä¿ */
     new_list = (struct modulelist *)malloc(sizeof(struct modulelist));
     if(new_list == NULL) {
         SYSLOGERROR(ERR_MALLOC, "gzip_set_module_list", strerror(errno));
@@ -363,17 +353,17 @@ gzip_set_module_list(char *modname, char *funcname, struct modulelist **list)
 /*
  * gzip_set_extra_config
  *
- * µ¡Ç½:
- *    gzip¥â¥¸¥å¡¼¥ëÍÑ¤Îextra config¤ÎºîÀ®
+ * æ©Ÿèƒ½:
+ *    gzipãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ç”¨ã®extra configã®ä½œæˆ
  *
- * °ú¿ô:
- *    char *modname                     ¥â¥¸¥å¡¼¥ëÌ¾
- *    struct extra_config **ext_cfg     extra config ¥ê¥¹¥È
- *    size_t cfgsize                    config ¹½Â¤ÂÎ¤Î¥µ¥¤¥º(extra config ¤Ş¤Ç¤Îoffset)
+ * å¼•æ•°:
+ *    char *modname                     ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å
+ *    struct extra_config **ext_cfg     extra config ãƒªã‚¹ãƒˆ
+ *    size_t cfgsize                    config æ§‹é€ ä½“ã®ã‚µã‚¤ã‚º(extra config ã¾ã§ã®offset)
  *
- * ÊÖÃÍ:
- *     0: Àµ¾ï
- *    -1: °Û¾ï
+ * è¿”å€¤:
+ *     0: æ­£å¸¸
+ *    -1: ç•°å¸¸
  */
 int
 gzip_set_extra_config(char *modname, struct extra_config **ext_cfg,
@@ -381,7 +371,7 @@ gzip_set_extra_config(char *modname, struct extra_config **ext_cfg,
 {
     struct extra_config *new_cfg;
 
-    /* ³°Éô¥â¥¸¥å¡¼¥ë¤Îconfig¹½Â¤ÂÎ¥İ¥¤¥ó¥¿¤ò³ÊÇ¼¤¹¤ëÎÎ°è¤Î³ÎÊİ */
+    /* å¤–éƒ¨ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®configæ§‹é€ ä½“ãƒã‚¤ãƒ³ã‚¿ã‚’æ ¼ç´ã™ã‚‹é ˜åŸŸã®ç¢ºä¿ */
     new_cfg = (struct extra_config *)malloc(sizeof(struct extra_config));
     if(new_cfg == NULL) {
         SYSLOGERROR(ERR_MALLOC, "gzip_set_module_list", strerror(errno));
@@ -400,15 +390,15 @@ gzip_set_extra_config(char *modname, struct extra_config **ext_cfg,
 /*
  * is_mailforder
  *
- * µ¡Ç½
- *    ¥á¡¼¥ë¥Õ¥©¥ë¥À¡¼¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *    ãƒ¡ãƒ¼ãƒ«ãƒ•ã‚©ãƒ«ãƒ€ãƒ¼ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      NULL                   Àµ¾ï
- *      ERR_CONF_MAILFOLDER    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                   æ­£å¸¸
+ *      ERR_CONF_MAILFOLDER    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_mailfolder(char *str)
@@ -416,28 +406,28 @@ is_mailfolder(char *str)
     char string[] = CHAR_MAILDROP_MAILFOLDER;
     int  i, j;
 
-    /* Ê¸»úÎó¤ÎÀèÆ¬¤¬¡Ö.¡×¤Ç¤Ê¤¤¤³¤È¤Î³ÎÇ§ */
+    /* æ–‡å­—åˆ—ã®å…ˆé ­ãŒã€Œ.ã€ã§ãªã„ã“ã¨ã®ç¢ºèª */
     if (str[0] != '.') {
         return ERR_MAILDROP_MAILFOLDER;
     }
 
     for (i = 0; str[i] != '\0'; i++) {
-        /*¡Ö.¡×¤¬Ï¢Â³¤·¤Æ¤¤¤Ê¤¤¤³¤È¤Î³ÎÇ§ */
+        /*ã€Œ.ã€ãŒé€£ç¶šã—ã¦ã„ãªã„ã“ã¨ã®ç¢ºèª */
         if ((str[i] == '.') && (str[i+1] == '.')) {
             return ERR_MAILDROP_MAILFOLDER;
         }
-        /* ¥á¡¼¥ë¥Õ¥©¥ë¥À¤ÎÌ¾Á°¤È¤·¤ÆÅ¬ÀÚ¤ÊÊ¸»ú¤¬»È¤ï¤ì¤Æ¤¤¤ë¤³¤È¤Î³ÎÇ§ */
+        /* ãƒ¡ãƒ¼ãƒ«ãƒ•ã‚©ãƒ«ãƒ€ã®åå‰ã¨ã—ã¦é©åˆ‡ãªæ–‡å­—ãŒä½¿ã‚ã‚Œã¦ã„ã‚‹ã“ã¨ã®ç¢ºèª */
         for (j = 0; string[j] != '\0'; j++) {
             if (str[i] == string[j]) {
                 break;
             }
         }
-        /* Ê¸»ú¤¬¹çÃ×¤¹¤ë¤³¤È¤Ê¤¯È´¤±¤¿¾ì¹ç¡¢¥¨¥é¡¼ */
+        /* æ–‡å­—ãŒåˆè‡´ã™ã‚‹ã“ã¨ãªãæŠœã‘ãŸå ´åˆã€ã‚¨ãƒ©ãƒ¼ */
         if (string[j] == '\0') {
             return ERR_MAILDROP_MAILFOLDER;
         }
     }
-    /* Ê¸»úÎó¤ÎºÇ¸å¤¬¡®¤Ç¤Ê¤¤¤³¤È¤Î³ÎÇ§ */
+    /* æ–‡å­—åˆ—ã®æœ€å¾ŒãŒï½€ã§ãªã„ã“ã¨ã®ç¢ºèª */
     if (str[i-1] == '.') {
         return ERR_MAILDROP_MAILFOLDER;
     }
@@ -447,15 +437,15 @@ is_mailfolder(char *str)
 /*
  * is_dotdelimiter
  *
- * µ¡Ç½
- *    .¤ÎÃÖ¤­´¹¤¨Ê¸»ú¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *    .ã®ç½®ãæ›ãˆæ–‡å­—ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      NULL                     Àµ¾ï
- *      ERR_CONF_DOTDELIMITER    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                     æ­£å¸¸
+ *      ERR_CONF_DOTDELIMITER    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_dotdelimiter(char *str)
@@ -463,18 +453,18 @@ is_dotdelimiter(char *str)
     char string[] = CHAR_MAILDROP_DOT_DELIMITER;
     int i;
 
-    /* °ìÊ¸»ú¤Ç¤¢¤ë¤« */
+    /* ä¸€æ–‡å­—ã§ã‚ã‚‹ã‹ */
     if (str[1] != '\0') {
         return ERR_MAILDROP_DOTDELIMITER;
     }
 
-    /* Ê¸»ú¥Á¥§¥Ã¥¯ */
+    /* æ–‡å­—ãƒã‚§ãƒƒã‚¯ */
     for (i = 0; string[i] != '\0'; i++ ) {
         if (str[0] == string[i]) {
             break;
         }
     }
-    /* ¹çÃ×¤¹¤ë¤³¤È¤Ê¤¯È´¤±¤Æ¤·¤Ş¤Ã¤¿¾ì¹ç¤Ï¡¢°ãÈ¿¤·¤¿Ê¸»ú */
+    /* åˆè‡´ã™ã‚‹ã“ã¨ãªãæŠœã‘ã¦ã—ã¾ã£ãŸå ´åˆã¯ã€é•åã—ãŸæ–‡å­— */
     if (string[i] == '\0' ) {
         return ERR_MAILDROP_DOTDELIMITER;
     }
@@ -484,15 +474,15 @@ is_dotdelimiter(char *str)
 /*
  * is_slashdelimiter
  *
- * µ¡Ç½
- *    /¤ÎÃÖ¤­´¹¤¨Ê¸»ú¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *    /ã®ç½®ãæ›ãˆæ–‡å­—ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *      char *str   ¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó
+ * å¼•æ•°
+ *      char *str   ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      NULL                       Àµ¾ï
- *      ERR_CONF_SLASHDELIMITER    ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸
+ * è¿”ã‚Šå€¤
+ *      NULL                       æ­£å¸¸
+ *      ERR_CONF_SLASHDELIMITER    ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
  */
 char *
 is_slashdelimiter(char *str)
@@ -500,18 +490,18 @@ is_slashdelimiter(char *str)
     char string[] = CHAR_MAILDROP_SLASH_DELIMITER;
     int i;
 
-    /* °ìÊ¸»ú¤Ç¤¢¤ë¤« */
+    /* ä¸€æ–‡å­—ã§ã‚ã‚‹ã‹ */
     if (str[1] != '\0') {
         return ERR_MAILDROP_SLASHDELIMITER;
     }
 
-    /* Ê¸»ú¥Á¥§¥Ã¥¯ */
+    /* æ–‡å­—ãƒã‚§ãƒƒã‚¯ */
     for (i = 0; string[i] != '\0'; i++ ) {
         if (str[0] == string[i]) {
             break;
         }
     }
-    /* ¹çÃ×¤¹¤ë¤³¤È¤Ê¤¯È´¤±¤Æ¤·¤Ş¤Ã¤¿¾ì¹ç¤Ï¡¢°ãÈ¿¤·¤¿Ê¸»ú */
+    /* åˆè‡´ã™ã‚‹ã“ã¨ãªãæŠœã‘ã¦ã—ã¾ã£ãŸå ´åˆã¯ã€é•åã—ãŸæ–‡å­— */
     if (string[i] == '\0' ) {
         return ERR_MAILDROP_SLASHDELIMITER;
     }
@@ -521,13 +511,13 @@ is_slashdelimiter(char *str)
 /*
  * gzip_free_config
  *
- * µ¡Ç½:
- *    gzip¤ÎconfigÎÎ°è¤òfree¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    mP     : priv¹½Â¤ÂÎ¤ò¤Ä¤Ê¤°¹½Â¤ÂÎ
- * ÊÖÃÍ:
- *     0: Àµ¾ï
- *    -1: °Û¾ï
+ * æ©Ÿèƒ½:
+ *    gzipã®configé ˜åŸŸã‚’freeã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    mP     : privæ§‹é€ ä½“ã‚’ã¤ãªãæ§‹é€ ä½“
+ * è¿”å€¤:
+ *     0: æ­£å¸¸
+ *    -1: ç•°å¸¸
  */
 int
 gzip_free_config(struct config *cfg)
@@ -546,7 +536,7 @@ gzip_free_config(struct config *cfg)
 	}
     }
 
-    /* p¤¬¸«¤Ä¤«¤Ã¤¿¾ì¹ç*/
+    /* pãŒè¦‹ã¤ã‹ã£ãŸå ´åˆ*/
     if (p != NULL) {
         if (p->cf_gzipcommand != NULL) {
             free(p->cf_gzipcommand);
@@ -571,21 +561,21 @@ gzip_free_config(struct config *cfg)
 }
 
 /***** ***** ***** ***** *****
- * ÆâÉô´Ø¿ô
+ * å†…éƒ¨é–¢æ•°
  ***** ***** ***** ***** *****/
 
 /*
  * md_struct_init
  *
- * gzip¹½Â¤ÂÎ¤Î³ÎÊİ¤È½é´ü²½¤ò¹Ô¤Ê¤¦
+ * gzipæ§‹é€ ä½“ã®ç¢ºä¿ã¨åˆæœŸåŒ–ã‚’è¡Œãªã†
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct config *         config¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
- *      time_t                  ¥á¡¼¥ë¼õ¿®»ş¹ï
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct config *         configæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
+ *      time_t                  ãƒ¡ãƒ¼ãƒ«å—ä¿¡æ™‚åˆ»
  *
- * ÊÖ¤êÃÍ
- *      struct gzip *       gzip¹½Â¤ÂÎ
+ * è¿”ã‚Šå€¤
+ *      struct gzip *       gzipæ§‹é€ ä½“
  */
 static struct gzip *
 md_struct_init(unsigned int s_id, struct gzip_config *config, time_t time,
@@ -595,7 +585,7 @@ md_struct_init(unsigned int s_id, struct gzip_config *config, time_t time,
     struct gzip *md;
     int ret;
 
-    /* ÎÎ°è¤ò³ÎÊİ */
+    /* é ˜åŸŸã‚’ç¢ºä¿ */
     md = (struct gzip *)malloc(sizeof(struct gzip));
     if (md == NULL) {
         SYSLOGERROR(ERR_S_MALLOC, s_id, "md_struct_init", E_STR);
@@ -603,32 +593,32 @@ md_struct_init(unsigned int s_id, struct gzip_config *config, time_t time,
     }
     memset(md, 0, sizeof(struct gzip));
 
-    /* ¼õ¿®Æü»ş¤òÊİÂ¸*/
+    /* å—ä¿¡æ—¥æ™‚ã‚’ä¿å­˜*/
     md->md_recvtime = time;
 
-    /* MailDir, MailFolder¤ÎÃÍ¤òÊİÂ¸*/
+    /* MailDir, MailFolderã®å€¤ã‚’ä¿å­˜*/
     strset_set(&md->md_maildir, config->cf_gzipmaildir);
     strset_set(&md->md_mailfolder, config->cf_gzipmailfolder);
 
-    /* dotdelmiter, slashdelimiter¤ÎÃÍÊİÂ¸*/
+    /* dotdelmiter, slashdelimiterã®å€¤ä¿å­˜*/
     md->md_dotdelimiter = *(config->cf_gzipdotdelimiter);
     md->md_slashdelimiter = *(config->cf_gzipslashdelimiter);
 
-    /* ¥«¥¹¥¿¥à¥Ø¥Ã¥À¤òºîÀ®*/
-    /* FROM¥Ø¥Ã¥À¤Î½é´ü²½*/
+    /* ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã‚’ä½œæˆ*/
+    /* FROMãƒ˜ãƒƒãƒ€ã®åˆæœŸåŒ–*/
     strset_init(&md->md_header_from);
-    /* ÃÍ³ÊÇ¼*/
+    /* å€¤æ ¼ç´*/
     ret = strset_catstrset(&md->md_header_from, from);
     if (ret == -1) {
         SYSLOGERROR(ERR_S_LIBFUNC, s_id, "strset_catstrset", E_STR);
         exit(EXIT_MILTER);
     }
-    /* TO¥Ø¥Ã¥À¤Î½é´ü²½*/
+    /* TOãƒ˜ãƒƒãƒ€ã®åˆæœŸåŒ–*/
     strset_init(&md->md_header_to);
-    /* ÃÍ³ÊÇ¼*/
+    /* å€¤æ ¼ç´*/
     md_list2str(s_id, &md->md_header_to, to_h);
 
-    /* ÊİÂ¸¥¢¥É¥ì¥¹°ìÍ÷¤Î³ÊÇ¼*/
+    /* ä¿å­˜ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®æ ¼ç´*/
     md->md_saveaddr_h = saveaddr_h;
 
     return md;
@@ -638,51 +628,51 @@ md_struct_init(unsigned int s_id, struct gzip_config *config, time_t time,
 /*
  * gzip_get_priv
  *
- * µ¡Ç½:
- *    extraprivÎÎ°è¤¬¤Ê¤±¤ì¤ĞºîÀ®¤·¡¢
- *    ¤¢¤ì¤Ğ¼«Ê¬ÍÑ¤ÎÎÎ°è¤ÎextraprivÎÎ°è¥İ¥¤¥ó¥¿¤òÊÖ¤¹´Ø¿ô
- * °ú¿ô:
- *    priv: mlfiPriv¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿(»²¾ÈÅÏ¤·)
- * ÊÖÃÍ:
- *   ¼«Ê¬ÍÑ¤Îextrapriv¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
+ * æ©Ÿèƒ½:
+ *    extraprivé ˜åŸŸãŒãªã‘ã‚Œã°ä½œæˆã—ã€
+ *    ã‚ã‚Œã°è‡ªåˆ†ç”¨ã®é ˜åŸŸã®extraprivé ˜åŸŸãƒã‚¤ãƒ³ã‚¿ã‚’è¿”ã™é–¢æ•°
+ * å¼•æ•°:
+ *    priv: mlfiPrivæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿(å‚ç…§æ¸¡ã—)
+ * è¿”å€¤:
+ *   è‡ªåˆ†ç”¨ã®extraprivæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
  */
 struct extrapriv *
 gzip_get_priv(struct mlfiPriv **priv)
 {
-    struct extrapriv *p = NULL;      /* ¸¡º÷ÍÑ */
-    struct extrapriv *mp = NULL;     /* ¿·µ¬ºîÀ®ÍÑ */
-    struct extrapriv *p_old = NULL;  /* ¸¡º÷Ãæ¡¢¤Ò¤È¤ÄÁ°¤Î¥İ¥¤¥ó¥¿ÊİÂ¸ÍÑ */
+    struct extrapriv *p = NULL;      /* æ¤œç´¢ç”¨ */
+    struct extrapriv *mp = NULL;     /* æ–°è¦ä½œæˆç”¨ */
+    struct extrapriv *p_old = NULL;  /* æ¤œç´¢ä¸­ã€ã²ã¨ã¤å‰ã®ãƒã‚¤ãƒ³ã‚¿ä¿å­˜ç”¨ */
 
     if (*priv != NULL) {
-        /* ¼«Ê¬¤Îpriv¹½Â¤ÂÎ¤¬¤¢¤ë¤«¸¡º÷ */
+        /* è‡ªåˆ†ã®privæ§‹é€ ä½“ãŒã‚ã‚‹ã‹æ¤œç´¢ */
         for (p = (*priv)->mlfi_extrapriv; p != NULL; p = p->expv_next) {
             if (strcmp(MYMODULE, p->expv_modulename) == 0) {
-                /* ¤¢¤Ã¤¿¤é¥ê¥¿¡¼¥ó */
+                /* ã‚ã£ãŸã‚‰ãƒªã‚¿ãƒ¼ãƒ³ */
                 return p;
             }
-            /* ¤Ò¤È¤ÄÁ°¤Î¥İ¥¤¥ó¥¿³ÊÇ¼ */
+            /* ã²ã¨ã¤å‰ã®ãƒã‚¤ãƒ³ã‚¿æ ¼ç´ */
             p_old = p;
         }
     }
-    /* ¼«Ê¬ÍÑ¤ÎextraprivÎÎ°è¿·µ¬ºîÀ® */
+    /* è‡ªåˆ†ç”¨ã®extraprivé ˜åŸŸæ–°è¦ä½œæˆ */
     mp = malloc(sizeof(struct extrapriv));
     if (mp == NULL) {
         SYSLOGERROR(ERR_MALLOC, "gzip_get_priv", E_STR);
         return NULL;
     }
-    /* ÃÍ¤Î³ÊÇ¼ */
-    /* MYMODULE¤ÎÃÍ¤ò¤½¤Î¤Ş¤Ş»²¹Í¤¹¤ë¤Î¤Ç¡¢³«Êü¤¹¤ë¤È¤­¤Ï¤·¤Ê¤¤¤Ç¤¯¤À¤µ¤¤*/
+    /* å€¤ã®æ ¼ç´ */
+    /* MYMODULEã®å€¤ã‚’ãã®ã¾ã¾å‚è€ƒã™ã‚‹ã®ã§ã€é–‹æ”¾ã™ã‚‹ã¨ãã¯ã—ãªã„ã§ãã ã•ã„*/
     mp->expv_modulename = MYMODULE;
-    /* NEXT¤Ë½é´ü²½*/
+    /* NEXTã«åˆæœŸåŒ–*/
     mp->expv_next = NULL;
-    /* ¥×¥é¥¤¥Ù¡¼¥È¤Î½é´ü²½*/
+    /* ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆã®åˆæœŸåŒ–*/
     mp->expv_modulepriv = NULL;
 
-    /* ²¿¤âÂ¸ºß¤·¤Æ¤¤¤Ê¤«¤Ã¤¿¤éÀèÆ¬¤Ë¥İ¥¤¥ó¥¿¤òÉÕ¤±¤ë */
+    /* ä½•ã‚‚å­˜åœ¨ã—ã¦ã„ãªã‹ã£ãŸã‚‰å…ˆé ­ã«ãƒã‚¤ãƒ³ã‚¿ã‚’ä»˜ã‘ã‚‹ */
     if (p_old == NULL) {
         (*priv)->mlfi_extrapriv = mp;
 
-    /* Â¸ºß¤·¤Æ¤¤¤ë¤¬¡¢¼«Ê¬ÍÑ¤¬¤Ê¤«¤Ã¤¿¤é¸å¤í¤Ë¤Ä¤±¤ë */
+    /* å­˜åœ¨ã—ã¦ã„ã‚‹ãŒã€è‡ªåˆ†ç”¨ãŒãªã‹ã£ãŸã‚‰å¾Œã‚ã«ã¤ã‘ã‚‹ */
     } else if (p == NULL) {
         p_old->expv_next = mp;
     }
@@ -692,26 +682,26 @@ gzip_get_priv(struct mlfiPriv **priv)
 /*
  * gzip_priv_free
  *
- * µ¡Ç½:
- *    ¤¹¤Ù¤Æ¤Îpriv¹½Â¤ÂÎ¤òfree¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *     extrapriv:   °ú¿ô¤Î¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿(»²¾ÈÅÏ¤·)
- * ÊÖÃÍ:
- *    Ìµ¤·
+ * æ©Ÿèƒ½:
+ *    ã™ã¹ã¦ã®privæ§‹é€ ä½“ã‚’freeã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *     extrapriv:   å¼•æ•°ã®æ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿(å‚ç…§æ¸¡ã—)
+ * è¿”å€¤:
+ *    ç„¡ã—
  */
 void
 gzip_priv_free(struct extrapriv *expv)
 {
-    /* NULL¥Á¥§¥Ã¥¯ */
+    /* NULLãƒã‚§ãƒƒã‚¯ */
     if (expv != NULL) {
-        /* gzip_privÎÎ°è¤¬¤¢¤ë¾ì¹ç */
+        /* gzip_privé ˜åŸŸãŒã‚ã‚‹å ´åˆ */
         if (expv->expv_modulepriv != NULL) {
-            /* gzip_priv¹½Â¤ÂÎ¤Îfree */
-            /* private ÊÑ¿ô³«Êü*/
+            /* gzip_privæ§‹é€ ä½“ã®free */
+            /* private å¤‰æ•°é–‹æ”¾*/
             free(expv->expv_modulepriv);
             expv->expv_modulepriv = NULL;
         }
-        /* extraprivÎÎ°è¤Îfree */
+        /* extraprivé ˜åŸŸã®free */
         free(expv);
         expv = NULL;
     }
@@ -723,25 +713,25 @@ gzip_priv_free(struct extrapriv *expv)
 /*
  * gzip_abort
  *
- * ¥á¡¼¥ëÊİÂ¸½èÍı¤òÃæ»ß¤¹¤ë
+ * ãƒ¡ãƒ¼ãƒ«ä¿å­˜å‡¦ç†ã‚’ä¸­æ­¢ã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct gzip *       gzip¹½Â¤ÂÎ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct gzip *       gzipæ§‹é€ ä½“
  *
- * ÊÖ¤êÃÍ
- *      Ìµ¤·
+ * è¿”ã‚Šå€¤
+ *      ç„¡ã—
  */
 void
 gzip_abort(unsigned int s_id, struct gzip *md)
 {
-    /* ¥×¥é¥¤¥Ù¡¼¥È¾ğÊó¤¬NULL¤Î¾ì¹ç*/
+    /* ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæƒ…å ±ãŒNULLã®å ´åˆ*/
     if (md == NULL) {
         return;
     }
 
     if (md->md_tempfile_fd > 0) {
-        /* ¥Õ¥¡¥¤¥ë¤¬¥ª¡¼¥×¥ó¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¤Ï¥¯¥í¡¼¥º¤¹¤ë */
+        /* ãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ªãƒ¼ãƒ—ãƒ³ã•ã‚Œã¦ã„ã‚‹å ´åˆã¯ã‚¯ãƒ­ãƒ¼ã‚ºã™ã‚‹ */
         close(md->md_tempfile_fd);
         md->md_tempfile_fd = 0;
     }
@@ -752,21 +742,21 @@ gzip_abort(unsigned int s_id, struct gzip *md)
 /*
  * gzip_exec_header
  *
- * µ¡Ç½:
- *    mlfi_header¤Ç¸Æ¤Ğ¤ì¤ë´Ø¿ô
- *    privÎÎ°è¤Î³ÎÊİ¡¦¥Ø¥Ã¥À¾ğÊó¤Î¥á¥â¥ê³ÊÇ¼¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    priv   : priv¹½Â¤ÂÎ¤ò¤Ä¤Ê¤°¹½Â¤ÂÎ
- *    headerf: ¥Ø¥Ã¥À¤Î¹àÌÜÌ¾
- *    headerv: ¥Ø¥Ã¥À¤Î¹àÌÜ¤ËÂĞ¤¹¤ëÃÍ
- * ÊÖÃÍ:
- *     0: Àµ¾ï
- *    -1: °Û¾ï
+ * æ©Ÿèƒ½:
+ *    mlfi_headerã§å‘¼ã°ã‚Œã‚‹é–¢æ•°
+ *    privé ˜åŸŸã®ç¢ºä¿ãƒ»ãƒ˜ãƒƒãƒ€æƒ…å ±ã®ãƒ¡ãƒ¢ãƒªæ ¼ç´ã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    priv   : privæ§‹é€ ä½“ã‚’ã¤ãªãæ§‹é€ ä½“
+ *    headerf: ãƒ˜ãƒƒãƒ€ã®é …ç›®å
+ *    headerv: ãƒ˜ãƒƒãƒ€ã®é …ç›®ã«å¯¾ã™ã‚‹å€¤
+ * è¿”å€¤:
+ *     0: æ­£å¸¸
+ *    -1: ç•°å¸¸
  */
 int
 gzip_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
 {
-    /* ÊÑ¿ôÀë¸À*/
+    /* å¤‰æ•°å®£è¨€*/
     struct extrapriv     *expv;
     struct extra_config  *p;
     struct gzip_priv *mypv;
@@ -775,7 +765,7 @@ gzip_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
     int                  ret;
     unsigned int         s_id;
 
-    /* ½é´ü²½*/
+    /* åˆæœŸåŒ–*/
     expv = NULL;
     p = NULL;
     mypv = NULL;
@@ -785,28 +775,28 @@ gzip_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
     s_id = priv->mlfi_sid;
 
 
-    /* extraprivÎÎ°è¤ÎÍ­Ìµ */
+    /* extraprivé ˜åŸŸã®æœ‰ç„¡ */
     expv = gzip_get_priv(&priv);
 
-    /* gzip_get_priv¤¬¥¨¥é¡¼¤Î»ş */
+    /* gzip_get_privãŒã‚¨ãƒ©ãƒ¼ã®æ™‚ */
     if (expv == NULL) {
         SYSLOGERROR(ERR_EXEC_FUNC, "gzip_exec_header", "gzip_get_priv");
         return -1;
     }
 
-    /* gzip_privÎÎ°è¤¬¤Ê¤«¤Ã¤¿¤éºîÀ® */
+    /* gzip_privé ˜åŸŸãŒãªã‹ã£ãŸã‚‰ä½œæˆ */
     if (expv->expv_modulepriv == NULL) {
-        /* gzipÎÎ°è */
+        /* gzipé ˜åŸŸ */
         mypv = malloc(sizeof(struct gzip_priv));
         if (mypv == NULL) {
             SYSLOGERROR(ERR_MALLOC, "gzip_exec_header", E_STR);
             return -1;
         }
 
-        /* 2¤Ä¤ò¤Ä¤Ê¤²¤ë */
+        /* 2ã¤ã‚’ã¤ãªã’ã‚‹ */
         expv->expv_modulepriv = mypv;
 
-        /* ¼«Ê¬¤Îconfig¹½Â¤ÂÎ¸¡º÷ */ 
+        /* è‡ªåˆ†ã®configæ§‹é€ ä½“æ¤œç´¢ */ 
         if (priv->config->cf_extraconfig != NULL) { 
             for (p = priv->config->cf_extraconfig; p != NULL; p = p->excf_next) {
                 if (!strcmp(MYMODULE, p->excf_modulename)) {
@@ -816,7 +806,7 @@ gzip_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
         }
 
         
-        /* ¥ª¡¼¥×¥ó  ¥á¡¼¥ëÊİÂ¸½èÍı¤ò³«»Ï */
+        /* ã‚ªãƒ¼ãƒ—ãƒ³  ãƒ¡ãƒ¼ãƒ«ä¿å­˜å‡¦ç†ã‚’é–‹å§‹ */
         mydat = gzip_open(s_id, ((struct gzip_config *)p->excf_config),
                            priv->mlfi_recvtime, &(priv->mlfi_envfrom),
                            priv->mlfi_rcptto_h, priv->mlfi_addrmatched_h,
@@ -827,14 +817,14 @@ gzip_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
             return -1;
         }
         
-        /* ¹½Â¤ÂÎ¤ò¤Ä¤Ê¤²¤ë */
+        /* æ§‹é€ ä½“ã‚’ã¤ãªã’ã‚‹ */
         mypv->mypriv = mydat;
     }
 
-    /* gzip¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿¤òÊÑ¿ô¤Ë³ÊÇ¼ */
+    /* gzipæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿ã‚’å¤‰æ•°ã«æ ¼ç´ */
     mydatp = ((struct gzip_priv *)expv->expv_modulepriv)->mypriv;
 
-    /* ¥Ø¥Ã¥À¤ò½ñ¤­¹ş¤ß*/
+    /* ãƒ˜ãƒƒãƒ€ã‚’æ›¸ãè¾¼ã¿*/
     ret = gzip_write_header(s_id, mydatp, headerf, headerv);
     if (ret != R_SUCCESS) {
         SYSLOGERROR(ERR_EXEC_FUNC, "gzip_exec_header", "gzip_write_header");
@@ -847,21 +837,21 @@ gzip_exec_header(struct mlfiPriv *priv, char *headerf, char *headerv)
 /*
  * gzip_exec_body
  *
- * µ¡Ç½:
- *    mlfi_body¤Ç¸Æ¤Ğ¤ì¤ë´Ø¿ô
- *    privÎÎ°è¤Î³ÎÊİ¡¦¥Ø¥Ã¥À¾ğÊó¤Î¥á¥â¥ê³ÊÇ¼¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    *priv  : priv¹½Â¤ÂÎ¤ò¤Ä¤Ê¤°¹½Â¤ÂÎ(»²¾ÈÅÏ¤·)
- *    *bodyp : mlfi_body¤¬¼èÆÀ¤·¤¿¥Ü¥Ç¥£Éô
- *    bodylen: bodyp¤Î¥µ¥¤¥º
- * ÊÖÃÍ:
- *     0: Àµ¾ï
- *    -1: °Û¾ï
+ * æ©Ÿèƒ½:
+ *    mlfi_bodyã§å‘¼ã°ã‚Œã‚‹é–¢æ•°
+ *    privé ˜åŸŸã®ç¢ºä¿ãƒ»ãƒ˜ãƒƒãƒ€æƒ…å ±ã®ãƒ¡ãƒ¢ãƒªæ ¼ç´ã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    *priv  : privæ§‹é€ ä½“ã‚’ã¤ãªãæ§‹é€ ä½“(å‚ç…§æ¸¡ã—)
+ *    *bodyp : mlfi_bodyãŒå–å¾—ã—ãŸãƒœãƒ‡ã‚£éƒ¨
+ *    bodylen: bodypã®ã‚µã‚¤ã‚º
+ * è¿”å€¤:
+ *     0: æ­£å¸¸
+ *    -1: ç•°å¸¸
  */
 int
 gzip_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
 {
-    /* ÊÑ¿ôÀë¸À*/
+    /* å¤‰æ•°å®£è¨€*/
     struct extrapriv     *expv;
     struct gzip      *mydat;
     struct gzip_priv *mypv;
@@ -870,7 +860,7 @@ gzip_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
     unsigned int          s_id;
     struct extra_config  *p;
 
-    /* ½é´ü²½*/
+    /* åˆæœŸåŒ–*/
     expv = NULL;
     p = NULL;
     mypv = NULL;
@@ -880,27 +870,27 @@ gzip_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
     s_id = priv->mlfi_sid;
 
 
-    /* extraprivÎÎ°è¤ÎÍ­Ìµ */
+    /* extraprivé ˜åŸŸã®æœ‰ç„¡ */
     expv = gzip_get_priv(&priv);
-    /* gzip_get_priv¤¬¥¨¥é¡¼¤Î»ş */
+    /* gzip_get_privãŒã‚¨ãƒ©ãƒ¼ã®æ™‚ */
     if (expv == NULL) {
         SYSLOGERROR(ERR_EXEC_FUNC, "gzip_exec_body", "gzip_get_priv");
         return -1;
     }
 
-    /* gzip_privÎÎ°è¤¬¤Ê¤«¤Ã¤¿¤éºîÀ® */
+    /* gzip_privé ˜åŸŸãŒãªã‹ã£ãŸã‚‰ä½œæˆ */
     if (expv->expv_modulepriv == NULL) {
-        /* gzipÎÎ°è */
+        /* gzipé ˜åŸŸ */
         mypv = malloc(sizeof(struct gzip_priv));
         if (mypv == NULL) {
             SYSLOGERROR(ERR_MALLOC, "gzip_exec_body", E_STR);
              return -1;
         }
 
-        /* 2¤Ä¤ò¤Ä¤Ê¤²¤ë */
+        /* 2ã¤ã‚’ã¤ãªã’ã‚‹ */
         expv->expv_modulepriv = mypv;
 
-        /* ¼«Ê¬¤Îconfig¹½Â¤ÂÎ¸¡º÷ */ 
+        /* è‡ªåˆ†ã®configæ§‹é€ ä½“æ¤œç´¢ */ 
         if (priv->config->cf_extraconfig != NULL) { 
             for (p = priv->config->cf_extraconfig; p != NULL; p = p->excf_next) {
                 if (!strcmp(MYMODULE, p->excf_modulename)) {
@@ -910,7 +900,7 @@ gzip_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
         }
 
        
-        /* ¥ª¡¼¥×¥ó  ¥á¡¼¥ëÊİÂ¸½èÍı¤ò³«»Ï */
+        /* ã‚ªãƒ¼ãƒ—ãƒ³  ãƒ¡ãƒ¼ãƒ«ä¿å­˜å‡¦ç†ã‚’é–‹å§‹ */
         mydat = gzip_open(s_id, ((struct gzip_config *)p->excf_config),
                            priv->mlfi_recvtime, &(priv->mlfi_envfrom),
                            priv->mlfi_rcptto_h, priv->mlfi_addrmatched_h,
@@ -921,14 +911,14 @@ gzip_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
             return -1;
         }
         
-        /* ¹½Â¤ÂÎ¤ò¤Ä¤Ê¤²¤ë */
+        /* æ§‹é€ ä½“ã‚’ã¤ãªã’ã‚‹ */
         mypv->mypriv = mydat;
     }
 
-    /* ¥á¡¼¥ë¥Ç¡¼¥¿¤ò¼èÆÀ*/
+    /* ãƒ¡ãƒ¼ãƒ«ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—*/
     mydat = ((struct gzip_priv *)expv->expv_modulepriv)->mypriv;
 
-    /* ¥Ü¥Ç¥£½ñ¤­¹ş¤ß */
+    /* ãƒœãƒ‡ã‚£æ›¸ãè¾¼ã¿ */
     ret = gzip_write_body(s_id, mydat, bodyp, bodylen);
     if (ret != R_SUCCESS) {
         SYSLOGERROR(ERR_EXEC_FUNC, "gzip_exec_body", "gzip_write_body");
@@ -941,36 +931,36 @@ gzip_exec_body(struct mlfiPriv *priv, u_char *bodyp, size_t bodylen)
 /*
  * gzip_exec_eom
  *
- * µ¡Ç½:
- *    mlfi_eom¤Ç¸Æ¤Ğ¤ì¤ë´Ø¿ô
- *    mlfi_header¤Ç³ÊÇ¼¤·¤¿¥Ø¥Ã¥À¾ğÊó¤ò¹½Â¤ÂÎ¤Ë³ÊÇ¼¤·¡¢
- *    DB¤ËÅĞÏ¿¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    priv: priv¹½Â¤ÂÎ¤ò¤Ä¤Ê¤°¹½Â¤ÂÎ(»²¾ÈÅÏ¤·)
- * ÊÖÃÍ:
- *     0: Àµ¾ï
- *    -1: °Û¾ï
+ * æ©Ÿèƒ½:
+ *    mlfi_eomã§å‘¼ã°ã‚Œã‚‹é–¢æ•°
+ *    mlfi_headerã§æ ¼ç´ã—ãŸãƒ˜ãƒƒãƒ€æƒ…å ±ã‚’æ§‹é€ ä½“ã«æ ¼ç´ã—ã€
+ *    DBã«ç™»éŒ²ã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    priv: privæ§‹é€ ä½“ã‚’ã¤ãªãæ§‹é€ ä½“(å‚ç…§æ¸¡ã—)
+ * è¿”å€¤:
+ *     0: æ­£å¸¸
+ *    -1: ç•°å¸¸
  */
 int
 gzip_exec_eom(struct mlfiPriv *priv)
 {
-    /* ÊÑ¿ôÀë¸À*/
+    /* å¤‰æ•°å®£è¨€*/
     struct extrapriv    *p;
     struct extrapriv    *p_old;
     struct gzip     *mydat;
     int                  ret;
     unsigned int         s_id;
 
-    /* ½é´ü²½*/
+    /* åˆæœŸåŒ–*/
     p = NULL;
     p_old = NULL;
     mydat= NULL;
     ret = 0;
     s_id = priv->mlfi_sid;
 
-    /* ¼«Ê¬¤ÎÎÎ°èÍ­Ìµ¥Á¥§¥Ã¥¯*/
+    /* è‡ªåˆ†ã®é ˜åŸŸæœ‰ç„¡ãƒã‚§ãƒƒã‚¯*/
     if (priv != NULL) {
-        /* ¼«Ê¬¤Îpriv¹½Â¤ÂÎ¤¬¤¢¤ë¤«¸¡º÷*/
+        /* è‡ªåˆ†ã®privæ§‹é€ ä½“ãŒã‚ã‚‹ã‹æ¤œç´¢*/
         for (p = priv->mlfi_extrapriv; p != NULL; p = p->expv_next) {
             if (!strcmp(MYMODULE, p->expv_modulename)) {
                 break;
@@ -978,35 +968,35 @@ gzip_exec_eom(struct mlfiPriv *priv)
             p_old = p;
         }
  
-        /* °ì¤ÄÁ°¤ÎÎÎ°è¤¬extrapriv¹½Â¤ÂÎ*/
+        /* ä¸€ã¤å‰ã®é ˜åŸŸãŒextraprivæ§‹é€ ä½“*/
         if (p_old != NULL) {
             if (p != NULL) {
                 mydat = ((struct gzip_priv *)p->expv_modulepriv)->mypriv;
-                /* ¥¯¥í¡¼¥º*/
+                /* ã‚¯ãƒ­ãƒ¼ã‚º*/
                 ret = gzip_close(s_id, mydat, priv->config);
                 if (ret != R_SUCCESS) {
                     SYSLOGERROR(ERR_EXEC_FUNC, "gzip_exec_eom", "gzip_close");
                     return -1;
                 }
-                /* °ì¤ÄÁ°¤Î¹½Â¤ÂÎ¤Înext¤Ëfree¤¹¤ë¹½Â¤ÂÎ¤Înext¤ò¤Ä¤Ê¤²¤ë*/
+                /* ä¸€ã¤å‰ã®æ§‹é€ ä½“ã®nextã«freeã™ã‚‹æ§‹é€ ä½“ã®nextã‚’ã¤ãªã’ã‚‹*/
                 p_old->expv_next = p->expv_next;
-                /* ¥×¥é¥¤¥Ù¡¼¥È¥Ç¡¼¥¿¤ò³«Êü¤¹¤ë*/
+                /* ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆãƒ‡ãƒ¼ã‚¿ã‚’é–‹æ”¾ã™ã‚‹*/
                 gzip_priv_free(p);
 
             }
-        /* P¤¬ÀèÆ¬¤Î¾ì¹ç*/
+        /* PãŒå…ˆé ­ã®å ´åˆ*/
         } else {
             if (p != NULL) {
                 mydat = ((struct gzip_priv *)p->expv_modulepriv)->mypriv;
-                /* ¥¯¥í¡¼¥º*/
+                /* ã‚¯ãƒ­ãƒ¼ã‚º*/
                 ret = gzip_close(s_id, mydat, priv->config);
                 if (ret != R_SUCCESS) {
                     SYSLOGERROR(ERR_EXEC_FUNC, "gzip_exec_eom", "gzip_close");
                     return -1;
                 }
-                /* °ì¤ÄÁ°¤Îmlfi¹½Â¤ÂÎ¤Ëfree¤¹¤ë¹½Â¤ÂÎ¤Înext¤ò¤Ä¤Ê¤²¤ë*/
+                /* ä¸€ã¤å‰ã®mlfiæ§‹é€ ä½“ã«freeã™ã‚‹æ§‹é€ ä½“ã®nextã‚’ã¤ãªã’ã‚‹*/
                 priv->mlfi_extrapriv = p->expv_next;
-                /* ¥×¥é¥¤¥Ù¡¼¥È¾ğÊó³«Êü*/
+                /* ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæƒ…å ±é–‹æ”¾*/
                 gzip_priv_free(p);
             }
         }
@@ -1017,58 +1007,58 @@ gzip_exec_eom(struct mlfiPriv *priv)
 /*
  * gzip_exec_abort
  *
- * µ¡Ç½:
- *    mlfi_abort¤äexec_eom¤Ç¸Æ¤Ğ¤ì¤ë´Ø¿ô
- *    priv¹½Â¤ÂÎ¤òÁ´¤Æfree¤¹¤ë´Ø¿ô
+ * æ©Ÿèƒ½:
+ *    mlfi_abortã‚„exec_eomã§å‘¼ã°ã‚Œã‚‹é–¢æ•°
+ *    privæ§‹é€ ä½“ã‚’å…¨ã¦freeã™ã‚‹é–¢æ•°
  *
- * °ú¿ô:
- *    priv: priv¹½Â¤ÂÎ¤ò¤Ä¤Ê¤°¹½Â¤ÂÎ
+ * å¼•æ•°:
+ *    priv: privæ§‹é€ ä½“ã‚’ã¤ãªãæ§‹é€ ä½“
  *
- * ÊÖÃÍ:
- *    0(R_SUCCESS): Àµ¾ï
+ * è¿”å€¤:
+ *    0(R_SUCCESS): æ­£å¸¸
  */
 int
 gzip_exec_abort(struct mlfiPriv *priv)
 {
-    /* ÊÑ¿ôÀë¸À*/
+    /* å¤‰æ•°å®£è¨€*/
     struct extrapriv    *p;
     struct extrapriv    *p_old;
     struct gzip     *md;
     unsigned int         s_id;
 
-    /* ½é´ü²½*/
+    /* åˆæœŸåŒ–*/
     p = NULL;
     p_old = NULL;
     md = NULL;
     s_id = priv->mlfi_sid;
 
-    /* ¼«Ê¬¤ÎÎÎ°èÍ­Ìµ¥Á¥§¥Ã¥¯ */
+    /* è‡ªåˆ†ã®é ˜åŸŸæœ‰ç„¡ãƒã‚§ãƒƒã‚¯ */
     if (priv != NULL) {
-        /* ¼«Ê¬¤Îpriv¹½Â¤ÂÎ¤¬¤¢¤ë¤«¸¡º÷ */
+        /* è‡ªåˆ†ã®privæ§‹é€ ä½“ãŒã‚ã‚‹ã‹æ¤œç´¢ */
         for (p = priv->mlfi_extrapriv; p != NULL; p = p->expv_next) {
             if (!strcmp(MYMODULE, p->expv_modulename)) {
                 break;
             }
             p_old = p;
         }
-        /* °ì¤ÄÁ°¤ÎÎÎ°è¤¬extrapriv¹½Â¤ÂÎ */
+        /* ä¸€ã¤å‰ã®é ˜åŸŸãŒextraprivæ§‹é€ ä½“ */
         if (p_old != NULL) {
             if (p != NULL) {
                 md = ((struct gzip_priv *)p->expv_modulepriv)->mypriv;
-                /* ¥¢¥Ü¡¼¥È */
+                /* ã‚¢ãƒœãƒ¼ãƒˆ */
                 gzip_abort(s_id, md);
-                /* ¤Ò¤È¤ÄÁ°¤Î¹½Â¤ÂÎ¤Înext¤Ëfree¤¹¤ë¹½Â¤ÂÎ¤Înext¤ò¤Ä¤Ê¤²¤ë */
+                /* ã²ã¨ã¤å‰ã®æ§‹é€ ä½“ã®nextã«freeã™ã‚‹æ§‹é€ ä½“ã®nextã‚’ã¤ãªã’ã‚‹ */
                 p_old->expv_next = p->expv_next;
                 gzip_priv_free(p);
             }
 
-        /* P¤¬ÀèÆ¬¤Î¾ì¹ç*/
+        /* PãŒå…ˆé ­ã®å ´åˆ*/
         } else {
             if (p != NULL) {
                 md = ((struct gzip_priv *)p->expv_modulepriv)->mypriv;
-                /* ¥¢¥Ü¡¼¥È */
+                /* ã‚¢ãƒœãƒ¼ãƒˆ */
                 gzip_abort(s_id, md);
-                /* ¤Ò¤È¤ÄÁ°¤Î¹½Â¤ÂÎ¤Înext¤Ëfree¤¹¤ë¹½Â¤ÂÎ¤Înext¤ò¤Ä¤Ê¤²¤ë */
+                /* ã²ã¨ã¤å‰ã®æ§‹é€ ä½“ã®nextã«freeã™ã‚‹æ§‹é€ ä½“ã®nextã‚’ã¤ãªã’ã‚‹ */
                 priv->mlfi_extrapriv = p->expv_next;
                 gzip_priv_free(p);
             }
@@ -1080,22 +1070,22 @@ gzip_exec_abort(struct mlfiPriv *priv)
 /*
  * gzip_open
  *
- * ¥Õ¥¡¥¤¥ë½ñ¤­¹ş¤ß¤Î½àÈ÷¤ò¹Ô¤Ê¤¦
- * - É¬Í×¤Ê¥Ç¥£¥ì¥¯¥È¥ê¤ÎºîÀ®
- * - °ì»ş¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó
- * - ¥«¥¹¥¿¥à¥Ø¥Ã¥À¤ÎÃÍºîÀ®
+ * ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ã®æº–å‚™ã‚’è¡Œãªã†
+ * - å¿…è¦ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ä½œæˆ
+ * - ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³
+ * - ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã®å€¤ä½œæˆ
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct config *         config¹½Â¤ÂÎ
- *      time_t                  ¼õ¿®Æü»ş
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct config *         configæ§‹é€ ä½“
+ *      time_t                  å—ä¿¡æ—¥æ™‚
  *      struct strset *         From
- *      struct strlist *        To°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
- *      struct strlist *        ÊİÂ¸¥¢¥É¥ì¥¹°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ *      struct strlist *        Toä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
+ *      struct strlist *        ä¿å­˜ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      struct gzip *       Àµ¾ï
- *      NULL                    ¥¨¥é¡¼ (°ì»ş¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó¤Ë¼ºÇÔ)
+ * è¿”ã‚Šå€¤
+ *      struct gzip *       æ­£å¸¸
+ *      NULL                    ã‚¨ãƒ©ãƒ¼ (ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³ã«å¤±æ•—)
  */
 struct gzip *
 gzip_open(unsigned int s_id, struct gzip_config *config,
@@ -1106,13 +1096,13 @@ gzip_open(unsigned int s_id, struct gzip_config *config,
     mode_t old_umask;
     int temppathlen;
 
-    /* gzip¹½Â¤ÂÎ¤ò½é´ü²½ */
+    /* gzipæ§‹é€ ä½“ã‚’åˆæœŸåŒ– */
     md = md_struct_init(s_id, config, time, from, to_h, saveaddr_h);
 
-    /* MailDirÇÛ²¼¤Ë¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë */
+    /* MailDiré…ä¸‹ã«ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹ */
     md_makemaildir(s_id, config->cf_gzipmaildir);
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹¤òºîÀ® */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ã‚’ä½œæˆ */
     temppathlen = strlen(config->cf_gzipmaildir) +
                     strlen(msy_hostname) + TEMPFILEPATH_LEN;
     md->md_tempfilepath = (char *)malloc(temppathlen);
@@ -1123,7 +1113,7 @@ gzip_open(unsigned int s_id, struct gzip_config *config,
     sprintf(md->md_tempfilepath, TEMPFILEPATH,
             config->cf_gzipmaildir, md->md_recvtime, msy_hostname);
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤ò¥ª¡¼¥×¥ó */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚ªãƒ¼ãƒ—ãƒ³ */
     old_umask = umask(0077);
     md->md_tempfile_fd = mkstemp(md->md_tempfilepath);
     umask(old_umask);
@@ -1137,18 +1127,18 @@ gzip_open(unsigned int s_id, struct gzip_config *config,
 /*
  * gzip_write_header
  *
- * ¥Ø¥Ã¥À¤ò°ì»ş¥Õ¥¡¥¤¥ë¤Ë½ĞÎÏ¤¹¤ë
- * ¥«¥¹¥¿¥à¥Ø¥Ã¥À¤ò½é¤á¤Ë½ñ¤­¹ş¤à
+ * ãƒ˜ãƒƒãƒ€ã‚’ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã™ã‚‹
+ * ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã‚’åˆã‚ã«æ›¸ãè¾¼ã‚€
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct gzip *       gzip¹½Â¤ÂÎ
- *      char *                  ¥Ø¥Ã¥À¥Õ¥£¡¼¥ë¥É (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
- *      char *                  ¥Ø¥Ã¥ÀÃÍ (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct gzip *       gzipæ§‹é€ ä½“
+ *      char *                  ãƒ˜ãƒƒãƒ€ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
+ *      char *                  ãƒ˜ãƒƒãƒ€å€¤ (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 int
 gzip_write_header(unsigned int s_id, struct gzip *md,
@@ -1160,7 +1150,7 @@ gzip_write_header(unsigned int s_id, struct gzip *md,
     int ret;
 
     if (!md->md_writing_header) {
-        /* ¤Ï¤¸¤á¤Ë¥«¥¹¥¿¥à¥Ø¥Ã¥À¤ò½ñ¤­¹ş¤à */
+        /* ã¯ã˜ã‚ã«ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã‚’æ›¸ãè¾¼ã‚€ */
         md->md_writing_header = 1;
         ret = gzip_write_header(s_id, md, CUSTOMHDR_FROM,
                                     md->md_header_from.ss_str);
@@ -1174,8 +1164,8 @@ gzip_write_header(unsigned int s_id, struct gzip *md,
         }
     }
 
-    /* ¥Ø¥Ã¥À¤Î½ñ¤­¹ş¤ß */
-    header_len = strlen(headerf) + ((headerv == NULL)?0:strlen(headerv)) + 3; /* Ê¸»úÎó + ': ' + '\n' */
+    /* ãƒ˜ãƒƒãƒ€ã®æ›¸ãè¾¼ã¿ */
+    header_len = strlen(headerf) + ((headerv == NULL)?0:strlen(headerv)) + 3; /* æ–‡å­—åˆ— + ': ' + '\n' */
     header = (char *)malloc(header_len + 1);    /* '\0' */
     if (header == NULL) {
         SYSLOGERROR(ERR_S_MALLOC, s_id, "gzip_write_header", E_STR);
@@ -1204,19 +1194,19 @@ gzip_write_header(unsigned int s_id, struct gzip *md,
 /*
  * gzip_write_body
  *
- * ¥á¡¼¥ë¥Ü¥Ç¥£¤ò°ì»ş¥Õ¥¡¥¤¥ë¤Ë½ĞÎÏ¤¹¤ë
- * ¥Ø¥Ã¥À¤È¥Ü¥Ç¥£¤Î¶èÀÚ¤ê¤ò½é¤á¤Ë½ñ¤­¹ş¤à
- * ²ş¹ÔÊ¸»ú¤ÏCRLF¤òLF¤ËÅı°ì¤¹¤ë
+ * ãƒ¡ãƒ¼ãƒ«ãƒœãƒ‡ã‚£ã‚’ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã™ã‚‹
+ * ãƒ˜ãƒƒãƒ€ã¨ãƒœãƒ‡ã‚£ã®åŒºåˆ‡ã‚Šã‚’åˆã‚ã«æ›¸ãè¾¼ã‚€
+ * æ”¹è¡Œæ–‡å­—ã¯CRLFã‚’LFã«çµ±ä¸€ã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct gzip *       gzip¹½Â¤ÂÎ
- *      unsigned char *         ¥Ü¥Ç¥£ (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
- *      size_t                  Ä¹¤µ (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct gzip *       gzipæ§‹é€ ä½“
+ *      unsigned char *         ãƒœãƒ‡ã‚£ (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
+ *      size_t                  é•·ã• (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 int
 gzip_write_body(unsigned int s_id, struct gzip *md,
@@ -1227,7 +1217,7 @@ gzip_write_body(unsigned int s_id, struct gzip *md,
     int i;
 
     if (!md->md_writing_body) {
-        /* ¤Ï¤¸¤á¤Ë¥Ø¥Ã¥À¤È¥Ü¥Ç¥£¤Î¶èÀÚ¤êÊ¸»ú¤ò½ñ¤­¹ş¤à */
+        /* ã¯ã˜ã‚ã«ãƒ˜ãƒƒãƒ€ã¨ãƒœãƒ‡ã‚£ã®åŒºåˆ‡ã‚Šæ–‡å­—ã‚’æ›¸ãè¾¼ã‚€ */
         md->md_writing_body = 1;
         ret = gzip_write_body(s_id, md, (unsigned char *) "\n", 1);
         if (ret != R_SUCCESS) {
@@ -1235,7 +1225,7 @@ gzip_write_body(unsigned int s_id, struct gzip *md,
         }
     }
 
-    /* ²ş¹ÔÊ¸»ú¤òLF¤ËÅı°ì¤·¤Ê¤¬¤é¡¢ËÜÊ¸¤ò½ñ¤­¹ş¤à */
+    /* æ”¹è¡Œæ–‡å­—ã‚’LFã«çµ±ä¸€ã—ãªãŒã‚‰ã€æœ¬æ–‡ã‚’æ›¸ãè¾¼ã‚€ */
     for (i = 0; i < len; i++, bodyp++) {
         if (md->md_cr) {
             if (*bodyp != '\n') {
@@ -1264,16 +1254,16 @@ gzip_write_body(unsigned int s_id, struct gzip *md,
 /*
  * gzip_close
  *
- * °ì»ş¥Õ¥¡¥¤¥ë¤ò¥¯¥í¡¼¥º¤·¡¢ÊİÂ¸¤¹¤ë
+ * ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚¯ãƒ­ãƒ¼ã‚ºã—ã€ä¿å­˜ã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct gzip *           gzip¹½Â¤ÂÎ
- *      struct config *         config¹½Â¤ÂÎ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct gzip *           gzipæ§‹é€ ä½“
+ *      struct config *         configæ§‹é€ ä½“
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 int
 gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
@@ -1294,7 +1284,7 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
     char  *command_real;
     char **command_args;
 
-    /* ½é´ü²½*/
+    /* åˆæœŸåŒ–*/
     tempstr_len = 0;
     tempstr = NULL;
     gzcf = NULL;
@@ -1303,9 +1293,9 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
     command_args = NULL;
     len = 0;
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤ò¥¯¥í¡¼¥º */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚¯ãƒ­ãƒ¼ã‚º */
     if (md->md_tempfile_fd > 0) {
-        /* ²ş¹ÔÊ¸»ú°·¤¤¤Ç¤Ê¤¤CR¤¬»Ä¤Ã¤Æ¤¤¤ë¾ì¹ç¤Ï½ñ¤­¹ş¤à */
+        /* æ”¹è¡Œæ–‡å­—æ‰±ã„ã§ãªã„CRãŒæ®‹ã£ã¦ã„ã‚‹å ´åˆã¯æ›¸ãè¾¼ã‚€ */
         if (md->md_cr) {
             ret_s = write(md->md_tempfile_fd, "\r", 1);
             if (ret_s < 0) {
@@ -1313,12 +1303,12 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
             }
             md->md_cr = 0;
         }
-        /* ¥¯¥í¡¼¥º */
+        /* ã‚¯ãƒ­ãƒ¼ã‚º */
         close(md->md_tempfile_fd);
         md->md_tempfile_fd = 0;
     }
 
-    /* extraconfig¤ò¼èÆÀ*/
+    /* extraconfigã‚’å–å¾—*/
     if (config == NULL || config->cf_extraconfig == NULL) {
         SYSLOGERROR(ERR_GZIP_CONF, s_id);
         return R_ERROR;
@@ -1330,26 +1320,26 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
             break;
         }
     }
-    /* ¤ß¤Ä¤«¤éÌµ¤«¤Ã¤¿¤é¡¢¥¨¥é¡¼*/
+    /* ã¿ã¤ã‹ã‚‰ç„¡ã‹ã£ãŸã‚‰ã€ã‚¨ãƒ©ãƒ¼*/
     if (gzcf == NULL) {
         SYSLOGERROR(ERR_GZIP_CONF, s_id);
         return R_ERROR;
     }
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤Îi¥Î¡¼¥ÉÈÖ¹æ¤ò¼è¤ë */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®iãƒãƒ¼ãƒ‰ç•ªå·ã‚’å–ã‚‹ */
     ret = stat(md->md_tempfilepath, &stbuf);
     if (ret < 0) {
         SYSLOGERROR(ERR_S_STAT, s_id, md->md_tempfilepath, E_STR);
         return R_ERROR;
     }
 
-    /* »Ò¥×¥í¥»¥¹ºîÀ®*/
+    /* å­ãƒ—ãƒ­ã‚»ã‚¹ä½œæˆ*/
     pid = fork();
     if (pid == -1) {
         SYSLOGERROR(ERR_S_FORK, gzcf->cf_gzipcommand);
         return R_ERROR;
 
-    /* »Ò¥×¥í¥»¥¹*/
+    /* å­ãƒ—ãƒ­ã‚»ã‚¹*/
     } else if (pid == 0) {
 
         /* convert command*/
@@ -1359,17 +1349,17 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
             SYSLOGWARNING(ERR_MEMORY_ALLOC);
             exit(1);
         }
-        /* GzipCommand¤ÎÄ¹¤µ¤ò·×»»*/
+        /* GzipCommandã®é•·ã•ã‚’è¨ˆç®—*/
         for(len = 0; command_args[len] != NULL; len++) {
         }
 
-        /* ¥Ñ¥é¥á¡¼¥¿¤Î¥ê¥¹¥ÈºîÀ®*/
-        /* »Ò¥×¥í¥»¥¹¤À¤«¤é¡¢¿Æ¥×¥í¥»¥¹¤ÎGzipcommand¤Ë±Æ¶Á¤·¤Ê¤¤*/
+        /* ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®ãƒªã‚¹ãƒˆä½œæˆ*/
+        /* å­ãƒ—ãƒ­ã‚»ã‚¹ã ã‹ã‚‰ã€è¦ªãƒ—ãƒ­ã‚»ã‚¹ã®Gzipcommandã«å½±éŸ¿ã—ãªã„*/
         command_args[len] = md->md_tempfilepath;
 
-        /* °µ½Ì¥³¥Ş¥ó¥É¼Â¹Ô*/
+        /* åœ§ç¸®ã‚³ãƒãƒ³ãƒ‰å®Ÿè¡Œ*/
         ret = execv(command_args[0], command_args);
-        /* ¥¨¥é¡¼½èÍı*/
+        /* ã‚¨ãƒ©ãƒ¼å‡¦ç†*/
         if (ret == -1) {
             SYSLOGERROR(ERR_RUN_COMMAND, s_id, gzcf->cf_gzipcommand);
             exit(1);
@@ -1378,34 +1368,34 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
         /* may not reach*/
         exit(1);
 
-    /* ¿Æ¥×¥í¥»¥¹*/
+    /* è¦ªãƒ—ãƒ­ã‚»ã‚¹*/
     } else {
-        /* »Ò¥×¥í¥»¥¹ÂÔ¤Ä*/
+        /* å­ãƒ—ãƒ­ã‚»ã‚¹å¾…ã¤*/
         wpid = waitpid(pid, &status, WUNTRACED);
         if (wpid < 0) {
             SYSLOGERROR(ERR_EXEC_STATUS, s_id, gzcf->cf_gzipcommand, status);
-            /* °ì»ş¥Õ¥¡¥¤¥ëºï½ü */
+            /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«å‰Šé™¤ */
             unlink(md->md_tempfilepath);
             return R_ERROR;
         }
-        /* »Ò¥×¥í¥»¥¹¤Î¥¹¥Æ¡¼¥¿¥¹³ÎÇ§*/
+        /* å­ãƒ—ãƒ­ã‚»ã‚¹ã®ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ç¢ºèª*/
         if (!WIFEXITED(status)) {
             SYSLOGERROR(ERR_EXEC_STATUS, s_id, gzcf->cf_gzipcommand, status);
-            /* °ì»ş¥Õ¥¡¥¤¥ëºï½ü */
+            /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«å‰Šé™¤ */
             unlink(md->md_tempfilepath);
             return R_ERROR;
         }
-        /* »Ò¥×¥í¥»¥¹¤¬Àµ¾ï¤Ë½ªÎ»¤µ¤ì¤Ê¤¤¾ì¹ç*/
+        /* å­ãƒ—ãƒ­ã‚»ã‚¹ãŒæ­£å¸¸ã«çµ‚äº†ã•ã‚Œãªã„å ´åˆ*/
         if (WEXITSTATUS(status)) {
             SYSLOGERROR(ERR_EXEC_STATUS, s_id, gzcf->cf_gzipcommand, status);
-            /* °ì»ş¥Õ¥¡¥¤¥ëºï½ü */
+            /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«å‰Šé™¤ */
             unlink(md->md_tempfilepath);
             return R_ERROR;
         }
     }
 
-    /* ¥³¥Ş¥ó¥É¤Î¼Â¹Ô·ë²Ì¥Á¥§¥Ã¥¯*/
-    /* ziptempfilepathÎÎ°è³ÎÊİ*/
+    /* ã‚³ãƒãƒ³ãƒ‰ã®å®Ÿè¡Œçµæœãƒã‚§ãƒƒã‚¯*/
+    /* ziptempfilepathé ˜åŸŸç¢ºä¿*/
     tempstr_len = strlen(md->md_tempfilepath) +
                      strlen(msy_hostname) + ZIPTEMPFILEPATH_LEN;
     tempstr = malloc(tempstr_len);
@@ -1414,51 +1404,51 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
         return R_ERROR;
     } 
 
-    /* ziptempfileÂ¸ºß¥Á¥§¥Ã¥¯*/
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤Îi¥Î¡¼¥ÉÈÖ¹æ¤ò¼è¤ë */
+    /* ziptempfileå­˜åœ¨ãƒã‚§ãƒƒã‚¯*/
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®iãƒãƒ¼ãƒ‰ç•ªå·ã‚’å–ã‚‹ */
     sprintf(tempstr, ZIPTEMPFILEPATH, md->md_tempfilepath);
     ret = stat(tempstr, &stbuf);
     if (ret < 0) {
         SYSLOGERROR(ERR_S_STAT, s_id, tempstr, E_STR);
-        /* ¸µ¤Îtempfileºï½ü*/
+        /* å…ƒã®tempfileå‰Šé™¤*/
         if (stat(md->md_tempfilepath, &stbuf) == 0) {
-            /* °ì»ş¥Õ¥¡¥¤¥ëºï½ü */
+            /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«å‰Šé™¤ */
             unlink(md->md_tempfilepath);
         }
         free(tempstr);
-        /* ¥¨¥é¡¼¤òÊÖ¤¹*/
+        /* ã‚¨ãƒ©ãƒ¼ã‚’è¿”ã™*/
         return R_ERROR;
     }
 
-    /* ´ûÂ¸¤Îtempfilepath¤ÎÎÎ°è³«Êü*/
+    /* æ—¢å­˜ã®tempfilepathã®é ˜åŸŸé–‹æ”¾*/
     free(md->md_tempfilepath);
 
-    /* ziptempfilepathÊİÂ¸*/
+    /* ziptempfilepathä¿å­˜*/
     md->md_tempfilepath = tempstr;
 
-    /* ÊİÂ¸Àè¤Î¥Õ¥¡¥¤¥ëÌ¾¤òºîÀ® */
+    /* ä¿å­˜å…ˆã®ãƒ•ã‚¡ã‚¤ãƒ«åã‚’ä½œæˆ */
     ret = md_makesavefilename(md, filename, sizeof(filename), config, stbuf);
     if (ret != R_SUCCESS) {
         return R_ERROR;
     }
 
-    /* É¬Í×¤Ê¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤òºîÀ® */
+    /* å¿…è¦ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã‚’ä½œæˆ */
     ret = md_makedirlist(s_id, md, &list_h);
     if (ret != R_SUCCESS) {
         return R_ERROR;
     }
 
-    /* É¬Í×¤Ê¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+    /* å¿…è¦ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
     ret = md_makedirbylist(s_id, md, list_h);
     if (ret != R_SUCCESS) {
         free_strlist(list_h);
         return R_ERROR;
     }
 
-    /* ¥Õ¥¡¥¤¥ë¥³¥Ô¡¼ */
+    /* ãƒ•ã‚¡ã‚¤ãƒ«ã‚³ãƒ”ãƒ¼ */
     md_makesavefile(s_id, md, filename, list_h);
 
-    /* °ì»ş¥Õ¥¡¥¤¥ëºï½ü */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«å‰Šé™¤ */
     unlink(md->md_tempfilepath);
 
     free_strlist(list_h);
@@ -1471,21 +1461,21 @@ gzip_close(unsigned int s_id, struct gzip *md, struct config * config)
 
 
 /***** ***** ***** ***** *****
- * ÆâÉô´Ø¿ô
+ * å†…éƒ¨é–¢æ•°
  ***** ***** ***** ***** *****/
 
 /*
  * md_makedirlist
  *
- * ºîÀ®¤¹¤ëÉ¬Í×¤Î¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤òºîÀ®¤¹¤ë
+ * ä½œæˆã™ã‚‹å¿…è¦ã®ã‚ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct gzip *       gzip¹½Â¤ÂÎ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct gzip *       gzipæ§‹é€ ä½“
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_makedirlist(unsigned int s_id, struct gzip *md, struct strlist **list_h)
@@ -1499,7 +1489,7 @@ md_makedirlist(unsigned int s_id, struct gzip *md, struct strlist **list_h)
     struct tm lt, *ret_t;
     int ret;
 
-    /* ¼õ¿®»ş¹ï¤«¤éÃÖ´¹Ê¸»úÎó¤òºîÀ® */
+    /* å—ä¿¡æ™‚åˆ»ã‹ã‚‰ç½®æ›æ–‡å­—åˆ—ã‚’ä½œæˆ */
     ret_t = localtime_r(&md->md_recvtime, &lt);
     if (ret_t == NULL) {
         SYSLOGERROR(ERR_S_LTIME, s_id, E_STR);
@@ -1516,15 +1506,15 @@ md_makedirlist(unsigned int s_id, struct gzip *md, struct strlist **list_h)
     sf[2].sf_formatchar = 'd';
     sf[2].sf_replacestr = day;
 
-    /* ÊİÂ¸ÂĞ¾İ¥¢¥É¥ì¥¹Ëè¤Ë¥Ç¥£¥ì¥¯¥È¥êÌ¾¤òºîÀ®¤¹¤ë */
+    /* ä¿å­˜å¯¾è±¡ã‚¢ãƒ‰ãƒ¬ã‚¹æ¯ã«ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªåã‚’ä½œæˆã™ã‚‹ */
     *list_h = list_t = NULL;
     p = md->md_saveaddr_h;
     while (p != NULL) {
-        /* ¥¢¥É¥ì¥¹¤È¥É¥á¥¤¥ó¤«¤éÃÖ´¹Ê¸»úÎó¤òºîÀ®¤¹¤ë */
+        /* ã‚¢ãƒ‰ãƒ¬ã‚¹ã¨ãƒ‰ãƒ¡ã‚¤ãƒ³ã‹ã‚‰ç½®æ›æ–‡å­—åˆ—ã‚’ä½œæˆã™ã‚‹ */
         strncpy(mailaddr, p->ss_data.ss_str, MAX_ADDRESS_LEN + 1);
         ret = check_7bit(mailaddr);
         if (ret != 0) {
-            /* 8bitÊ¸»ú¤¬´Ş¤Ş¤ì¤ë¤¿¤áUNKNOWN¤Ë */
+            /* 8bitæ–‡å­—ãŒå«ã¾ã‚Œã‚‹ãŸã‚UNKNOWNã« */
             addr_p = UNKNOWN;
             domain_p = UNKNOWN;
         } else {
@@ -1533,8 +1523,8 @@ md_makedirlist(unsigned int s_id, struct gzip *md, struct strlist **list_h)
 
             domain_p = strchr(mailaddr, '@');
             if (domain_p == NULL) {
-                /* ¥¢¥É¥ì¥¹°ìÍ÷¤ÎºîÀ®»ş¤Ë¥É¥á¥¤¥ó¤¬Êä´°¤µ¤ì¤ë¤Î¤Ç¡¢
-                 * ¤³¤³¤Ë¤ÏÆş¤é¤Ê¤¤¤Ï¤º */
+                /* ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®ä½œæˆæ™‚ã«ãƒ‰ãƒ¡ã‚¤ãƒ³ãŒè£œå®Œã•ã‚Œã‚‹ã®ã§ã€
+                 * ã“ã“ã«ã¯å…¥ã‚‰ãªã„ã¯ãš */
                 domain_p = UNKNOWN;
             } else {
                 domain_p++;
@@ -1548,10 +1538,10 @@ md_makedirlist(unsigned int s_id, struct gzip *md, struct strlist **list_h)
         sf[5].sf_formatchar = 'f';
         sf[4].sf_replacestr = sf[5].sf_replacestr = addr_p;
 
-        /* MailFolder¤Î¥Õ¥©¡¼¥Ş¥Ã¥ÈÊ¸»ú¤òÃÖ´¹¤¹¤ë */
+        /* MailFolderã®ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆæ–‡å­—ã‚’ç½®æ›ã™ã‚‹ */
         tmp = str_replace_format(md->md_mailfolder.ss_str, sf, 6);
 
-        /* MailDir, MailFolder (ÃÖ´¹¸å) ¤òÏ¢·ë¤¹¤ë */
+        /* MailDir, MailFolder (ç½®æ›å¾Œ) ã‚’é€£çµã™ã‚‹ */
         strset_init(&path);
         if (strset_catstrset(&path, &md->md_maildir) == -1 ||
             strset_catstr(&path, "/") == -1 ||
@@ -1561,8 +1551,8 @@ md_makedirlist(unsigned int s_id, struct gzip *md, struct strlist **list_h)
         }
         free(tmp);
 
-        /* ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤ËÄÉ²Ã¤¹¤ë
-         * ¤Ş¤Ã¤¿¤¯Æ±°ì¤Î¥Ñ¥¹¤¬´û¤Ë°ìÍ÷¤Ë¤¢¤ë¾ì¹ç¤ÏÌµ»ë¤¹¤ë */
+        /* ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã«è¿½åŠ ã™ã‚‹
+         * ã¾ã£ãŸãåŒä¸€ã®ãƒ‘ã‚¹ãŒæ—¢ã«ä¸€è¦§ã«ã‚ã‚‹å ´åˆã¯ç„¡è¦–ã™ã‚‹ */
         uniq_push_strlist(list_h, &list_t, path.ss_str);
 
 
@@ -1576,16 +1566,16 @@ md_makedirlist(unsigned int s_id, struct gzip *md, struct strlist **list_h)
 /*
  * md_makedirbylist
  *
- * ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤ò¸µ¤Ë¡¢Maildir·Á¼°¤Î¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë
+ * ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã‚’å…ƒã«ã€Maildirå½¢å¼ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct gzip *       gzip¹½Â¤ÂÎ
- *      struct strlist *        ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct gzip *       gzipæ§‹é€ ä½“
+ *      struct strlist *        ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_makedirbylist(unsigned int s_id, struct gzip *md, struct strlist *list)
@@ -1611,49 +1601,49 @@ md_makedirbylist(unsigned int s_id, struct gzip *md, struct strlist *list)
 /*
  * md_makemaildir_tree
  *
- * »ØÄê¤µ¤ì¤¿¥Ç¥£¥ì¥¯¥È¥ê¤Ë»ê¤ë¥Ç¥£¥ì¥¯¥È¥ê¥Ä¥ê¡¼¤òMaildir·Á¼°¤ÇºîÀ®¤¹¤ë
+ * æŒ‡å®šã•ã‚ŒãŸãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«è‡³ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ„ãƒªãƒ¼ã‚’Maildirå½¢å¼ã§ä½œæˆã™ã‚‹
  *
  * /home/archive/Maildir/.2009.10.01
- * ¢ª /home/archive/Maildir/.2009/{new,cur,tmp}
+ * â†’ /home/archive/Maildir/.2009/{new,cur,tmp}
  *    /home/archive/Maildir/.2009.10/{new,cur,tmp}
  *    /home/archive/Maildir/.2009.10.01/{new,cur,tmp}
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      char *                  ¥Ç¥£¥ì¥¯¥È¥êÌ¾
- *                              (ºÇ¤â¿¼¤¤¥Ç¥£¥ì¥¯¥È¥ê¤ò»ØÄê¤¹¤ë)
- *      int                     ¥Ù¡¼¥¹¥Ç¥£¥ì¥¯¥È¥ê¤ÎÄ¹¤µ
- *                              (Maildir·Á¼°¤Î¥Ä¥ê¡¼¤Îµ¯ÅÀ¤ò»ØÄê¤¹¤ë)
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      char *                  ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
+ *                              (æœ€ã‚‚æ·±ã„ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’æŒ‡å®šã™ã‚‹)
+ *      int                     ãƒ™ãƒ¼ã‚¹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®é•·ã•
+ *                              (Maildirå½¢å¼ã®ãƒ„ãƒªãƒ¼ã®èµ·ç‚¹ã‚’æŒ‡å®šã™ã‚‹)
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼ (°ú¿ô¥¨¥é¡¼)
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼ (å¼•æ•°ã‚¨ãƒ©ãƒ¼)
  */
 static int
 md_makemaildir_tree(unsigned int s_id, char *targetdir, int basedir_len)
 {
     char *subtop, *dot;
 
-    /* ¥İ¥¤¥ó¥¿¤ò¥Õ¥©¥ë¥ÀÀèÆ¬¤Î¥É¥Ã¥È¤Ë°ÜÆ°¤µ¤»¤ë
+    /* ãƒã‚¤ãƒ³ã‚¿ã‚’ãƒ•ã‚©ãƒ«ãƒ€å…ˆé ­ã®ãƒ‰ãƒƒãƒˆã«ç§»å‹•ã•ã›ã‚‹
      * /path/to/basedir/.folder
      *                  ^-subtop */
     subtop = targetdir + basedir_len + 1;
     if (strchr(subtop, SLASH) != NULL) {
-        /* Ëü°ì¥Õ¥©¥ë¥ÀÇÛ²¼¤Ë¥¹¥é¥Ã¥·¥å¤¬´Ş¤Ş¤ì¤Æ¤¤¤¿¾ì¹ç¤Ï
-         * ÂĞ±ş¤·¤Æ¤¤¤Ê¤¤¤Î¤Ç¥¨¥é¡¼¤òÊÖ¤¹ */
+        /* ä¸‡ä¸€ãƒ•ã‚©ãƒ«ãƒ€é…ä¸‹ã«ã‚¹ãƒ©ãƒƒã‚·ãƒ¥ãŒå«ã¾ã‚Œã¦ã„ãŸå ´åˆã¯
+         * å¯¾å¿œã—ã¦ã„ãªã„ã®ã§ã‚¨ãƒ©ãƒ¼ã‚’è¿”ã™ */
         return R_ERROR;
     }
 
-    /* ¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë */
+    /* ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹ */
     while ((dot = strchr(subtop, DOT)) != NULL) {
-        /* ¥É¥Ã¥È¤ò\0¤Ë°ì»şÅª¤ËÃÖ¤­´¹¤¨¤Æ¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+        /* ãƒ‰ãƒƒãƒˆã‚’\0ã«ä¸€æ™‚çš„ã«ç½®ãæ›ãˆã¦ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
         *dot = '\0';
         md_makemaildir(s_id, targetdir);
         *dot = DOT;
         subtop = dot + 1;
     }
 
-    /* ºÇ½ªÅª¤Ê¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+    /* æœ€çµ‚çš„ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
     md_makemaildir(s_id, targetdir);
 
     return R_SUCCESS;
@@ -1662,22 +1652,22 @@ md_makemaildir_tree(unsigned int s_id, char *targetdir, int basedir_len)
 /*
  * md_makemaildir
  *
- * »ØÄê¤µ¤ì¤¿¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤·¡¢¤½¤ÎÇÛ²¼¤Ë
+ * æŒ‡å®šã•ã‚ŒãŸãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã—ã€ãã®é…ä¸‹ã«
  *   /new, /cur, /tmp
- * ¤Î3¤Ä¤Î¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë
- * ¢¨¥Ç¥£¥ì¥¯¥È¥ê¤ÎºîÀ®¤Ë¼ºÇÔ¤·¤¿¾ì¹ç¤â¥¨¥é¡¼¤È¤·¤Ê¤¤
+ * ã®3ã¤ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹
+ * â€»ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ä½œæˆã«å¤±æ•—ã—ãŸå ´åˆã‚‚ã‚¨ãƒ©ãƒ¼ã¨ã—ãªã„
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      char *                  ¥Ç¥£¥ì¥¯¥È¥êÌ¾
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      char *                  ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 md_makemaildir(unsigned int s_id, char *dirname)
 {
-    /* ºîÀ®¤¹¤ë¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷ */
+    /* ä½œæˆã™ã‚‹ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ */
     char *subdirs[] = {
                        "/new",
                        "/cur",
@@ -1689,12 +1679,12 @@ md_makemaildir(unsigned int s_id, char *dirname)
     char *tmp;
     int ret, i;
 
-    /* ¥Ù¡¼¥¹¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+    /* ãƒ™ãƒ¼ã‚¹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
     md_mkdir(s_id, dirname);
 
     strset_init(&createpath);
     for (i = 0; subdirs[i] != NULL; i++) {
-        /* MailDir¤ò¥³¥Ô¡¼ */
+        /* MailDirã‚’ã‚³ãƒ”ãƒ¼ */
         tmp = strdup(dirname);
         if (tmp == NULL) {
             SYSLOGERROR(ERR_S_MALLOC, s_id, "md_makemaildir", E_STR);
@@ -1702,14 +1692,14 @@ md_makemaildir(unsigned int s_id, char *dirname)
         }
         strset_set(&createpath, tmp);
 
-        /* ¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥êÌ¾ (.../new, .../cur, .../tmp) ¤òÉÕ²Ã */
+        /* ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå (.../new, .../cur, .../tmp) ã‚’ä»˜åŠ  */
         ret = strset_catstr(&createpath, subdirs[i]);
         if (ret == -1) {
             SYSLOGERROR(ERR_S_LIBFUNC, s_id, "strset_catstr", E_STR);
             exit(EXIT_MILTER);
         }
          
-        /* ¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+        /* ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
         md_mkdir(s_id, createpath.ss_str);
 
         strset_free(&createpath);
@@ -1721,15 +1711,15 @@ md_makemaildir(unsigned int s_id, char *dirname)
 /*
  * md_mkdir
  *
- * »ØÄê¤µ¤ì¤¿¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë
+ * æŒ‡å®šã•ã‚ŒãŸãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      char *                  ¥Ç¥£¥ì¥¯¥È¥êÌ¾
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      char *                  ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï (´û¤Ë¥Ç¥£¥ì¥¯¥È¥ê¤¬Â¸ºß¤·¤¿¾ì¹ç¤â)
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸ (æ—¢ã«ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãŒå­˜åœ¨ã—ãŸå ´åˆã‚‚)
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_mkdir(unsigned int s_id, char *dirname)
@@ -1746,7 +1736,7 @@ md_mkdir(unsigned int s_id, char *dirname)
             return R_ERROR;
         }
 
-        /* ºîÀ®¤·¤¿ */
+        /* ä½œæˆã—ãŸ */
         return R_SUCCESS;
 
     } else {
@@ -1755,35 +1745,35 @@ md_mkdir(unsigned int s_id, char *dirname)
             return R_ERROR;
         }
 
-        /* ´û¤ËÂ¸ºß¤·¤¿ */
+        /* æ—¢ã«å­˜åœ¨ã—ãŸ */
         return R_SUCCESS;
     }
 
-    /* Ç°¤Î¤¿¤á */
+    /* å¿µã®ãŸã‚ */
     return R_SUCCESS;
 }
 
 /*
  * md_makesavefilename
  *
- * ÊİÂ¸¥Õ¥¡¥¤¥ëÌ¾ ("/new/.....") ¤òºîÀ®¤¹¤ë
+ * ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«å ("/new/.....") ã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct gzip *           gzip¹½Â¤ÂÎ
- *      char *                  ¥Õ¥¡¥¤¥ëÌ¾¤Î³ÊÇ¼Àè
- *      config *                ÀßÄêÊÑ¿ô
- *      int                     ³ÊÇ¼Àè¤ÎÄ¹¤µ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct gzip *           gzipæ§‹é€ ä½“
+ *      char *                  ãƒ•ã‚¡ã‚¤ãƒ«åã®æ ¼ç´å…ˆ
+ *      config *                è¨­å®šå¤‰æ•°
+ *      int                     æ ¼ç´å…ˆã®é•·ã•
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_makesavefilename(struct gzip *md, char *filename,
                     int filename_len, struct config * config, struct stat stbuf)
 {
-    /* ¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹ (/new/....) ¤òºîÀ®¤¹¤ë */
+    /* ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ (/new/....) ã‚’ä½œæˆã™ã‚‹ */
     snprintf(filename, filename_len, SAVEZIPFILENAME,
                 md->md_recvtime, stbuf.st_ino, config->cf_msyhostname);
 
@@ -1794,17 +1784,17 @@ md_makesavefilename(struct gzip *md, char *filename,
 /*
  * md_makesavefile
  *
- * °ìÍ÷¤Ë´Ş¤Ş¤ì¤ë¥Ç¥£¥ì¥¯¥È¥êÇÛ²¼¤Ë¡¢ÊİÂ¸¥Õ¥¡¥¤¥ë¤ò¥ê¥ó¥¯¤¹¤ë
- * ¢¨¥ê¥ó¥¯¤Ë¼ºÇÔ¤·¤¿¾ì¹ç¤Ï¥¨¥é¡¼¤È¤·¤Ê¤¤
+ * ä¸€è¦§ã«å«ã¾ã‚Œã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªé…ä¸‹ã«ã€ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒªãƒ³ã‚¯ã™ã‚‹
+ * â€»ãƒªãƒ³ã‚¯ã«å¤±æ•—ã—ãŸå ´åˆã¯ã‚¨ãƒ©ãƒ¼ã¨ã—ãªã„
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct gzip *       gzip¹½Â¤ÂÎ
- *      char *                  ÊİÂ¸¥Õ¥¡¥¤¥ëÌ¾
- *      struct strlist *        ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct gzip *       gzipæ§‹é€ ä½“
+ *      char *                  ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«å
+ *      struct strlist *        ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤· (¥ê¥ó¥¯¤Ë¼ºÇÔ¤·¤¿¾ì¹ç¤â)
+ * è¿”ã‚Šå€¤
+ *      ãªã— (ãƒªãƒ³ã‚¯ã«å¤±æ•—ã—ãŸå ´åˆã‚‚)
  */
 static void
 md_makesavefile(unsigned int s_id, struct gzip *md,
@@ -1816,7 +1806,7 @@ md_makesavefile(unsigned int s_id, struct gzip *md,
 
     p = dirlist;
     while (p != NULL) {
-        /* ¥ê¥ó¥¯Àè¤Î¥Õ¥¡¥¤¥ë¤Î¥Õ¥ë¥Ñ¥¹¤òºîÀ®¤¹¤ë */
+        /* ãƒªãƒ³ã‚¯å…ˆã®ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ãƒ«ãƒ‘ã‚¹ã‚’ä½œæˆã™ã‚‹ */
         strset_init(&path);
         if (strset_catstr(&path, p->ss_data.ss_str) == -1 ||
             strset_catstr(&path, filename) == -1) {
@@ -1824,10 +1814,10 @@ md_makesavefile(unsigned int s_id, struct gzip *md,
             exit(EXIT_MILTER);
         }
 
-        /* ¥Ï¡¼¥É¥ê¥ó¥¯¤òºîÀ®¤¹¤ë */
+        /* ãƒãƒ¼ãƒ‰ãƒªãƒ³ã‚¯ã‚’ä½œæˆã™ã‚‹ */
         ret = link(md->md_tempfilepath, path.ss_str);
         if (ret < 0) {
-            /* ¼ºÇÔ¤·¤¿¾ì¹ç¤Ï¥í¥°½ĞÎÏ¤Î¤ß */
+            /* å¤±æ•—ã—ãŸå ´åˆã¯ãƒ­ã‚°å‡ºåŠ›ã®ã¿ */
             SYSLOGERROR(ERR_S_LINK, s_id, p->ss_data.ss_str, E_STR);
         }
         strset_free(&path);
@@ -1840,15 +1830,15 @@ md_makesavefile(unsigned int s_id, struct gzip *md,
 /*
  * md_list2str
  *
- * strlist·Á¼°¤Î°ìÍ÷¤«¤é¥«¥ó¥Ş¶èÀÚ¤ê¤ÎÊ¸»úÎó¤òºîÀ®¤¹¤ë
+ * strlistå½¢å¼ã®ä¸€è¦§ã‹ã‚‰ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Šã®æ–‡å­—åˆ—ã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct strset *         ³ÊÇ¼Àè¤Îstrset¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
- *      struct strlist *        °ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct strset *         æ ¼ç´å…ˆã®strsetæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
+ *      struct strlist *        ä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 md_list2str(unsigned int s_id, struct strset *target, struct strlist *list_h)
@@ -1863,7 +1853,7 @@ md_list2str(unsigned int s_id, struct strset *target, struct strlist *list_h)
     p = list_h;
     while (p != NULL) {
         if (p != list_h) {
-            /* 2¤ÄÌÜ°Ê¹ß¤Ï ", " ¤Ç·Ò¤²¤ë */
+            /* 2ã¤ç›®ä»¥é™ã¯ ", " ã§ç¹‹ã’ã‚‹ */
             ret = strset_catstr(&str, ", ");
             if (ret < 0) {
                 SYSLOGERROR(ERR_S_LIBFUNC, s_id, "strset_catstr", E_STR);
@@ -1886,13 +1876,13 @@ md_list2str(unsigned int s_id, struct strset *target, struct strlist *list_h)
 /*
  * md_free
  *
- * gzip¹½Â¤ÂÎ¤ò²òÊü¤¹¤ë
+ * gzipæ§‹é€ ä½“ã‚’è§£æ”¾ã™ã‚‹
  *
- * °ú¿ô
- *      struct gzip *       gzip¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      struct gzip *       gzipæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 md_free(struct gzip *md)

@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: messasy.h,v $
- * $Revision: 1.20 $
- * $Date: 2009/10/29 09:19:45 $
  */
 
 #ifndef _MESSASY_H_
@@ -33,9 +23,6 @@
 #include <libdgconfig.h>
 
 #include "msy_config.h"
-
-/* ¥½¥Õ¥È¥¦¥§¥¢¥Ğ¡¼¥¸¥ç¥ó */
-#define VERSION              "3.02"
 
 #define IDENT   "messasy"
 
@@ -57,41 +44,41 @@
 #define TRUE            1
 #define FALSE           0
 
-/* ¥°¥í¡¼¥Ğ¥ëÊÑ¿ô */
+/* ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•° */
 #define MAX_HOSTNAME_LEN 255
 extern char msy_hostname[MAX_HOSTNAME_LEN + 1];
 
-/* ¥×¥é¥¤¥Ù¡¼¥È¹½Â¤ÂÎ */
+/* ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæ§‹é€ ä½“ */
 struct mlfiPriv {
-    unsigned int        mlfi_sid;               /* ¥»¥Ã¥·¥ç¥óID */
-    time_t              mlfi_recvtime;          /* ¼õ¿®Æü»ş */
-    _SOCK_ADDR          mlfi_clientaddr;        /* ¥¯¥é¥¤¥¢¥ó¥È¥¢¥É¥ì¥¹ */
+    unsigned int        mlfi_sid;               /* ã‚»ãƒƒã‚·ãƒ§ãƒ³ID */
+    time_t              mlfi_recvtime;          /* å—ä¿¡æ—¥æ™‚ */
+    _SOCK_ADDR          mlfi_clientaddr;        /* ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹ */
     struct strset       mlfi_envfrom;           /* From */
 
-    struct strlist      *mlfi_rcptto_h;         /* To°ìÍ÷¤ÎÀèÆ¬ */
-    struct strlist      *mlfi_rcptto_t;         /* To°ìÍ÷¤ÎËöÈø */
+    struct strlist      *mlfi_rcptto_h;         /* Toä¸€è¦§ã®å…ˆé ­ */
+    struct strlist      *mlfi_rcptto_t;         /* Toä¸€è¦§ã®æœ«å°¾ */
 
-    struct strlist      *mlfi_addrmatched_h;    /* ÊİÂ¸ÂĞ¾İ¥¢¥É¥ì¥¹°ìÍ÷¤ÎÀèÆ¬ */
-    struct strlist      *mlfi_addrmatched_t;    /* ÊİÂ¸ÂĞ¾İ¥¢¥É¥ì¥¹°ìÍ÷¤ÎËöÈø */
+    struct strlist      *mlfi_addrmatched_h;    /* ä¿å­˜å¯¾è±¡ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®å…ˆé ­ */
+    struct strlist      *mlfi_addrmatched_t;    /* ä¿å­˜å¯¾è±¡ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®æœ«å°¾ */
 
-    struct config       *config;                /* ÀßÄê¥Õ¥¡¥¤¥ë */
-    struct extrapriv    *mlfi_extrapriv;        /* ¥â¥¸¥å¡¼¥ëÎÎ°è¤Ø¤Î¥İ¥¤¥ó¥¿ */
+    struct config       *config;                /* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ« */
+    struct extrapriv    *mlfi_extrapriv;        /* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«é ˜åŸŸã¸ã®ãƒã‚¤ãƒ³ã‚¿ */
 
 #ifdef OLD_CODE
     struct maildrop     *md;                    /* maildrop */
 #else    /* OLD_CODE */
-    int                 header_existence;      /* header1¹ÔÌÜ¤«¤Î¥Õ¥é¥° */
+    int                 header_existence;      /* header1è¡Œç›®ã‹ã®ãƒ•ãƒ©ã‚° */
 #endif   /* OLD_CODE */
 };
 
-/* ¥â¥¸¥å¡¼¥ëÌ¾¤È¤½¤Î¥×¥é¥¤¥Ù¡¼¥Èbuf */
+/* ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«åã¨ãã®ãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆbuf */
 struct extrapriv {
     struct extrapriv  *expv_next;
     char              *expv_modulename;
     void              *expv_modulepriv;
 };
 
-/* ¥³¡¼¥ë¥Ğ¥Ã¥¯´Ø¿ô */
+/* ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•° */
 sfsistat mlfi_connect(SMFICTX *, char *, _SOCK_ADDR *);
 sfsistat mlfi_envfrom(SMFICTX *, char **);
 sfsistat mlfi_envrcpt(SMFICTX *, char **);
@@ -102,8 +89,9 @@ sfsistat mlfi_eom(SMFICTX *);
 sfsistat mlfi_abort(SMFICTX *);
 sfsistat mlfi_close(SMFICTX *);
 
-/* ¤½¤ÎÂ¾´Ø¿ô */
+/* ãã®ä»–é–¢æ•° */
 sfsistat mlfi_cleanup(SMFICTX *);
+sfsistat eom_cleanup(SMFICTX *);
 sfsistat mlfi_freepriv(SMFICTX *);
 
 #endif // _MESSASY_H_

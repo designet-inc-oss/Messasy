@@ -15,32 +15,32 @@
 #include <libdgstr.h>
 #include "libdgmail.h"
 
-/*--- static´Ø¿ôÀë¸À ---*/
+/*--- staticé–¢æ•°å®£è¨€ ---*/
 
 static int euc_str_divide(char *, char *, int);
 static int encode_mime_one_line(struct strset *, char *, int);
 
-/*--- ³°ÉôÊÑ¿ô ---*/
+/*--- å¤–éƒ¨å¤‰æ•° ---*/
 
 /* Basic BASE64 conversion table */
 char base64[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-/*--- ´Ø¿ô ---*/
+/*--- é–¢æ•° ---*/
 
 /*
  * get_field
  *
- * µ¡Ç½
- *	¥Ø¥Ã¥À¤ÎÃÍ¤ò¼èÆÀ¤¹¤ë
+ * æ©Ÿèƒ½
+ *	ãƒ˜ãƒƒãƒ€ã®å€¤ã‚’å–å¾—ã™ã‚‹
  *
- * °ú¿ô
- *	char  *buftop	¥Õ¥£¡¼¥ë¥É¤ÎÀèÆ¬
- *	char **nadr	¼¡¤Î¥Ø¥Ã¥À¤Ø¤Î¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *	char  *buftop	ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã®å…ˆé ­
+ *	char **nadr	æ¬¡ã®ãƒ˜ãƒƒãƒ€ã¸ã®ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *	NULL		¥¢¥í¥±¡¼¥È¥¨¥é¡¼             
- *	rstr		¥Ø¥Ã¥À¤ÎÃÍ
+ * è¿”ã‚Šå€¤
+ *	NULL		ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼             
+ *	rstr		ãƒ˜ãƒƒãƒ€ã®å€¤
  */
 char *
 get_field(char *buftop, char **nadr)
@@ -93,17 +93,17 @@ get_field(char *buftop, char **nadr)
 /*
  * get_subject
  *
- * µ¡Ç½
- *	¥á¡¼¥ë¤Î¥µ¥Ö¥¸¥§¥¯¥È¤ò¼è¤ê½Ğ¤¹
+ * æ©Ÿèƒ½
+ *	ãƒ¡ãƒ¼ãƒ«ã®ã‚µãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å–ã‚Šå‡ºã™
  *
- * °ú¿ô
- *	char  *buftop	¥Õ¥£¡¼¥ë¥É¤ÎÀèÆ¬
- *	char **nadr	¼¡¤Î¥Ø¥Ã¥À¤Ø¤Î¥İ¥¤¥ó¥¿
- *	char **rstr	MIME¥Ç¥³¡¼¥É¤µ¤ì¤ëÁ°¤Î¥µ¥Ö¥¸¥§¥¯¥È¥Ø¥Ã¥À¤ÎÃÍ
+ * å¼•æ•°
+ *	char  *buftop	ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã®å…ˆé ­
+ *	char **nadr	æ¬¡ã®ãƒ˜ãƒƒãƒ€ã¸ã®ãƒã‚¤ãƒ³ã‚¿
+ *	char **rstr	MIMEãƒ‡ã‚³ãƒ¼ãƒ‰ã•ã‚Œã‚‹å‰ã®ã‚µãƒ–ã‚¸ã‚§ã‚¯ãƒˆãƒ˜ãƒƒãƒ€ã®å€¤
  *
- * ÊÖ¤êÃÍ:
- *  NULL		¥¢¥í¥±¡¼¥È¥¨¥é¡¼
- *  dstr		MIME¥Ç¥³¡¼¥É¤µ¤ì¤¿¥Ø¥Ã¥À¤ÎÃÍ
+ * è¿”ã‚Šå€¤:
+ *  NULL		ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
+ *  dstr		MIMEãƒ‡ã‚³ãƒ¼ãƒ‰ã•ã‚ŒãŸãƒ˜ãƒƒãƒ€ã®å€¤
  */
 char *
 get_subject(char *buftop, char **nadr, char **rstr)
@@ -127,15 +127,15 @@ get_subject(char *buftop, char **nadr, char **rstr)
 /*
  * decode_mime
  *
- * µ¡Ç½
- *	MIME¥Ç¥³¡¼¥É
+ * æ©Ÿèƒ½
+ *	MIMEãƒ‡ã‚³ãƒ¼ãƒ‰
  *
- * °ú¿ô
- *	char *sstr	¥¨¥ó¥³¡¼¥É¤µ¤ì¤¿Ê¸»úÎó
+ * å¼•æ•°
+ *	char *sstr	ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã•ã‚ŒãŸæ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *	NULL		¥¢¥í¥±¡¼¥È¥¨¥é¡¼
- *	retbuf_addr	MIME¥Ç¥³¡¼¥É¤µ¤ì¤¿Ê¸»úÎó
+ * è¿”ã‚Šå€¤
+ *	NULL		ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
+ *	retbuf_addr	MIMEãƒ‡ã‚³ãƒ¼ãƒ‰ã•ã‚ŒãŸæ–‡å­—åˆ—
  */
 char *
 decode_mime(char *sstr)
@@ -424,15 +424,15 @@ decode_mime(char *sstr)
 /*
  * check_7bit
  *
- * µ¡Ç½
- *	7bitÊ¸»ú¤Î¥Á¥§¥Ã¥¯
+ * æ©Ÿèƒ½
+ *	7bitæ–‡å­—ã®ãƒã‚§ãƒƒã‚¯
  *
- * °ú¿ô
- *	char *str	¥Á¥§¥Ã¥¯¤¹¤ëÊ¸»úÎó
+ * å¼•æ•°
+ *	char *str	ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ 
- *	0		8¥Ó¥Ã¥È¤ÎÊ¸»úÎó¤Ç¤Ï¤Ê¤¤
- *	1		8¥Ó¥Ã¥È¤ÎÊ¸»úÎó¤Ç¤¢¤ë
+ * è¿”ã‚Šå€¤ 
+ *	0		8ãƒ“ãƒƒãƒˆã®æ–‡å­—åˆ—ã§ã¯ãªã„
+ *	1		8ãƒ“ãƒƒãƒˆã®æ–‡å­—åˆ—ã§ã‚ã‚‹
  */
 int
 check_7bit(char *str)
@@ -451,17 +451,17 @@ check_7bit(char *str)
 /*
  * decode_qp
  *
- * µ¡Ç½
- *	quoted printable¤Î¥Ç¥³¡¼¥É
+ * æ©Ÿèƒ½
+ *	quoted printableã®ãƒ‡ã‚³ãƒ¼ãƒ‰
  *
- * °ú¿ô
- *	char  *src_buf	¥Ç¥³¡¼¥É¤·¤¿¤¤Ê¸»úÎó
- *	char **ret_buf	¥Ç¥³¡¼¥É¤µ¤ì¡¢¥¢¥í¥±¡¼¥È¤µ¤ì¤¿Ê¸»úÎó
+ * å¼•æ•°
+ *	char  *src_buf	ãƒ‡ã‚³ãƒ¼ãƒ‰ã—ãŸã„æ–‡å­—åˆ—
+ *	char **ret_buf	ãƒ‡ã‚³ãƒ¼ãƒ‰ã•ã‚Œã€ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã•ã‚ŒãŸæ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *	 0		À®¸ù
- *	>0		¥Ç¥³¡¼¥É¥¨¥é¡¼
- *	<0		¥á¥â¥ê¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *	 0		æˆåŠŸ
+ *	>0		ãƒ‡ã‚³ãƒ¼ãƒ‰ã‚¨ãƒ©ãƒ¼
+ *	<0		ãƒ¡ãƒ¢ãƒªã‚¨ãƒ©ãƒ¼
  */
 int
 decode_qp(char *src_buf, char **ret_buf)
@@ -530,15 +530,15 @@ decode_qp(char *src_buf, char **ret_buf)
 /*
  * hex2i
  *
- * µ¡Ç½
- *	16¿Ê¿ô¤ÎÊ¸»ú¤òÀ°¿ôÃÍ¤ËÊÑ´¹¡£
+ * æ©Ÿèƒ½
+ *	16é€²æ•°ã®æ–‡å­—ã‚’æ•´æ•°å€¤ã«å¤‰æ›ã€‚
  *
- * °ú¿ô
- *	int c	ÊÑ´¹¤¹¤ë16¿Ê¿ô
+ * å¼•æ•°
+ *	int c	å¤‰æ›ã™ã‚‹16é€²æ•°
  *
- * ÊÖ¤êÃÍ
- *	-1°Ê³°	ÊÑ´¹¸å¤ÎÀ°¿ôÃÍ
- *	-1	¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *	-1ä»¥å¤–	å¤‰æ›å¾Œã®æ•´æ•°å€¤
+ *	-1	ã‚¨ãƒ©ãƒ¼
  */
 int
 hex2i(int c)
@@ -561,17 +561,17 @@ hex2i(int c)
 /*
  * decode_b64
  *
- * µ¡Ç½
- *	Base64¤Î¥Ç¥³¡¼¥É
+ * æ©Ÿèƒ½
+ *	Base64ã®ãƒ‡ã‚³ãƒ¼ãƒ‰
  *
- * °ú¿ô
- *	char  *src_buf	¥Ç¥³¡¼¥É¤·¤¿¤¤Ê¸»úÎó
- *	char **ret_buf	¥Ç¥³¡¼¥É¤µ¤ì¡¢¥¢¥í¥±¡¼¥È¤µ¤ì¤¿Ê¸»úÎó
+ * å¼•æ•°
+ *	char  *src_buf	ãƒ‡ã‚³ãƒ¼ãƒ‰ã—ãŸã„æ–‡å­—åˆ—
+ *	char **ret_buf	ãƒ‡ã‚³ãƒ¼ãƒ‰ã•ã‚Œã€ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã•ã‚ŒãŸæ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *	 0		À®¸ù
- *	>0		¥Ç¥³¡¼¥É¥¨¥é¡¼
- *	<0		¥á¥â¥ê¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *	 0		æˆåŠŸ
+ *	>0		ãƒ‡ã‚³ãƒ¼ãƒ‰ã‚¨ãƒ©ãƒ¼
+ *	<0		ãƒ¡ãƒ¢ãƒªã‚¨ãƒ©ãƒ¼
  */
 int
 decode_b64(char *src_buf, char **ret_buf)
@@ -620,15 +620,15 @@ decode_b64(char *src_buf, char **ret_buf)
 /*
  * encode_b64
  *
- * µ¡Ç½
- *	Base64¤Î¥¨¥ó¥³¡¼¥É
+ * æ©Ÿèƒ½
+ *	Base64ã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰
  *
- * °ú¿ô
- *	char  *str	¥¨¥ó¥³¡¼¥É¤·¤¿¤¤Ê¸»úÎó
+ * å¼•æ•°
+ *	char  *str	ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã—ãŸã„æ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *	bstr		¥¨¥ó¥³¡¼¥É¤·¤¿Ê¸»úÎó
- *	NULL		¥¢¥í¥±¡¼¥È¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *	bstr		ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã—ãŸæ–‡å­—åˆ—
+ *	NULL		ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
  */
 char *
 encode_b64(char *str)
@@ -691,15 +691,15 @@ encode_b64(char *str)
 /*
  * b64char2i
  *
- * µ¡Ç½
- *	Base64¥¨¥ó¥³¡¼¥ÉÊ¸»ú¤òÃÍ¤ËÊÑ´¹
+ * æ©Ÿèƒ½
+ *	Base64ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰æ–‡å­—ã‚’å€¤ã«å¤‰æ›
  *
- * °ú¿ô
- *	int c	ÊÑ´¹¤·¤¿¤¤Ê¸»ú 
+ * å¼•æ•°
+ *	int c	å¤‰æ›ã—ãŸã„æ–‡å­— 
  *
- * ÊÖ¤êÃÍ
- *	-1°Ê³°	ÊÑ´¹¸å¤ÎÀ°¿ôÃÍ
- *	-1	¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *	-1ä»¥å¤–	å¤‰æ›å¾Œã®æ•´æ•°å€¤
+ *	-1	ã‚¨ãƒ©ãƒ¼
  */
 int
 b64char2i(int c)
@@ -726,16 +726,16 @@ b64char2i(int c)
 /*
  * get_addrpart
  *
- * µ¡Ç½
- *	¥á¡¼¥ë¥¢¥É¥ì¥¹Éô¤Î¼èÆÀ¡£
- *	"name <address>'' ¤Ş¤¿¤Ï "address (name)'' ¤Ş¤¿¤Ï"address"¤Î·Á¼°¡£
+ * æ©Ÿèƒ½
+ *	ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹éƒ¨ã®å–å¾—ã€‚
+ *	"name <address>'' ã¾ãŸã¯ "address (name)'' ã¾ãŸã¯"address"ã®å½¢å¼ã€‚
  *
- * °ú¿ô
- *	unsigned char *str	¥á¡¼¥ë¥¢¥É¥ì¥¹´ØÏ¢¥Ø¥Ã¥À¤ÎÃÍ
+ * å¼•æ•°
+ *	unsigned char *str	ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹é–¢é€£ãƒ˜ãƒƒãƒ€ã®å€¤
  *
- * ÊÖ¤êÃÍ
- *	bstr			¥á¡¼¥ë¥¢¥É¥ì¥¹Ê¸»úÎó
- *	NULL			¥¢¥í¥±¡¼¥È¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *	bstr			ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹æ–‡å­—åˆ—
+ *	NULL			ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
  */
 char *
 get_addrpart(unsigned char *str)
@@ -969,16 +969,16 @@ get_addrpart(unsigned char *str)
 /*
  * get_from
  *
- * µ¡Ç½
- *	From¥Ø¥Ã¥À¤«¤é¥á¡¼¥ë¥¢¥É¥ì¥¹Éô¤ò¼èÆÀ¤¹¤ë
+ * æ©Ÿèƒ½
+ *	Fromãƒ˜ãƒƒãƒ€ã‹ã‚‰ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹éƒ¨ã‚’å–å¾—ã™ã‚‹
  *
- * °ú¿ô
- *	char  *buftop	¥á¡¼¥ë¥Ø¥Ã¥À¤ÎÀèÆ¬
- *	char **nadr	¼¡¤Î¥Ø¥Ã¥À¤Ø¤Î¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *	char  *buftop	ãƒ¡ãƒ¼ãƒ«ãƒ˜ãƒƒãƒ€ã®å…ˆé ­
+ *	char **nadr	æ¬¡ã®ãƒ˜ãƒƒãƒ€ã¸ã®ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *	dstr		¥á¡¼¥ë¥¢¥É¥ì¥¹Ê¸»úÎó
- *	NULL		¥¢¥í¥±¡¼¥È¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *	dstr		ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹æ–‡å­—åˆ—
+ *	NULL		ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
  */
 char *
 get_from(char *buftop, char **nadr)
@@ -1003,16 +1003,16 @@ get_from(char *buftop, char **nadr)
 /*
  * encode_mime
  *
- * µ¡Ç½
- *	EUCÊ¸»úÎó¤òJIS¤ËÊÑ´¹¤·¤¿¸åMIME¥¨¥ó¥³¡¼¥É¤¹¤ë¡£
+ * æ©Ÿèƒ½
+ *	EUCæ–‡å­—åˆ—ã‚’JISã«å¤‰æ›ã—ãŸå¾ŒMIMEã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã™ã‚‹ã€‚
  *
- * °ú¿ô
- *	char *str	ÊÑ´¹Á°¤ÎÊ¸»úÎó
- *	int   len	str¤Î'<¥á¡¼¥ë¥¢¥É¥ì¥¹>'¤ÎÄ¾Á°¤Ş¤Ç¤ÎÊ¸»ú¿ô
- *			'<¥á¡¼¥ë¥¢¥É¥ì¥¹>'¤¬¤Ê¤±¤ì¤Ğstrlen(str)
- * ÊÖ¤êÃÍ
- *	ss.ss_str	ÊÑ´¹¸å¤ÎÊ¸»úÎó
- *	NULL		¥¢¥í¥±¡¼¥È¥¨¥é¡¼
+ * å¼•æ•°
+ *	char *str	å¤‰æ›å‰ã®æ–‡å­—åˆ—
+ *	int   len	strã®'<ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹>'ã®ç›´å‰ã¾ã§ã®æ–‡å­—æ•°
+ *			'<ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹>'ãŒãªã‘ã‚Œã°strlen(str)
+ * è¿”ã‚Šå€¤
+ *	ss.ss_str	å¤‰æ›å¾Œã®æ–‡å­—åˆ—
+ *	NULL		ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
  */
 char *
 encode_mime(char *str, int len)
@@ -1027,7 +1027,7 @@ encode_mime(char *str, int len)
     iconv_t icd;
     int     error;
     int     ptr = 0;
-    /* ¹ÔÃ±°Ì¤ËÊ¬³ä¤¹¤ë¤¿¤á¤ÎÃæ´Ö¥Ğ¥Ã¥Õ¥¡ */
+    /* è¡Œå˜ä½ã«åˆ†å‰²ã™ã‚‹ãŸã‚ã®ä¸­é–“ãƒãƒƒãƒ•ã‚¡ */
     char    str_divide[ENC_STR_DIVIDE_LEN + 2];
     char   *str_divide_tmp;
     int     str_divide_len;
@@ -1052,24 +1052,24 @@ encode_mime(char *str, int len)
         return (NULL);
     }
 
-    /* ÊÑ´¹ºÑ¤ßÊ¸»ú¿ô¤¬ÊÑ´¹¤·¤¿¤¤Ê¸»ú¿ô¤è¤ê²¼¤Ê¤é¥ë¡¼¥× */
+    /* å¤‰æ›æ¸ˆã¿æ–‡å­—æ•°ãŒå¤‰æ›ã—ãŸã„æ–‡å­—æ•°ã‚ˆã‚Šä¸‹ãªã‚‰ãƒ«ãƒ¼ãƒ— */
     while (ptr < ileft) {
         op = buf;
         oleft = sizeof(buf);
 
-        /* Ê¸»úÎó¤ÎÊ¬³ä */
+        /* æ–‡å­—åˆ—ã®åˆ†å‰² */
         str_divide_len = euc_str_divide(ip + ptr, str_divide, ileft - ptr);
 
         ptr = ptr + str_divide_len;
         str_divide_tmp = str_divide;
-        /* ½ªÃ¼¤Î´Á»ú¥¢¥¦¥È½èÍı¤Î¤¿¤á\0¤ò´Ş¤àÄ¹¤µ¤ËÊÑ¹¹ */
+        /* çµ‚ç«¯ã®æ¼¢å­—ã‚¢ã‚¦ãƒˆå‡¦ç†ã®ãŸã‚\0ã‚’å«ã‚€é•·ã•ã«å¤‰æ›´ */
         str_divide_len_tmp = str_divide_len + 1;
 
-        /* EUC¤«¤éJIS¤ØÊÑ´¹ */
+        /* EUCã‹ã‚‰JISã¸å¤‰æ› */
         iconv(icd, NULL, NULL, NULL, NULL);
         ret = iconv(icd, &str_divide_tmp, &str_divide_len_tmp, &op, &oleft);
 
-        /* ¥¨¥ó¥³¡¼¥É·ë²Ì¤Î½ªÃ¼¤¬\0¤Ê¤é1¤ò°ú¤¯ */
+        /* ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰çµæœã®çµ‚ç«¯ãŒ\0ãªã‚‰1ã‚’å¼•ã */
         b64_enc_size = sizeof(buf) - oleft;
         if (buf[b64_enc_size - 1] == '\0') {
             b64_enc_size--;
@@ -1117,16 +1117,16 @@ encode_mime(char *str, int len)
 /*
  * euc_str_divide
  *
- * µ¡Ç½
- *	EUC¤ÎÊ¸»úÎó¤òÊ¬³ä¤¹¤ë´Ø¿ô
+ * æ©Ÿèƒ½
+ *	EUCã®æ–‡å­—åˆ—ã‚’åˆ†å‰²ã™ã‚‹é–¢æ•°
  *
- * °ú¿ô
- *	char *org_str	¥³¥Ô¡¼¸µ¤ÎÊ¸»úÎó
- *	char *buf	Ê¬³ä¸å¤ÎÊ¸»úÎó
- *	int   rest_len	¸å²¿Ê¸»úÊÑ´¹¤¹¤ë¤«¤Î¿ô
+ * å¼•æ•°
+ *	char *org_str	ã‚³ãƒ”ãƒ¼å…ƒã®æ–‡å­—åˆ—
+ *	char *buf	åˆ†å‰²å¾Œã®æ–‡å­—åˆ—
+ *	int   rest_len	å¾Œä½•æ–‡å­—å¤‰æ›ã™ã‚‹ã‹ã®æ•°
  *
- * ÊÖ¤êÃÍ
- *	ptr		¥³¥Ô¡¼¤·¤¿Ê¸»ú¿ô
+ * è¿”ã‚Šå€¤
+ *	ptr		ã‚³ãƒ”ãƒ¼ã—ãŸæ–‡å­—æ•°
  */
 static int
 euc_str_divide(char *org_str, char *buf, int rest_len)
@@ -1139,7 +1139,7 @@ euc_str_divide(char *org_str, char *buf, int rest_len)
             break;
         }
 
-        /* Á´³ÑÊ¸»ú¤Ê¤é¤Ğ */
+        /* å…¨è§’æ–‡å­—ãªã‚‰ã° */
         if (org_str[ptr] & 0x80) {
 
             buf[ptr] = org_str[ptr];
@@ -1148,7 +1148,7 @@ euc_str_divide(char *org_str, char *buf, int rest_len)
             ptr += 2;
 
         } else {
-            /* AsciiÊ¸»ú¤Ê¤é¤Ğ */
+            /* Asciiæ–‡å­—ãªã‚‰ã° */
             buf[ptr] = org_str[ptr];
             ptr++;
         }
@@ -1162,18 +1162,18 @@ euc_str_divide(char *org_str, char *buf, int rest_len)
 /*
  * encode_mime_one_line
  *
- * µ¡Ç½
- *	1¹ÔÊ¬¤ÎÊ¸»úÎó¤òMIME¥¨¥ó¥³¡¼¥É¤¹¤ë´Ø¿ô
+ * æ©Ÿèƒ½
+ *	1è¡Œåˆ†ã®æ–‡å­—åˆ—ã‚’MIMEã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã™ã‚‹é–¢æ•°
  *
- * °ú¿ô
- *	struct strset *ss	MIME¥¨¥ó¥³¡¼¥É¤·¤¿Ê¸»úÎó¤ò³ÊÇ¼
- *	char          *buf	MIME¥¨¥ó¥³¡¼¥É¤¹¤ëÊ¸»úÎó
- *	int            size	MIME¥¨¥ó¥³¡¼¥É¤¹¤ëÊ¸»úÎó¤ÎÄ¹¤µ
+ * å¼•æ•°
+ *	struct strset *ss	MIMEã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã—ãŸæ–‡å­—åˆ—ã‚’æ ¼ç´
+ *	char          *buf	MIMEã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã™ã‚‹æ–‡å­—åˆ—
+ *	int            size	MIMEã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã™ã‚‹æ–‡å­—åˆ—ã®é•·ã•
  *
- * ÊÖ¤êÃÍ
- *	-1	¥¢¥í¥±¡¼¥È¥¨¥é¡¼
- *	-2	ºÇÂçÊ¸»ú¿ô¥¨¥é¡¼
- *	0	Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *	-1	ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
+ *	-2	æœ€å¤§æ–‡å­—æ•°ã‚¨ãƒ©ãƒ¼
+ *	0	æ­£å¸¸
  */
 static int
 encode_mime_one_line(struct strset *ss, char *buf, int size)
@@ -1187,7 +1187,7 @@ encode_mime_one_line(struct strset *ss, char *buf, int size)
         return (-2);
     }
 
-    /* ·ÑÂ³¹Ô¤Î¾ì¹ç */
+    /* ç¶™ç¶šè¡Œã®å ´åˆ */
     if (ss->ss_len > 0) {
         ret = strset_catnstr(ss, "\n\t", 2);
         if (ret < 0) {
@@ -1228,16 +1228,16 @@ encode_mime_one_line(struct strset *ss, char *buf, int size)
 /*
  * get_to
  *
- * µ¡Ç½
- *	To¥Ø¥Ã¥À¤«¤é¥á¡¼¥ë¥¢¥É¥ì¥¹Éô¤ò2¼¡¸µÇÛÎó¤Ë³ÊÇ¼¤¹¤ë
+ * æ©Ÿèƒ½
+ *	Toãƒ˜ãƒƒãƒ€ã‹ã‚‰ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹éƒ¨ã‚’2æ¬¡å…ƒé…åˆ—ã«æ ¼ç´ã™ã‚‹
  *
- * °ú¿ô
- *      char   *buftop		¥Õ¥£¡¼¥ë¥É¤ÎÀèÆ¬¡ÊTo:¤Î¼¡¤ÎÊ¸»ú¤«¤é¡Ë
- *      char  **nadr		¼¡¤Î¥Ø¥Ã¥À¤Ø¤Î¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      char   *buftop		ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã®å…ˆé ­ï¼ˆTo:ã®æ¬¡ã®æ–‡å­—ã‹ã‚‰ï¼‰
+ *      char  **nadr		æ¬¡ã®ãƒ˜ãƒƒãƒ€ã¸ã®ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ:
- *	NULL			¥¢¥í¥±¡¼¥È¥¨¥é¡¼
- *	**addr_array		¥á¡¼¥ë¥¢¥É¥ì¥¹Ê¸»úÎó(Æó¼¡¸µÇÛÎó)(»²¾ÈÊÑ¿ô)
+ * è¿”ã‚Šå€¤:
+ *	NULL			ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
+ *	**addr_array		ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹æ–‡å­—åˆ—(äºŒæ¬¡å…ƒé…åˆ—)(å‚ç…§å¤‰æ•°)
  */
 char ** 
 get_to(char *buftop, char **nadr)
@@ -1247,13 +1247,13 @@ get_to(char *buftop, char **nadr)
     char  **addr_array = NULL;
     int     ret;
 
-    /* ÀèÆ¬¤Ë¤¢¤ë¥Ø¥Ã¥À¤ÎÃÍ¤ò¼èÆÀ */
+    /* å…ˆé ­ã«ã‚ã‚‹ãƒ˜ãƒƒãƒ€ã®å€¤ã‚’å–å¾— */
     rstr = get_field(buftop, nadr);
     if (rstr == NULL) {
         return NULL;
     }
 
-    // ¥«¥ó¥Ş¤ÇÊ¬³ä
+    // ã‚«ãƒ³ãƒã§åˆ†å‰²
     ret = divide_address_list(rstr, &addr_array);
     free(rstr);
     if (ret != 0) {
@@ -1266,17 +1266,17 @@ get_to(char *buftop, char **nadr)
 /*
  * divide_address_list
  *
- * µ¡Ç½
- *	To¥Ø¥Ã¥ÀÅù¤ÎÃÍ¤ò¥«¥ó¥Ş¤ÇÊ¬³ä
+ * æ©Ÿèƒ½
+ *	Toãƒ˜ãƒƒãƒ€ç­‰ã®å€¤ã‚’ã‚«ãƒ³ãƒã§åˆ†å‰²
  *
- * °ú¿ô
- *	char   *str		¥Õ¥£¡¼¥ë¥É¤ÎÀèÆ¬¡ÊTo:Åù¤Î¼¡¤ÎÊ¸»ú¤«¤é¡Ë
- *	char ***addr_array	To¥Ø¥Ã¥ÀÅù¤ÎÃÍ¤ò¥«¥ó¥Ş¤ÇÊ¬³ä¸å¤ÎÃÍ
- *				 (Æó¼¡¸µÇÛÎó)(»²¾ÈÊÑ¿ô)
+ * å¼•æ•°
+ *	char   *str		ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã®å…ˆé ­ï¼ˆTo:ç­‰ã®æ¬¡ã®æ–‡å­—ã‹ã‚‰ï¼‰
+ *	char ***addr_array	Toãƒ˜ãƒƒãƒ€ç­‰ã®å€¤ã‚’ã‚«ãƒ³ãƒã§åˆ†å‰²å¾Œã®å€¤
+ *				 (äºŒæ¬¡å…ƒé…åˆ—)(å‚ç…§å¤‰æ•°)
  *
- * ÊÖ¤êÃÍ:
- *	-1			¥¢¥í¥±¡¼¥È¥¨¥é¡¼
- *	 0			Àµ¾ï
+ * è¿”ã‚Šå€¤:
+ *	-1			ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼
+ *	 0			æ­£å¸¸
  */
 int
 divide_address_list(char *str, char ***addr_array)
@@ -1292,43 +1292,43 @@ divide_address_list(char *str, char ***addr_array)
     int mode;
     int to_array_num;
 
-    // ¥¢¥É¥ì¥¹1¸Ä+NULL¤ÎÊ¬¥¢¥í¥±¡¼¥È
+    // ã‚¢ãƒ‰ãƒ¬ã‚¹1å€‹+NULLã®åˆ†ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆ
     to_array = (char **)malloc(sizeof(char **) * 2);
     if (to_array == NULL) {
         return -1;
     }
 
-    /* ¥«¥ó¥Ş¤¬¤¢¤ë¾ì¹ç¤Ï½ñ¼°¥Á¥§¥Ã¥¯ */
-    *to_array = NULL;         // 2¼¡¸µÇÛÎó¤ËNULL¤òÂåÆş
-    *(to_array + 1) = NULL;         // 2¼¡¸µÇÛÎó¤ÎºÇ¸å¤ËNULL¤òÂåÆş
-    to_array_num = 1;         // 2¼¡¸µÇÛÎó¤ÎÇÛÎó¤Î¸Ä¿ô
-    to_array_addr = to_array; // 2¼¡¸µÇÛÎó¤Ëaddress¤òÂåÆş¤¹¤ë¾ì½ê¤ò¼¨¤¹¥İ¥¤¥ó¥¿
-    mode = MODE_N;            // ¥Î¡¼¥Ş¥ë¥â¡¼¥É("¤È\¤È,°Ê³°)
+    /* ã‚«ãƒ³ãƒãŒã‚ã‚‹å ´åˆã¯æ›¸å¼ãƒã‚§ãƒƒã‚¯ */
+    *to_array = NULL;         // 2æ¬¡å…ƒé…åˆ—ã«NULLã‚’ä»£å…¥
+    *(to_array + 1) = NULL;         // 2æ¬¡å…ƒé…åˆ—ã®æœ€å¾Œã«NULLã‚’ä»£å…¥
+    to_array_num = 1;         // 2æ¬¡å…ƒé…åˆ—ã®é…åˆ—ã®å€‹æ•°
+    to_array_addr = to_array; // 2æ¬¡å…ƒé…åˆ—ã«addressã‚’ä»£å…¥ã™ã‚‹å ´æ‰€ã‚’ç¤ºã™ãƒã‚¤ãƒ³ã‚¿
+    mode = MODE_N;            // ãƒãƒ¼ãƒãƒ«ãƒ¢ãƒ¼ãƒ‰("ã¨\ã¨,ä»¥å¤–)
     for (to_ptr = to_start = str; *to_ptr != '\0'; to_ptr++) {
 
         switch (*to_ptr) {
-            /* display-name¤ò¼¨¤¹"¤Î¾ì¹ç */
+            /* display-nameã‚’ç¤ºã™"ã®å ´åˆ */
             case '"':
             switch (mode) {
-                case MODE_N:       // ""Æâ¤Ç¤Ê¤¤¾ì¹ç
+                case MODE_N:       // ""å†…ã§ãªã„å ´åˆ
                 mode = MODE_D;
                 break; 
 
-                case MODE_Q:       // ""Æâ¤Ç¤Ê¤¯Ä¾Á°¤¬\¤Î¾ì¹ç
+                case MODE_Q:       // ""å†…ã§ãªãç›´å‰ãŒ\ã®å ´åˆ
                 mode = MODE_N;
                 break; 
 
-                case MODE_D:       // ""Æâ¤Î¾ì¹ç
+                case MODE_D:       // ""å†…ã®å ´åˆ
                 mode = MODE_N;
                 break;
 
-                default:           // MODE_DQ(""Æâ¤ÇÄ¾Á°¤¬\¤Î¾ì¹ç)
+                default:           // MODE_DQ(""å†…ã§ç›´å‰ãŒ\ã®å ´åˆ)
                 mode = MODE_D;
                 break; 
             }
             break;
 
-            /* ¥¯¥©¡¼¥ÈÊ¸»ú¤Î¾ì¹ç */
+            /* ã‚¯ã‚©ãƒ¼ãƒˆæ–‡å­—ã®å ´åˆ */
             case '\\':
             switch (mode) {
                 case MODE_N:
@@ -1349,18 +1349,18 @@ divide_address_list(char *str, char ***addr_array)
             }
             break;
 
-            /* ¥«¥ó¥Ş¤Î¾ì¹ç */
+            /* ã‚«ãƒ³ãƒã®å ´åˆ */
             case ',':
             switch (mode) {
                 case MODE_N:
-                /* ¥¢¥É¥ì¥¹³ÊÇ¼ */
-                *to_ptr = '\0';   // \0¤ÇÄÙ¤¹    
+                /* ã‚¢ãƒ‰ãƒ¬ã‚¹æ ¼ç´ */
+                *to_ptr = '\0';   // \0ã§æ½°ã™    
 
-                // ¥¢¥É¥ì¥¹¤Î¤ß¤òÈ´¤­½Ğ¤¹
+                // ã‚¢ãƒ‰ãƒ¬ã‚¹ã®ã¿ã‚’æŠœãå‡ºã™
                 *to_array_addr = get_addrpart(to_start); 
                 if (*to_array_addr == NULL) {
-                    /* ¥¢¥í¥±¡¼¥È¥¨¥é¡¼ */
-                    // ¥á¥â¥ê³«Êü
+                    /* ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼ */
+                    // ãƒ¡ãƒ¢ãƒªé–‹æ”¾
                     for (to_array_move = to_array; 
                                *to_array_move != NULL; to_array_move++) {
                         free(*to_array_move);
@@ -1369,15 +1369,15 @@ divide_address_list(char *str, char ***addr_array)
                     return -1;
                 }
 
-                // ¥«¥ó¥Ş(\0)¤Î¼¡¤«¤é¤ò³«»Ï¤È¤¹¤ë
+                // ã‚«ãƒ³ãƒ(\0)ã®æ¬¡ã‹ã‚‰ã‚’é–‹å§‹ã¨ã™ã‚‹
                 to_start = to_ptr + 1;
 
-                // ¿·ÇÛÎó¤ÎºîÀ®(¼¡¤Î¥¢¥É¥ì¥¹¤ÈNULL¤ÎÊ¬¤Ş¤Ç¥¢¥í¥±¡¼¥È)
+                // æ–°é…åˆ—ã®ä½œæˆ(æ¬¡ã®ã‚¢ãƒ‰ãƒ¬ã‚¹ã¨NULLã®åˆ†ã¾ã§ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆ)
                 to_array_tmp = (char **)malloc(sizeof(char **) 
                                                          * (to_array_num + 2));
                 if (to_array_tmp == NULL) {
-                    /* ¥¢¥í¥±¡¼¥È¥¨¥é¡¼ */
-                    // ¥á¥â¥ê³«Êü
+                    /* ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼ */
+                    // ãƒ¡ãƒ¢ãƒªé–‹æ”¾
                     for (to_array_move = to_array;
                                *to_array_move != NULL; to_array_move++) {
                         free(*to_array_move);
@@ -1386,29 +1386,29 @@ divide_address_list(char *str, char ***addr_array)
                     return -1;
                 }
 
-                /* ÇÛÎó¤Îºî¤êÄ¾¤· */
-                to_array_move = to_array;          // µìÇÛÎó¤Î¥İ¥¤¥ó¥¿
-                to_array_tmp_move = to_array_tmp;  // ¿·ÇÛÎó¤Î¥İ¥¤¥ó¥¿
+                /* é…åˆ—ã®ä½œã‚Šç›´ã— */
+                to_array_move = to_array;          // æ—§é…åˆ—ã®ãƒã‚¤ãƒ³ã‚¿
+                to_array_tmp_move = to_array_tmp;  // æ–°é…åˆ—ã®ãƒã‚¤ãƒ³ã‚¿
                 while (*to_array_move != NULL) {
                     *to_array_tmp_move = *to_array_move;
                     to_array_move++;
                     to_array_tmp_move++;
                 }
 
-                // µìÇÛÎó³«Êü
+                // æ—§é…åˆ—é–‹æ”¾
                 free(to_array);
     
-                // ¿·ÇÛÎó¤Ø°Ü¹Ô
+                // æ–°é…åˆ—ã¸ç§»è¡Œ
                 to_array = to_array_tmp;
                 to_array_addr = to_array_tmp_move;
 
-                // ÇÛÎó¤ÎºÇ¸å¤ËNULL¤òÂåÆş
+                // é…åˆ—ã®æœ€å¾Œã«NULLã‚’ä»£å…¥
                 *(to_array_addr + 1) = NULL;
 
-                // ÇÛÎó¤Î¿ô¤ò¥¤¥ó¥¯¥ê¥á¥ó¥È
+                // é…åˆ—ã®æ•°ã‚’ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆ
                 to_array_num++;
 
-                // modeÊÑ¹¹¤»¤º
+                // modeå¤‰æ›´ã›ãš
                 break;
 
                 case MODE_Q:
@@ -1416,7 +1416,7 @@ divide_address_list(char *str, char ***addr_array)
                 break;
 
                 case MODE_D:
-                // modeÊÑ¹¹¤»¤º
+                // modeå¤‰æ›´ã›ãš
                 break;
 
                 default:           // MODE_DQ
@@ -1424,11 +1424,11 @@ divide_address_list(char *str, char ***addr_array)
                 break;
             }
 
-            /* ¾åµ­°Ê³°¤Î¾ì¹ç */
+            /* ä¸Šè¨˜ä»¥å¤–ã®å ´åˆ */
             default:
             switch (mode) {
                 case MODE_N:
-                // modeÊÑ¹¹¤»¤º
+                // modeå¤‰æ›´ã›ãš
                 break;
 
                 case MODE_Q:
@@ -1436,7 +1436,7 @@ divide_address_list(char *str, char ***addr_array)
                 break;
 
                 case MODE_D:
-                // modeÊÑ¹¹¤»¤º
+                // modeå¤‰æ›´ã›ãš
                 break;
 
                 default:           // MODE_DQ
@@ -1447,11 +1447,11 @@ divide_address_list(char *str, char ***addr_array)
         }
     }
 
-    /* ºÇ¸åÈø¤Î¥¢¥É¥ì¥¹³ÊÇ¼ */
+    /* æœ€å¾Œå°¾ã®ã‚¢ãƒ‰ãƒ¬ã‚¹æ ¼ç´ */
     *to_array_addr = get_addrpart(to_start);
     if (*to_array_addr == NULL) {
-        /* ¥¢¥í¥±¡¼¥È¥¨¥é¡¼ */
-        // ¥á¥â¥ê³«Êü
+        /* ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼ */
+        // ãƒ¡ãƒ¢ãƒªé–‹æ”¾
         for (to_array_move = to_array; *to_array_move != NULL; to_array_move++){
             free(*to_array_move);
         }
@@ -1459,11 +1459,11 @@ divide_address_list(char *str, char ***addr_array)
         return -1;
     }
 
-    // NULL¤òÇÛÎó¤ÎºÇ¸å¤ËÂåÆş
+    // NULLã‚’é…åˆ—ã®æœ€å¾Œã«ä»£å…¥
     to_array_addr++;
     *to_array_addr = NULL;
 
-    // °ú¿ô¤ËÂåÆş
+    // å¼•æ•°ã«ä»£å…¥
     *addr_array = to_array;
 
     return 0;

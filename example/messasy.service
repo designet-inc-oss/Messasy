@@ -1,0 +1,13 @@
+[Unit]
+Description = Message Archive System
+
+[Service]
+ExecStart = /usr/local/bin/messasy.bin /etc/messasy/messasy.conf /etc/messasy/module.conf
+Restart = always
+Type = simple
+User = messasy
+Group = messasy
+
+[Install]
+WantedBy = multi-user.target
+

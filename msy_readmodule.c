@@ -1,3 +1,19 @@
+/*
+ * messasy
+ *
+ * Copyright (C) 2006-2024 DesigNET, INC.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -17,16 +33,16 @@ struct modulehandle *mhandle_list = NULL;
 /*
  * read_module_config
  *
- * µ¡Ç½
- *      ¥Õ¥¡¥¤¥ë¤òopen¤·¡¢moduleÀßÄê¥Õ¥¡¥¤¥ë¤òÆÉ¤ß¹þ¤à
- *      ¥¨¥é¡¼¤ÏSYSLOG(¥Þ¥¯¥í)¤Ë½ÐÎÏ¤¹¤ë¡£
+ * æ©Ÿèƒ½
+ *      ãƒ•ã‚¡ã‚¤ãƒ«ã‚’openã—ã€moduleè¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã‚€
+ *      ã‚¨ãƒ©ãƒ¼ã¯SYSLOG(ãƒžã‚¯ãƒ­)ã«å‡ºåŠ›ã™ã‚‹ã€‚
  *
- * °ú¿ô
- *      char           *file      ¥Õ¥¡¥¤¥ëÌ¾
+ * å¼•æ•°
+ *      char           *file      ãƒ•ã‚¡ã‚¤ãƒ«å
  *
- * ÊÖ¤êÃÍ
- *      -1             ÆÉ¹þ¸¢Ìµ¤·¡¢fopen¼ºÇÔ¡¢¥¢¥í¥±¡¼¥È¥¨¥é¡¼¡£
- *	 0	       Àµ¾ï
+ * è¿”ã‚Šå€¤
+ *      -1             èª­è¾¼æ¨©ç„¡ã—ã€fopenå¤±æ•—ã€ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼ã€‚
+ *	 0	       æ­£å¸¸
  *
  */
 int
@@ -38,20 +54,20 @@ read_module_config(char *file)
     int    nline, status, ret;
     void  *lib_handle;
 
-    /* moduleÀßÄê¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹þ¤ß¸¢¸¡ºº */
+    /* moduleè¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®èª­ã¿è¾¼ã¿æ¨©æ¤œæŸ» */
     if ((pmsg = is_readable_file(file)) != NULL) {
         SYSLOG(LOG_WARNING, pmsg);
         return (-1);
     }
 
-    /* ¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó */
+    /* ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³ */
     fp = fopen(file, "r");
     if (fp == NULL) {
         SYSLOG(LOG_WARNING, ERR_CONF_OPEN, file, strerror(errno));
         return (-1);
     }
 
-    /* 1¹Ô¤º¤ÄÆÉ¤ß¹þ¤ß½èÍý¤ò¹Ô¤¦ */
+    /* 1è¡Œãšã¤èª­ã¿è¾¼ã¿å‡¦ç†ã‚’è¡Œã† */
     for (nline = 1; fgets(line, MAX_CONFIG_LINE + 1, fp) != NULL; nline++) {
 
         pline = strchr(line, '\n');
@@ -137,7 +153,7 @@ read_module_config(char *file)
             return (-1);
         }
 
-	/* ¥é¥¤¥Ö¥é¥ê¤Î¥ª¡¼¥×¥ó */
+	/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®ã‚ªãƒ¼ãƒ—ãƒ³ */
 	lib_handle = dlopen(modpath, RTLD_LAZY);
 	if (!lib_handle) {
             SYSLOGERROR(ERR_LIB_FILE_OPEN, "read_module_conf", modpath, dlerror());
@@ -145,7 +161,7 @@ read_module_config(char *file)
             return (-1);
         }
 
-        /* ¥é¥¤¥Ö¥é¥ê¥Ý¥¤¥ó¥¿¤Î¥ê¥¹¥È³ÊÇ¼ */
+        /* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒã‚¤ãƒ³ã‚¿ã®ãƒªã‚¹ãƒˆæ ¼ç´ */
         ret = set_lib_handle(modname, lib_handle, &mhandle_list);
         if (ret != 0) {
 	    free_lib_handle();
@@ -161,12 +177,12 @@ read_module_config(char *file)
 /*
  * free_lib_handle
  *
- * µ¡Ç½:
- *    dlopen¤·¤¿¥â¥¸¥å¡¼¥ë¥Ï¥ó¥É¥ë¤Î¥ê¥¹¥È¤ò³«Êü¤¹¤ë
- * °ú¿ô:
- *    Ìµ¤·
- * ÊÖÃÍ:
- *    Ìµ¤·
+ * æ©Ÿèƒ½:
+ *    dlopenã—ãŸãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒãƒ³ãƒ‰ãƒ«ã®ãƒªã‚¹ãƒˆã‚’é–‹æ”¾ã™ã‚‹
+ * å¼•æ•°:
+ *    ç„¡ã—
+ * è¿”å€¤:
+ *    ç„¡ã—
  */
 void
 free_lib_handle()
@@ -186,22 +202,22 @@ free_lib_handle()
 /*
  * set_lib_handle
  *
- * µ¡Ç½:
- *    dlopen¤·¤¿¥â¥¸¥å¡¼¥ë¥Ï¥ó¥É¥ë¤Î¥ê¥¹¥È¤òºîÀ®¤¹¤ë
- * °ú¿ô:
- *    char *modname	¥â¥¸¥å¡¼¥ëÌ¾
- *    void *libptr	¥â¥¸¥å¡¼¥ë¥Ï¥ó¥É¥ë
- *    struct modulehandle **list	¥â¥¸¥å¡¼¥ë¥Ï¥ó¥É¥ë¤Î¥ê¥¹¥È
- * ÊÖÃÍ:
- *    0		Àµ¾ï
- *    -1	°Û¾ï
+ * æ©Ÿèƒ½:
+ *    dlopenã—ãŸãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒãƒ³ãƒ‰ãƒ«ã®ãƒªã‚¹ãƒˆã‚’ä½œæˆã™ã‚‹
+ * å¼•æ•°:
+ *    char *modname	ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å
+ *    void *libptr	ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒãƒ³ãƒ‰ãƒ«
+ *    struct modulehandle **list	ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒãƒ³ãƒ‰ãƒ«ã®ãƒªã‚¹ãƒˆ
+ * è¿”å€¤:
+ *    0		æ­£å¸¸
+ *    -1	ç•°å¸¸
  */
 int
 set_lib_handle (char *modname, void *libptr, struct modulehandle **list)
 {
     struct modulehandle *new_list;
 
-    /* lib_handle¥Ý¥¤¥ó¥¿¤ò³ÊÇ¼¤¹¤ëÎÎ°è¤Î³ÎÊÝ */
+    /* lib_handleãƒã‚¤ãƒ³ã‚¿ã‚’æ ¼ç´ã™ã‚‹é ˜åŸŸã®ç¢ºä¿ */
     new_list = (struct modulehandle *)malloc(sizeof(struct modulehandle));
     if(new_list == NULL) {
         SYSLOGERROR(ERR_MALLOC, "set_lib_handle", strerror(errno));
@@ -225,29 +241,29 @@ set_lib_handle (char *modname, void *libptr, struct modulehandle **list)
 /*
  * msy_exec_header
  *
- * µ¡Ç½:
- *    ¥â¥¸¥å¡¼¥ë¤Î¥Ø¥Ã¥ÀÍÑ´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    *mP     : Messasy¥×¥é¥¤¥Ù¡¼¥È¹½Â¤ÂÎ
- *    *headerf: ¥Ø¥Ã¥À¥Õ¥£¡¼¥ë¥É
- *    *headerv: ¥Ø¥Ã¥À¤ÎÃÍ
- * ÊÖÃÍ:
- *     0: Àµ¾ï½ªÎ»
- *    -2: ´Ø¿ô¥Ï¥ó¥É¥ëºîÀ®¥¨¥é¡¼
+ * æ©Ÿèƒ½:
+ *    ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®ãƒ˜ãƒƒãƒ€ç”¨é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    *mP     : Messasyãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæ§‹é€ ä½“
+ *    *headerf: ãƒ˜ãƒƒãƒ€ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰
+ *    *headerv: ãƒ˜ãƒƒãƒ€ã®å€¤
+ * è¿”å€¤:
+ *     0: æ­£å¸¸çµ‚äº†
+ *    -2: é–¢æ•°ãƒãƒ³ãƒ‰ãƒ«ä½œæˆã‚¨ãƒ©ãƒ¼
  */
 int
 msy_exec_header(struct mlfiPriv *mP, char *headerf, char *headerv)
 {
 
-        /* ÊÖ¤êÃÍÈ½ÄêÍÑ */
+        /* è¿”ã‚Šå€¤åˆ¤å®šç”¨ */
     int check = 0;
-         /* ´Ø¿ô¼Â¹ÔÍÑ */
+         /* é–¢æ•°å®Ÿè¡Œç”¨ */
     int (*func_pointer)(struct mlfiPriv *, char *, char *) = NULL; 
-         /* ¼Â¹Ô´Ø¿ôÌ¾¥ê¥¹¥È¤ò¤¿¤É¤ëÍÑ */
+         /* å®Ÿè¡Œé–¢æ•°åãƒªã‚¹ãƒˆã‚’ãŸã©ã‚‹ç”¨ */
     struct modulelist *p = NULL; 
 
 
-    /* header¼Â¹Ô´Ø¿ô¤¬¤¢¤ë¾ì¹ç¼Â¹Ô¤·¤Ä¤Å¤±¤ë */
+    /* headerå®Ÿè¡Œé–¢æ•°ãŒã‚ã‚‹å ´åˆå®Ÿè¡Œã—ã¤ã¥ã‘ã‚‹ */
     for(p = mP->config->cf_exec_header; p != NULL; p = p->mlist_next) {
         func_pointer = (int (*)())(p->mlist_funcptr);
         check = (*func_pointer)(mP, headerf, headerv);
@@ -262,29 +278,29 @@ msy_exec_header(struct mlfiPriv *mP, char *headerf, char *headerv)
 /*
  * msy_exec_body
  *
- * µ¡Ç½:
- *    ¥â¥¸¥å¡¼¥ë¤Î¥Ü¥Ç¥£ÍÑ´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    *mP     : Messasy¥×¥é¥¤¥Ù¡¼¥È¹½Â¤ÂÎ
- *    *bodyp  : mlfi_body¤¬¼èÆÀ¤·¤¿¥Ü¥Ç¥£¤ÎÃÍ
- *    bosylen : bodyp¤Î¥µ¥¤¥º
- * ÊÖÃÍ:
- *     0: Àµ¾ï½ªÎ»
- *    -2: ´Ø¿ô¥Ï¥ó¥É¥ëºîÀ®¥¨¥é¡¼
+ * æ©Ÿèƒ½:
+ *    ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®ãƒœãƒ‡ã‚£ç”¨é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    *mP     : Messasyãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæ§‹é€ ä½“
+ *    *bodyp  : mlfi_bodyãŒå–å¾—ã—ãŸãƒœãƒ‡ã‚£ã®å€¤
+ *    bosylen : bodypã®ã‚µã‚¤ã‚º
+ * è¿”å€¤:
+ *     0: æ­£å¸¸çµ‚äº†
+ *    -2: é–¢æ•°ãƒãƒ³ãƒ‰ãƒ«ä½œæˆã‚¨ãƒ©ãƒ¼
  */
 int
 msy_exec_body(struct mlfiPriv *mP, u_char *bodyp, size_t bodylen)
 {
 
-        /* ÊÖ¤êÃÍÈ½ÄêÍÑ */
+        /* è¿”ã‚Šå€¤åˆ¤å®šç”¨ */
     int check = 0;
-         /* ´Ø¿ô¼Â¹ÔÍÑ */
+         /* é–¢æ•°å®Ÿè¡Œç”¨ */
     int (*func_pointer)(struct mlfiPriv *, u_char *, size_t ) = NULL;
-         /* ¼Â¹Ô´Ø¿ôÌ¾¥ê¥¹¥È¤ò¤¿¤É¤ëÍÑ */
+         /* å®Ÿè¡Œé–¢æ•°åãƒªã‚¹ãƒˆã‚’ãŸã©ã‚‹ç”¨ */
     struct modulelist *p = NULL; 
 
 
-    /* body¼Â¹Ô´Ø¿ô¤¬¤¢¤ë¾ì¹ç¼Â¹Ô¤·¤Ä¤Å¤±¤ë */
+    /* bodyå®Ÿè¡Œé–¢æ•°ãŒã‚ã‚‹å ´åˆå®Ÿè¡Œã—ã¤ã¥ã‘ã‚‹ */
     for(p = mP->config->cf_exec_body; p != NULL; p = p->mlist_next) {
         func_pointer = (int (*)())p->mlist_funcptr;
         check = (*func_pointer)(mP, bodyp, bodylen);
@@ -299,26 +315,26 @@ msy_exec_body(struct mlfiPriv *mP, u_char *bodyp, size_t bodylen)
 /*
  * msy_exec_eoh
  *
- * µ¡Ç½:
- *    ¥â¥¸¥å¡¼¥ë¤ÎeohÍÑ´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    *mP     : Messasy¥×¥é¥¤¥Ù¡¼¥È¹½Â¤ÂÎ
- * ÊÖÃÍ:
- *     0: Àµ¾ï½ªÎ»
- *    -2: ´Ø¿ô¥Ï¥ó¥É¥ëºîÀ®¥¨¥é¡¼
+ * æ©Ÿèƒ½:
+ *    ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®eohç”¨é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    *mP     : Messasyãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæ§‹é€ ä½“
+ * è¿”å€¤:
+ *     0: æ­£å¸¸çµ‚äº†
+ *    -2: é–¢æ•°ãƒãƒ³ãƒ‰ãƒ«ä½œæˆã‚¨ãƒ©ãƒ¼
  */
 int
 msy_exec_eoh(struct mlfiPriv *mP)
 {
-        /* ÊÖ¤êÃÍÈ½ÄêÍÑ */
+        /* è¿”ã‚Šå€¤åˆ¤å®šç”¨ */
     int check = 0;
-         /* ´Ø¿ô¼Â¹ÔÍÑ */
+         /* é–¢æ•°å®Ÿè¡Œç”¨ */
     int (*func_pointer)(struct mlfiPriv *);
-         /* ¼Â¹Ô´Ø¿ôÌ¾¥ê¥¹¥È¤ò¤¿¤É¤ëÍÑ */
+         /* å®Ÿè¡Œé–¢æ•°åãƒªã‚¹ãƒˆã‚’ãŸã©ã‚‹ç”¨ */
     struct modulelist *p = NULL;
 
 
-    /* eoh¼Â¹Ô´Ø¿ô¤¬¤¢¤ë¾ì¹ç¼Â¹Ô¤·¤Ä¤Å¤±¤ë */
+    /* eohå®Ÿè¡Œé–¢æ•°ãŒã‚ã‚‹å ´åˆå®Ÿè¡Œã—ã¤ã¥ã‘ã‚‹ */
     for(p = mP->config->cf_exec_eoh; p != NULL; p = p->mlist_next) {
         func_pointer = (int (*)())p->mlist_funcptr;
         check = (*func_pointer)(mP);
@@ -333,26 +349,26 @@ msy_exec_eoh(struct mlfiPriv *mP)
 /*
  * msy_exec_eom
  *
- * µ¡Ç½:
- *    ¥â¥¸¥å¡¼¥ë¤ÎeomÍÑ´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    *mP     : Messasy¥×¥é¥¤¥Ù¡¼¥È¹½Â¤ÂÎ
- * ÊÖÃÍ:
- *     0: Àµ¾ï½ªÎ»
- *    -2: ´Ø¿ô¥Ï¥ó¥É¥ëºîÀ®¥¨¥é¡¼
+ * æ©Ÿèƒ½:
+ *    ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®eomç”¨é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    *mP     : Messasyãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæ§‹é€ ä½“
+ * è¿”å€¤:
+ *     0: æ­£å¸¸çµ‚äº†
+ *    -2: é–¢æ•°ãƒãƒ³ãƒ‰ãƒ«ä½œæˆã‚¨ãƒ©ãƒ¼
  */
 int
 msy_exec_eom(struct mlfiPriv *mP)
 {
-        /* ÊÖ¤êÃÍÈ½ÄêÍÑ */
+        /* è¿”ã‚Šå€¤åˆ¤å®šç”¨ */
     int check = 0;
-         /* ´Ø¿ô¼Â¹ÔÍÑ */
+         /* é–¢æ•°å®Ÿè¡Œç”¨ */
     int (*func_pointer)(struct mlfiPriv *);
-         /* ¼Â¹Ô´Ø¿ôÌ¾¥ê¥¹¥È¤ò¤¿¤É¤ëÍÑ */
+         /* å®Ÿè¡Œé–¢æ•°åãƒªã‚¹ãƒˆã‚’ãŸã©ã‚‹ç”¨ */
     struct modulelist *p = NULL; 
 
 
-    /* eom¼Â¹Ô´Ø¿ô¤¬¤¢¤ë¾ì¹ç¼Â¹Ô¤·¤Ä¤Å¤±¤ë */
+    /* eomå®Ÿè¡Œé–¢æ•°ãŒã‚ã‚‹å ´åˆå®Ÿè¡Œã—ã¤ã¥ã‘ã‚‹ */
     for(p = mP->config->cf_exec_eom; p != NULL; p = p->mlist_next) {
         func_pointer = (int (*)())p->mlist_funcptr;
         check = (*func_pointer)(mP);
@@ -367,27 +383,27 @@ msy_exec_eom(struct mlfiPriv *mP)
 /*
  * msy_exec_abort
  *
- * µ¡Ç½:
- *    ¥â¥¸¥å¡¼¥ë¤ÎabortÍÑ´Ø¿ô¤ò¼Â¹Ô¤¹¤ë´Ø¿ô
- * °ú¿ô:
- *    *mP     : Messasy¥×¥é¥¤¥Ù¡¼¥È¹½Â¤ÂÎ
- * ÊÖÃÍ:
- *     0: Àµ¾ï½ªÎ»
- *    -2: ´Ø¿ô¥Ï¥ó¥É¥ëºîÀ®¥¨¥é¡¼
+ * æ©Ÿèƒ½:
+ *    ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®abortç”¨é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹é–¢æ•°
+ * å¼•æ•°:
+ *    *mP     : Messasyãƒ—ãƒ©ã‚¤ãƒ™ãƒ¼ãƒˆæ§‹é€ ä½“
+ * è¿”å€¤:
+ *     0: æ­£å¸¸çµ‚äº†
+ *    -2: é–¢æ•°ãƒãƒ³ãƒ‰ãƒ«ä½œæˆã‚¨ãƒ©ãƒ¼
  */
 int
 msy_exec_abort(struct mlfiPriv *mP)
 {
 
-        /* ÊÖ¤êÃÍÈ½ÄêÍÑ */
+        /* è¿”ã‚Šå€¤åˆ¤å®šç”¨ */
     int check = 0;
-         /* ´Ø¿ô¼Â¹ÔÍÑ */
+         /* é–¢æ•°å®Ÿè¡Œç”¨ */
     int (*func_pointer)(struct mlfiPriv *);
-         /* ¼Â¹Ô´Ø¿ôÌ¾¥ê¥¹¥È¤ò¤¿¤É¤ëÍÑ */
+         /* å®Ÿè¡Œé–¢æ•°åãƒªã‚¹ãƒˆã‚’ãŸã©ã‚‹ç”¨ */
     struct modulelist *p = NULL; 
 
 
-    /* abort¼Â¹Ô´Ø¿ô¤¬¤¢¤ë¾ì¹ç¼Â¹Ô¤·¤Ä¤Å¤±¤ë */
+    /* abortå®Ÿè¡Œé–¢æ•°ãŒã‚ã‚‹å ´åˆå®Ÿè¡Œã—ã¤ã¥ã‘ã‚‹ */
     for(p = mP->config->cf_exec_abort; p != NULL; p = p->mlist_next) {
         func_pointer = (int (*)())p->mlist_funcptr;
         check = (*func_pointer)(mP);

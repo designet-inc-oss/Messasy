@@ -2,11 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(messasy, 3.02, report@@lists.sourceforge.jp)
+AC_INIT(messasy, 3.03, github-oss@designet.co.jp)
 AC_CONFIG_AUX_DIR(./shtool)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([client_side.h])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -175,6 +175,13 @@ if test "$enable_libenczip" = "no" ; then
 else
         BUILD_MYSO="$BUILD_MYSO libenczip"
 fi
+AC_ARG_ENABLE([liblda],
+        [AS_HELP_STRING([--disable-liblda], [disable to build liblda [default=yes]])])
+if test "$enable_liblda" = "no" ; then
+        MAKE_SO="$MAKE_SO"
+else
+        BUILD_MYSO="$BUILD_MYSO liblda"
+fi
 
 AC_SUBST(SO_LDFLAGS, $SO_LDFLAGS)
 AC_SUBST(SO_CFLAGS, $SO_CFLAGS)
@@ -212,5 +219,6 @@ AC_CONFIG_FILES([lib/Makefile
                  so/Makefile
                  so/libmaildrop/Makefile
                  so/libgzip/Makefile
+                 so/liblda/Makefile
                  so/libenczip/Makefile])
 AC_OUTPUT

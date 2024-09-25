@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <syslog.h>
 
-/*--- ¹½Â¤ÂÎ ---*/
+/*--- æ§‹é€ ä½“ ---*/
 
-/* ÀßÄê¥Õ¥¡¥¤¥ë¹àÌÜ¾ğÊó³ÊÇ¼¹½Â¤ÂÎ */
+/* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«é …ç›®æƒ…å ±æ ¼ç´æ§‹é€ ä½“ */
 struct cfentry {
     char   *cf_name;
     unsigned int cf_type;
@@ -24,30 +24,30 @@ struct cfentry {
 };
 
 
-/*--- ¥°¥í¡¼¥Ğ¥ëÊÑ¿ô ---*/
+/*--- ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•° ---*/
 
 extern int dgconfig_loglevel;
 
 
-/*--- ¥Ş¥¯¥í ---*/
+/*--- ãƒã‚¯ãƒ­ ---*/
 
-/* ÆÃÊÌ¤Ê¥Õ¥¡¥·¥ê¥Æ¥£ */
+/* ç‰¹åˆ¥ãªãƒ•ã‚¡ã‚·ãƒªãƒ†ã‚£ */
 #define FACILITY_STDERR "stderr"
 #define FACILITY_NONE   "none"
 
-/* ¥í¥°¥ì¥Ù¥ë */
+/* ãƒ­ã‚°ãƒ¬ãƒ™ãƒ« */
 #define LOGLVL_INFO     2
 #define LOGLVL_WARNING  1
 #define LOGLVL_ERROR    0
 
 #define MAX_CONFIG_LINE      1024
 
-/* ÀßÄê¥Õ¥¡¥¤¥ë¤ÎÀßÄêÃÍ¤Î·¿¾ğÊó¤ò¼¨¤¹¥Õ¥é¥° */
+/* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®è¨­å®šå€¤ã®å‹æƒ…å ±ã‚’ç¤ºã™ãƒ•ãƒ©ã‚° */
 #define CF_INTEGER      1
 #define CF_INT_PLUS     2
 #define CF_STRING       3
 
-/* LDAP¥Á¥§¥Ã¥¯´Ø¿ô */
+/* LDAPãƒã‚§ãƒƒã‚¯é–¢æ•° */
 #define LDAP_VERSION_MIN     2
 #define LDAP_VERSION_MAX     3
 #define LDAP_SCOPE_ONELEVEL     "onelevel"
@@ -56,9 +56,9 @@ extern int dgconfig_loglevel;
 #define CONFIG_TRUE    1
 
 
-/*--- ´Ø¿ô¥Ş¥¯¥í ---*/
+/*--- é–¢æ•°ãƒã‚¯ãƒ­ ---*/
 
-/* syslog¤ò¸Æ¤Ó½Ğ¤¹ºİ¤Ë»ÈÍÑ¤¹¤ë¥Ş¥¯¥í */
+/* syslogã‚’å‘¼ã³å‡ºã™éš›ã«ä½¿ç”¨ã™ã‚‹ãƒã‚¯ãƒ­ */
 #define SYSLOG (*dgconfig_log)
 
 #define SYSLOGINFO(logcontent...) \
@@ -74,11 +74,11 @@ if (dgconfig_loglevel >= LOGLVL_ERROR) { \
     SYSLOG(LOG_ERR, logcontent); \
 }
 
-/* ÀßÄê¥Õ¥¡¥¤¥ë¹àÌÜ¾ğÊó³ÊÇ¼¹½Â¤ÂÎ¤Ç»ÈÍÑ */
+/* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«é …ç›®æƒ…å ±æ ¼ç´æ§‹é€ ä½“ã§ä½¿ç”¨ */
 #define OFFSET(x, y) ((int)&(((x *)NULL)->y))
 
 
-/*--- ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸ ---*/
+/*--- ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ ---*/
 
 #define ERR_CONF_SYSLOGFACILITY "unknown syslog facility string"
 #define ERR_CONF_OPEN           "Cannot open config file: %s :%s"
@@ -100,7 +100,7 @@ if (dgconfig_loglevel >= LOGLVL_ERROR) { \
 #define ERR_CONF_ONEATTR        "invalid attribute" 
 
 
-/*--- ¥×¥í¥È¥¿¥¤¥×Àë¸À ---*/
+/*--- ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ ---*/
 
 extern int (*dgconfig_log) (int, const char *, ...);
 
@@ -122,7 +122,7 @@ extern char *is_oneattr(char *);
 
 #ifdef SOLARIS
 
-/* solaris¤Î¾ì¹ç */
+/* solarisã®å ´åˆ */
 #define inet_aton(s, in)        _inet_aton(s, in)
 extern int _inet_aton(const char *, struct in_addr *);
 

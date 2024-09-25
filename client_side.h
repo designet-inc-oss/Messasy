@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,27 +12,17 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: client_side.h,v $
- * $Revision: 1.7 $
- * $Date: 2009/10/22 03:17:04 $
  */
 
 #ifndef _CLIENT_SIDE_H_
 #define _CLIENT_SIDE_H_
 
-/* Äê¿ôÄêµÁ */
-#define LOGIN_STATE_NONE     0x0         /* ½é´üÀÜÂ³»ş¤Î¥¹¥Æ¡¼¥¿¥¹ */
-#define LOGIN_STATE_AUTH     0x1         /* ¥í¥°¥¤¥ó¤ÇÇ§¾ÚÀ®¸ù¸å¤Î¥¹¥Æ¡¼¥¿¥¹ */
+/* å®šæ•°å®šç¾© */
+#define LOGIN_STATE_NONE     0x0         /* åˆæœŸæ¥ç¶šæ™‚ã®ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ */
+#define LOGIN_STATE_AUTH     0x1         /* ãƒ­ã‚°ã‚¤ãƒ³ã§èªè¨¼æˆåŠŸå¾Œã®ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ */
 
-#define MAX_CMD_LEN          128         /* ¥³¥Ş¥ó¥É¥é¥¤¥óºÇÂçÄ¹ */
-#define MANAGER_NAME "messasyctl"        /* ´ÉÍı¥³¥ó¥½¡¼¥ë¤ÎÌ¾Á° */
+#define MAX_CMD_LEN          128         /* ã‚³ãƒãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³æœ€å¤§é•· */
+#define MANAGER_NAME "messasyctl"        /* ç®¡ç†ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã®åå‰ */
 #define NONE                   0
 #define CR_FOUND               1
 #define CRLF_FOUND             2
@@ -45,8 +35,8 @@
 #define STATE_NONQUIT          0
 #define STATE_QUIT             1
 
-/* ¥á¥Ã¥»¡¼¥¸ÄêµÁ */
-#define BANNER               "Welcome to Messasy (Version " VERSION ")\r\n"
+/* ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å®šç¾© */
+#define BANNER               "Welcome to Messasy (Version " PACKAGE_VERSION ")\r\n"
 #define TOO_LONG_STRING      "-NG command too long\r\n"
 #define SYNTAX_ERR_STRING    "-NG command syntax error\r\n"
 #define AUTH_ERR_STRING      "-NG authentication error\r\n"
@@ -61,25 +51,25 @@
 
 #define IS_AUTH(mc)    (mc->mc_state & LOGIN_STATE_AUTH)
 
-/* isblank ¤ÎÍ­¸ú²½ */
+/* isblank ã®æœ‰åŠ¹åŒ– */
 #ifndef isblank
     int isblank(int);
 #endif
 
-/* ´ÉÍı¥³¥ó¥È¥í¡¼¥ë¹½Â¤ÂÎ */
+/* ç®¡ç†ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«æ§‹é€ ä½“ */
 struct manager_control {
-    int              mc_so;       /* ¥½¥±¥Ã¥È */
-    char            *mc_dest;     /* ÀÜÂ³¥¯¥é¥¤¥¢¥ó¥È¤ÎIP¥¢¥É¥ì¥¹ */
-    int              mc_state;    /* ÀÜÂ³¥æ¡¼¥¶¤Î¾õÂÖ */
+    int              mc_so;       /* ã‚½ã‚±ãƒƒãƒˆ */
+    char            *mc_dest;     /* æ¥ç¶šã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã®IPã‚¢ãƒ‰ãƒ¬ã‚¹ */
+    int              mc_state;    /* æ¥ç¶šãƒ¦ãƒ¼ã‚¶ã®çŠ¶æ…‹ */
 };
 
-/* ´ÉÍı¥³¥Ş¥ó¥É¹½Â¤ÂÎ */
+/* ç®¡ç†ã‚³ãƒãƒ³ãƒ‰æ§‹é€ ä½“ */
 struct manager_command {
-    char *dc_command;                                 /* ¥³¥Ş¥ó¥ÉÌ¾ */
-    int (*dc_func)(struct manager_control *, char *); /* ¥³¥Ş¥ó¥É½èÍı´Ø¿ô */
+    char *dc_command;                                 /* ã‚³ãƒãƒ³ãƒ‰å */
+    int (*dc_func)(struct manager_control *, char *); /* ã‚³ãƒãƒ³ãƒ‰å‡¦ç†é–¢æ•° */
 };
 
-/* ¥×¥í¥È¥¿¥¤¥×Àë¸À */
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ */
 extern void *manager_main(void *);
 
 #endif // _CLIENT_SIDE_H_

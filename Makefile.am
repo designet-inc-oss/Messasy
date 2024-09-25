@@ -12,3 +12,13 @@ DEFS = @DEFS@ -DHAVE_STRNDUP -DDEFAULT_CONFDIR=\"$(sysconfdir)\" @DEF_LIBWRAP@
 #SUBDIRS = lib . so
 SUBDIRS = lib . so
 EXEEXT = .bin
+README: README.md
+
+clean-local:
+	rm -rf autom4te.cache
+
+distclean-local:
+	find ./lib -name '.deps' -exec $(RM) -r {} +
+	find ./lib -name 'Makefile' -exec $(RM) -r {} +
+
+distclean-all: distclean distclean-local

@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: client_side.c,v $
- * $Revision: 1.16 $
- * $Date: 2009/10/28 01:20:07 $
  */
 
 #include <stdio.h>
@@ -45,15 +35,12 @@
 #include <libdgstr.h>
 #include <libdgconfig.h>
 
-/* add included header for make */
-//#include "config.h"
-
 #include "log.h"
 #include "msy_config.h"
 #include "messasy.h"
 #include "client_side.h"
 
-/* ¥×¥í¥È¥¿¥¤¥×Àë¸À */
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ */
 static int parse_arg(char *, char **, int);
 static int manager_login(struct manager_control *, char *);
 static int manager_quit(struct manager_control *, char *);
@@ -65,32 +52,32 @@ static int check_crlf(char, int);
 static void increment_tc(void);
 static void decrement_tc(void);
 
-/* ´ÉÍı¥³¥Ş¥ó¥É¤Î¼ÂÂÖÄêµÁ */
+/* ç®¡ç†ã‚³ãƒãƒ³ãƒ‰ã®å®Ÿæ…‹å®šç¾© */
 struct manager_command manager_command[] = {
    { "LOGIN",  manager_login},
    { "RELOAD", manager_reload},
    { "QUIT",   manager_quit},
 };
 
-/* ´ÉÍı¥³¥Ş¥ó¥É¹½Â¤ÂÎ¤ÎÂç¤­¤µ¼èÆÀ */
+/* ç®¡ç†ã‚³ãƒãƒ³ãƒ‰æ§‹é€ ä½“ã®å¤§ãã•å–å¾— */
 #define NUM_DAEMON_COMMAND \
                (sizeof(manager_command) / sizeof(struct manager_command))
 
-/* ¥¹¥ì¥Ã¥Éµ¯Æ°¿ô¥«¥¦¥ó¥¿ */
+/* ã‚¹ãƒ¬ãƒƒãƒ‰èµ·å‹•æ•°ã‚«ã‚¦ãƒ³ã‚¿ */
 static unsigned int thread_count;
 static pthread_mutex_t tc_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * increment_tc
  *
- * µ¡Ç½
- *      ¥¹¥ì¥Ã¥É¥«¥¦¥ó¥¿¤Î¥¤¥ó¥¯¥ê¥á¥ó¥È
+ * æ©Ÿèƒ½
+ *      ã‚¹ãƒ¬ãƒƒãƒ‰ã‚«ã‚¦ãƒ³ã‚¿ã®ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆ
  *
- * °ú¿ô
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      ãªã—
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 increment_tc(void)
@@ -103,14 +90,14 @@ increment_tc(void)
 /*
  * decrement_tc
  *
- * µ¡Ç½
- *      ¥¹¥ì¥Ã¥É¥«¥¦¥ó¥¿¤Î¥Ç¥¯¥ê¥á¥ó¥È
+ * æ©Ÿèƒ½
+ *      ã‚¹ãƒ¬ãƒƒãƒ‰ã‚«ã‚¦ãƒ³ã‚¿ã®ãƒ‡ã‚¯ãƒªãƒ¡ãƒ³ãƒˆ
  *
- * °ú¿ô
- *      ¤Ê¤·
+ * å¼•æ•°
+ *      ãªã—
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 decrement_tc(void)
@@ -123,16 +110,16 @@ decrement_tc(void)
 /*
  * parse_arg
  *
- * µ¡Ç½
- *      ÆşÎÏ¥³¥Ş¥ó¥É¤Î°ú¿ô¤ò²òÀÏ¤¹¤ë
+ * æ©Ÿèƒ½
+ *      å…¥åŠ›ã‚³ãƒãƒ³ãƒ‰ã®å¼•æ•°ã‚’è§£æã™ã‚‹
  *
- * °ú¿ô
- *      *string   ²òÀÏÂĞ¾İ¤ÎÊ¸»úÎó
- *      *array[]  ²òÀÏ¸å¤ÎÊ¸»úÎó³ÊÇ¼ÊÑ¿ô
- *      *num      µöÍÆ¤¹¤ë°ú¿ô¤Î¿ô
+ * å¼•æ•°
+ *      *string   è§£æå¯¾è±¡ã®æ–‡å­—åˆ—
+ *      *array[]  è§£æå¾Œã®æ–‡å­—åˆ—æ ¼ç´å¤‰æ•°
+ *      *num      è¨±å®¹ã™ã‚‹å¼•æ•°ã®æ•°
  *
- * ÊÖ¤êÃÍ
- *     count: Àµ¾ï¡ÊÊ¸»úÎó¿ô¡Ë
+ * è¿”ã‚Šå€¤
+ *     count: æ­£å¸¸ï¼ˆæ–‡å­—åˆ—æ•°ï¼‰
  */
 static int
 parse_arg(char *string, char *array[], int num)
@@ -141,7 +128,7 @@ parse_arg(char *string, char *array[], int num)
     int count = 0;
 
     while (count < num) {
-        /* ÀèÆ¬¤Î¶õÊ¸»ú¤òÆÉ¤ßÈô¤Ğ¤¹ */
+        /* å…ˆé ­ã®ç©ºæ–‡å­—ã‚’èª­ã¿é£›ã°ã™ */
         for (; isblank((int)string[i]); i++);
 
         if (string[i] == '\0') {
@@ -149,7 +136,7 @@ parse_arg(char *string, char *array[], int num)
         }
         array[count++] = &string[i];
 
-        /* °ú¿ô¤Î³ÊÇ¼ */
+        /* å¼•æ•°ã®æ ¼ç´ */
         while (!isblank(string[i])) {
             if (string[i] == '\0') {
                 return (count);
@@ -165,17 +152,17 @@ parse_arg(char *string, char *array[], int num)
 /*
  * manager_login
  *
- * µ¡Ç½
- *      login¥³¥Ş¥ó¥É¤ò½èÍı¤¹¤ë
+ * æ©Ÿèƒ½
+ *      loginã‚³ãƒãƒ³ãƒ‰ã‚’å‡¦ç†ã™ã‚‹
  *
- * °ú¿ô
- *      *mc            ´ÉÍı¥³¥ó¥È¥í¡¼¥ë¹½Â¤ÂÎ
- *      *arg           °ú¿ô¤ÇÅÏ¤µ¤ì¤¿Ê¸»úÎó
+ * å¼•æ•°
+ *      *mc            ç®¡ç†ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«æ§‹é€ ä½“
+ *      *arg           å¼•æ•°ã§æ¸¡ã•ã‚ŒãŸæ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS      ¥í¥°¥¤¥óÀ®¸ù
- *      R_SYNTAX_ERROR login¥³¥Ş¥ó¥É¤Î½ñ¼°¥¨¥é¡¼
- *      R_ERROR        Ç§¾Ú¤Ë¼ºÇÔ
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS      ãƒ­ã‚°ã‚¤ãƒ³æˆåŠŸ
+ *      R_SYNTAX_ERROR loginã‚³ãƒãƒ³ãƒ‰ã®æ›¸å¼ã‚¨ãƒ©ãƒ¼
+ *      R_ERROR        èªè¨¼ã«å¤±æ•—
  */
 static int
 manager_login(struct manager_control *mc, char *arg)
@@ -188,21 +175,21 @@ manager_login(struct manager_control *mc, char *arg)
 
     switch (ret) {
         case 1:
-            /* °ú¿ô¤¬°ì¤Ä */
+            /* å¼•æ•°ãŒä¸€ã¤ */
             break;
         case 2:
-            if (param[1] == '\0') {
-                /* °ú¿ô¤¬Æó¤Ä¡¢Æó¤ÄÌÜ¤Î°ú¿ô¤¬¶õÇò¤Î¤ß¤ÏOK */
+            if (*param[1] == '\0') {
+                /* å¼•æ•°ãŒäºŒã¤ã€äºŒã¤ç›®ã®å¼•æ•°ãŒç©ºç™½ã®ã¿ã¯OK */
                 break;
             }
         default:
-            /* ½ñ¼°¥¨¥é¡¼ */
+            /* æ›¸å¼ã‚¨ãƒ©ãƒ¼ */
             write(mc->mc_so, SYNTAX_ERR_STRING, sizeof(SYNTAX_ERR_STRING) - 1);
             return (R_SYNTAX_ERROR);
             break;
     }
 
-    /* ´û¤ËÇ§¾ÚºÑ¤ß */
+    /* æ—¢ã«èªè¨¼æ¸ˆã¿ */
     if (mc->mc_state &= LOGIN_STATE_AUTH) {
         write(mc->mc_so, OK_ALREADY_LOGIN_STRING, sizeof(OK_ALREADY_LOGIN_STRING) - 1);
 
@@ -221,7 +208,7 @@ manager_login(struct manager_control *mc, char *arg)
 
     write(mc->mc_so, OK_LOGIN_STRING, sizeof(OK_LOGIN_STRING) - 1);
 
-    /* Ç§¾ÚºÑ¤ß¥¹¥Æ¡¼¥¿¥¹¤òÉÕÍ¿ */
+    /* èªè¨¼æ¸ˆã¿ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ã‚’ä»˜ä¸ */
     mc->mc_state |= LOGIN_STATE_AUTH;
 
     return (R_SUCCESS);
@@ -230,16 +217,16 @@ manager_login(struct manager_control *mc, char *arg)
 /*
  * manager_quit
  *
- * µ¡Ç½
- *      quit¥³¥Ş¥ó¥É¤ò½èÍı¤¹¤ë
+ * æ©Ÿèƒ½
+ *      quitã‚³ãƒãƒ³ãƒ‰ã‚’å‡¦ç†ã™ã‚‹
  *
- * °ú¿ô
- *      *mc           ´ÉÍı¥³¥ó¥È¥í¡¼¥ë¹½Â¤ÂÎ
- *      *arg          °ú¿ô¤ÇÅÏ¤µ¤ì¤¿Ê¸»úÎó
+ * å¼•æ•°
+ *      *mc           ç®¡ç†ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«æ§‹é€ ä½“
+ *      *arg          å¼•æ•°ã§æ¸¡ã•ã‚ŒãŸæ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *     R_ERROR        Àµ¾ï¡Ê¥í¥°¥¢¥¦¥ÈÀ®¸ù¡Ë
- *     R_SYNTAX_ERROR ½ñ¼°¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *     R_ERROR        æ­£å¸¸ï¼ˆãƒ­ã‚°ã‚¢ã‚¦ãƒˆæˆåŠŸï¼‰
+ *     R_SYNTAX_ERROR æ›¸å¼ã‚¨ãƒ©ãƒ¼
  */
 static int
 manager_quit(struct manager_control *mc, char *arg)
@@ -251,20 +238,20 @@ manager_quit(struct manager_control *mc, char *arg)
 
     switch (ret) {
         case 0:
-            /* °ú¿ô¤¬¤Ê¤· */
+            /* å¼•æ•°ãŒãªã— */
             break;
         case 1:
-            if (param[0] == '\0') {
-                /* °ú¿ô¤¬1¤Ä¡¢1¤ÄÌÜ¤Î°ú¿ô¤¬¶õÇò¤Î¤ß¤ÏOK */
+            if (*param[0] == '\0') {
+                /* å¼•æ•°ãŒ1ã¤ã€1ã¤ç›®ã®å¼•æ•°ãŒç©ºç™½ã®ã¿ã¯OK */
                 break;
             }
         default:
-            /* ½ñ¼°¥¨¥é¡¼ */
+            /* æ›¸å¼ã‚¨ãƒ©ãƒ¼ */
             write(mc->mc_so, SYNTAX_ERR_STRING, sizeof(SYNTAX_ERR_STRING) - 1);
             return (R_SYNTAX_ERROR);
     }
 
-    /* write ¤Ë¼ºÇÔ¤·¤Æ¤â½ªÎ» */
+    /* write ã«å¤±æ•—ã—ã¦ã‚‚çµ‚äº† */
     write(mc->mc_so, GOODBY_STRING, sizeof(GOODBY_STRING) - 1);
     return (R_ERROR);
 }
@@ -272,17 +259,17 @@ manager_quit(struct manager_control *mc, char *arg)
 /*
  * manager_reload
  *
- * µ¡Ç½
- *      reload¥³¥Ş¥ó¥É¤ò½èÍı¤¹¤ë
+ * æ©Ÿèƒ½
+ *      reloadã‚³ãƒãƒ³ãƒ‰ã‚’å‡¦ç†ã™ã‚‹
  *
- * °ú¿ô
- *      *mc            ´ÉÍı¥³¥ó¥È¥í¡¼¥ë¹½Â¤ÂÎ
- *      *arg           °ú¿ô¤ÇÅÏ¤µ¤ì¤¿Ê¸»úÎó
+ * å¼•æ•°
+ *      *mc            ç®¡ç†ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«æ§‹é€ ä½“
+ *      *arg           å¼•æ•°ã§æ¸¡ã•ã‚ŒãŸæ–‡å­—åˆ—
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS      Àµ¾ï
- *      R_SYNTAX_ERROR ½ñ¼°¥¨¥é¡¼
- *      R_ERROR        °Û¾ï
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS      æ­£å¸¸
+ *      R_SYNTAX_ERROR æ›¸å¼ã‚¨ãƒ©ãƒ¼
+ *      R_ERROR        ç•°å¸¸
  */
 static int
 manager_reload(struct manager_control *mc, char *arg)
@@ -294,27 +281,27 @@ manager_reload(struct manager_control *mc, char *arg)
 
     switch (ret) {
         case 0:
-            /* °ú¿ô¤¬¤Ê¤· */
+            /* å¼•æ•°ãŒãªã— */
             break;
         case 1:
-            if (param[0] == '\0') {
-                /* °ú¿ô¤¬1¤Ä¡¢1¤ÄÌÜ¤Î°ú¿ô¤¬¶õÇò¤Î¤ß¤ÏOK */
+            if (*param[0] == '\0') {
+                /* å¼•æ•°ãŒ1ã¤ã€1ã¤ç›®ã®å¼•æ•°ãŒç©ºç™½ã®ã¿ã¯OK */
                 break;
             }
         default:
-            /* ½ñ¼°¥¨¥é¡¼ */
+            /* æ›¸å¼ã‚¨ãƒ©ãƒ¼ */
             write(mc->mc_so, SYNTAX_ERR_STRING, sizeof(SYNTAX_ERR_STRING) - 1);
             return (R_SYNTAX_ERROR);
             break;
     }
 
-    /* Ç§¾Ú¾õÂÖ¤Î³ÎÇ§ */
+    /* èªè¨¼çŠ¶æ…‹ã®ç¢ºèª */
     if (!IS_AUTH(mc)) {
         write(mc->mc_so, AUTH_ERR_STRING, sizeof(AUTH_ERR_STRING) - 1);
         return (R_ERROR);
     }
 
-    /* ÀßÄê¥Õ¥¡¥¤¥ë¤Î¥ê¥í¡¼¥É½èÍı */
+    /* è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒªãƒ­ãƒ¼ãƒ‰å‡¦ç† */
     ret = reload_config();
     if (ret != R_SUCCESS) {
         write(mc->mc_so, NG_STRING, sizeof(NG_STRING) - 1);
@@ -328,16 +315,16 @@ manager_reload(struct manager_control *mc, char *arg)
 /*
  * check_crlf
  *
- * µ¡Ç½
- *      CRLF¤Î¥Á¥§¥Ã¥¯¤ò¹Ô¤¦
- * °ú¿ô
- *      c     ¥Á¥§¥Ã¥¯Ê¸»ú
- *      state ¥¹¥Æ¡¼¥¿¥¹
- * ÊÖ¤êÃÍ
- *      state ¥¹¥Æ¡¼¥¿¥¹¾ğÊó
+ * æ©Ÿèƒ½
+ *      CRLFã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã†
+ * å¼•æ•°
+ *      c     ãƒã‚§ãƒƒã‚¯æ–‡å­—
+ *      state ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹
+ * è¿”ã‚Šå€¤
+ *      state ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹æƒ…å ±
  *        CR_FOUND   CR
  *        CRLF_FOUND CRLF
- *        NONE       CRLF°Ê³°
+ *        NONE       CRLFä»¥å¤–
  */
 static int
 check_crlf (char c, int state)
@@ -359,14 +346,14 @@ check_crlf (char c, int state)
 /*
  * read_dust
  *
- * µ¡Ç½
- *      read¤Î»Ä³¼¤ò½üµî
+ * æ©Ÿèƒ½
+ *      readã®æ®‹éª¸ã‚’é™¤å»
  *
- * °ú¿ô
- *      fd    ¥Õ¥¡¥¤¥ë¥Ç¥£¥¹¥¯¥ê¥×¥¿
+ * å¼•æ•°
+ *      fd    ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‡ã‚£ã‚¹ã‚¯ãƒªãƒ—ã‚¿
  *
- * ÊÖ¤êÃÍ
- *     ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *     ãªã—
  */
 static void
 read_dust(int fd, int state)
@@ -374,7 +361,7 @@ read_dust(int fd, int state)
     char dust;
     int  readsize;
 
-    /* \r\n ¤¬Íè¤ë¤Ş¤Çread¤¹¤ë */
+    /* \r\n ãŒæ¥ã‚‹ã¾ã§readã™ã‚‹ */
     while (state != CRLF_FOUND) {
         readsize = read(fd, &dust, 1);
         if (readsize <= 0) {
@@ -388,19 +375,19 @@ read_dust(int fd, int state)
 /*
  * read_line
  *
- * µ¡Ç½
- *      1¹ÔÆÉ¤ß¹ş¤à
+ * æ©Ÿèƒ½
+ *      1è¡Œèª­ã¿è¾¼ã‚€
  *
- * °ú¿ô
- *      fd            ¥Õ¥¡¥¤¥ë¥Ç¥£¥¹¥¯¥ê¥×¥¿
- *     *buf           ½ñ¤­¹ş¤ß¥Ğ¥Ã¥Õ¥¡
+ * å¼•æ•°
+ *      fd            ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‡ã‚£ã‚¹ã‚¯ãƒªãƒ—ã‚¿
+ *     *buf           æ›¸ãè¾¼ã¿ãƒãƒƒãƒ•ã‚¡
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS     Àµ¾ï
- *      R_TIMEOUT     ¥¿¥¤¥à¥¢¥¦¥È
- *      R_ERROR       read¥¨¥é¡¼
- *      R_EOF         socket¤¬close
- *      R_TOOLONG     Ê¸»úÎó¤¬Ä¹¤¹¤®¤ë
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS     æ­£å¸¸
+ *      R_TIMEOUT     ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆ
+ *      R_ERROR       readã‚¨ãƒ©ãƒ¼
+ *      R_EOF         socketãŒclose
+ *      R_TOOLONG     æ–‡å­—åˆ—ãŒé•·ã™ãã‚‹
  */
 static int
 read_line (int fd, char *buf)
@@ -408,33 +395,34 @@ read_line (int fd, char *buf)
     int len;
     int state;
     int readsize;
+    char *mv = buf; 
 
-    for (len = state = 0; len < MAX_CMD_LEN + 2 && state != CRLF_FOUND; buf++, len++) {
-        readsize = read(fd, buf, 1);
+    for (len = state = 0; len < MAX_CMD_LEN + 1 && state != CRLF_FOUND; mv++, len++) {
+        readsize = read(fd, mv, 1);
         if (readsize < 0) {
-            /* ¥¿¥¤¥à¥¢¥¦¥È */
+            /* ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆ */
             if (errno == EWOULDBLOCK) {
                 return (R_TIMEOUT);
             }
-            /* ¤½¤ì°Ê³°¤Î¥¨¥é¡¼ */
+            /* ãã‚Œä»¥å¤–ã®ã‚¨ãƒ©ãƒ¼ */
             return (R_ERROR);
         }
         if (readsize == 0) {
             return (R_EOF);
         }
 
-        state = check_crlf(*buf, state);
+        state = check_crlf(*mv, state);
         if (state == CRLF_FOUND) {
-            buf--;
+            mv--;
             len--;
             break;
         }
     }
 
-    *buf = '\0';
+    *mv = '\0';
 
     if (state != CRLF_FOUND) {
-        /* ÆşÎÏÊ¸»úÎó¤¬Ä¹¤¹¤®¤ë */
+        /* å…¥åŠ›æ–‡å­—åˆ—ãŒé•·ã™ãã‚‹ */
         read_dust(fd, state);
         return (R_TOOLONG);
     }
@@ -445,14 +433,14 @@ read_line (int fd, char *buf)
 /*
  * request_handler
  *
- * µ¡Ç½
- *      ´ÉÍı¥¤¥ó¥¿¥Õ¥§¡¼¥¹¤È¤Î¤ä¤ê¼è¤ê¤ò¹Ô¤¦
+ * æ©Ÿèƒ½
+ *      ç®¡ç†ã‚¤ãƒ³ã‚¿ãƒ•ã‚§ãƒ¼ã‚¹ã¨ã®ã‚„ã‚Šå–ã‚Šã‚’è¡Œã†
  *
- * °ú¿ô
- *      *arg      ´ÉÍı¥³¥ó¥È¥í¡¼¥ë¹½Â¤ÂÎ(void *·¿)
+ * å¼•æ•°
+ *      *arg      ç®¡ç†ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«æ§‹é€ ä½“(void *å‹)
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void *
 request_handler(void *arg)
@@ -486,10 +474,10 @@ request_handler(void *arg)
             continue;
         }
 
-        /* ÀèÆ¬¤Î¶õÊ¸»ú¤òÆÉ¤ßÈô¤Ğ¤¹ */
+        /* å…ˆé ­ã®ç©ºæ–‡å­—ã‚’èª­ã¿é£›ã°ã™ */
         for (bufp = readbuf; isblank((int)*bufp) && *bufp != '\0'; bufp++);
 
-        /* ÂĞ±ş¥³¥Ş¥ó¥ÉÁöºº */
+        /* å¯¾å¿œã‚³ãƒãƒ³ãƒ‰èµ°æŸ» */
         for (i = 0; i < NUM_DAEMON_COMMAND; i++) {
             len = strlen(manager_command[i].dc_command);
             if ((strncasecmp(manager_command[i].dc_command, bufp, len) == 0) &&
@@ -502,13 +490,13 @@ request_handler(void *arg)
             }
         }
 
-        /* ÂĞ±ş¥³¥Ş¥ó¥É¤¬Â¸ºß¤·¤Ê¤¤ */
+        /* å¯¾å¿œã‚³ãƒãƒ³ãƒ‰ãŒå­˜åœ¨ã—ãªã„ */
         if (i == NUM_DAEMON_COMMAND) {
              write(mc->mc_so, UNKNOWN_STRING, sizeof(UNKNOWN_STRING) - 1);
         }
     }
 
-    /* ´ÉÍı¥¤¥ó¥¿¥Õ¥§¡¼¥¹»ÈÍÑ¿ô¤ò¸º¤é¤¹ */
+    /* ç®¡ç†ã‚¤ãƒ³ã‚¿ãƒ•ã‚§ãƒ¼ã‚¹ä½¿ç”¨æ•°ã‚’æ¸›ã‚‰ã™ */
     decrement_tc();
 
     close(mc->mc_so);
@@ -523,24 +511,23 @@ request_handler(void *arg)
 /*
  * manager_main
  *
- * µ¡Ç½
- *      ´ÉÍı¥¤¥ó¥¿¥Õ¥§¡¼¥¹¤Î¥á¥¤¥ó½èÍı
+ * æ©Ÿèƒ½
+ *      ç®¡ç†ã‚¤ãƒ³ã‚¿ãƒ•ã‚§ãƒ¼ã‚¹ã®ãƒ¡ã‚¤ãƒ³å‡¦ç†
  *
- * °ú¿ô
- *      *arg    listen¥½¥±¥Ã¥È
+ * å¼•æ•°
+ *      *arg    listenã‚½ã‚±ãƒƒãƒˆ
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 void *
 manager_main(void *arg)
 {
-    int                    so;
-    int                    on;
+    intptr_t               so;
+    int                    on = 1;
     int                    ret;
     struct manager_control *mc;
 
-    int                    nfds;
     socklen_t              slen;
     int                    fd;
     struct sockaddr_in     addr;
@@ -551,18 +538,16 @@ manager_main(void *arg)
 
     char f_name[] = "manager_main";
 
-    so = (int)arg;
-
-    nfds = so + 1;
+    so = (intptr_t)arg;
     slen = sizeof(struct sockaddr_in);
 
     while (1) {
-        fd = accept(so, (struct sockaddr *)&addr, &slen);
+        fd = accept((int)so, (struct sockaddr *)&addr, &slen);
         if (fd < 0) {
             continue;
         }
 
-        /* ¥¯¥é¥¤¥¢¥ó¥ÈIP¤ÎÊİÂ¸ */
+        /* ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆIPã®ä¿å­˜ */
         client = strdup(inet_ntoa(addr.sin_addr));
         if (client == NULL) {
             SYSLOGERROR(ERR_MALLOC, f_name, E_STR);
@@ -570,7 +555,7 @@ manager_main(void *arg)
         }
 
 #ifdef __HAVE_LIBWRAP
-        /* TCP_wrapper ¤Î¥Á¥§¥Ã¥¯ */
+        /* TCP_wrapper ã®ãƒã‚§ãƒƒã‚¯ */
         ret = hosts_ctl(MANAGER_NAME, STRING_UNKNOWN, client, STRING_UNKNOWN);
         if (ret == 0) {
             SYSLOGERROR(ERR_HOSTS_CTL, inet_ntoa(addr.sin_addr));
@@ -583,7 +568,7 @@ manager_main(void *arg)
         cfg = config_retrieve();
 
         if (thread_count >= cfg->cf_commandmaxclients) {
-            /* ÀÜÂ³¿ô¤òÄ¶¤¨¤Æ¤¤¤ë»ş */
+            /* æ¥ç¶šæ•°ã‚’è¶…ãˆã¦ã„ã‚‹æ™‚ */
             SYSLOGERROR(ERR_MANY_CONNECT, thread_count, cfg->cf_commandmaxclients);
             pthread_mutex_unlock(&tc_lock);
             config_release(cfg);
@@ -594,7 +579,7 @@ manager_main(void *arg)
             continue;
         }
 
-        /* ´ÉÍı¥¤¥ó¥¿¥Õ¥§¡¼¥¹»ÈÍÑ¿ô¤òÁı¤ä¤¹ */
+        /* ç®¡ç†ã‚¤ãƒ³ã‚¿ãƒ•ã‚§ãƒ¼ã‚¹ä½¿ç”¨æ•°ã‚’å¢—ã‚„ã™ */
         increment_tc();
 
         tv.tv_sec = cfg->cf_commandtimeout;
@@ -602,13 +587,13 @@ manager_main(void *arg)
 
         config_release(cfg);
 
-        /* KEEPALIVE¤òÀßÄê */
+        /* KEEPALIVEã‚’è¨­å®š */
         ret = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on));
         if (ret != 0) {
             SYSLOGERROR(ERR_SETSOCK_KEEP, E_STR);
         }
 
-        /* ¥¿¥¤¥à¥¢¥¦¥È¤òÀßÄê */
+        /* ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã‚’è¨­å®š */
         ret = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
         if (ret != 0) {
             SYSLOGERROR(ERR_SETSOCK_RCVTIMEO, E_STR);
@@ -628,15 +613,15 @@ manager_main(void *arg)
         mc->mc_dest  = client;
         mc->mc_state = LOGIN_STATE_NONE;
 
-        /* Welcome ¥á¥Ã¥»¡¼¥¸¤ÎÁ÷¿® */
+        /* Welcome ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®é€ä¿¡ */
         write(fd, BANNER, sizeof(BANNER) - 1);
 
-        /* ¥³¥Ş¥ó¥É½èÍı */
+        /* ã‚³ãƒãƒ³ãƒ‰å‡¦ç† */
         ret = pthread_create(&child, NULL, request_handler, (void *)mc);
         if (ret != 0) {
             SYSLOGERROR(ERR_THREAD_CREATE, f_name, E_STR);
             close(fd);
-            close(so);
+            close((int)so);
             free(client);
 
             exit(EXIT_MANAGER);
@@ -644,8 +629,8 @@ manager_main(void *arg)
         pthread_detach(child);
     }
 
-    /* ÅşÃ£¤·¤Ê¤¤ */
-    close (so);
+    /* åˆ°é”ã—ãªã„ */
+    close ((int)so);
     ret = 0;
     pthread_exit(&ret);
 }

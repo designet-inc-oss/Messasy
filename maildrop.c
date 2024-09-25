@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: maildrop.c,v $
- * $Revision: 1.30 $
- * $Date: 2009/10/22 04:18:09 $
  */
 
 #ifdef OLD_CODE
@@ -67,22 +57,22 @@ static void md_free(struct maildrop *);
 /*
  * maildrop_open
  *
- * ¥Õ¥¡¥¤¥ë½ñ¤­¹ş¤ß¤Î½àÈ÷¤ò¹Ô¤Ê¤¦
- * - É¬Í×¤Ê¥Ç¥£¥ì¥¯¥È¥ê¤ÎºîÀ®
- * - °ì»ş¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó
- * - ¥«¥¹¥¿¥à¥Ø¥Ã¥À¤ÎÃÍºîÀ®
+ * ãƒ•ã‚¡ã‚¤ãƒ«æ›¸ãè¾¼ã¿ã®æº–å‚™ã‚’è¡Œãªã†
+ * - å¿…è¦ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ä½œæˆ
+ * - ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³
+ * - ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã®å€¤ä½œæˆ
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct config *         config¹½Â¤ÂÎ
- *      time_t                  ¼õ¿®Æü»ş
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct config *         configæ§‹é€ ä½“
+ *      time_t                  å—ä¿¡æ—¥æ™‚
  *      struct strset *         From
- *      struct strlist *        To°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
- *      struct strlist *        ÊİÂ¸¥¢¥É¥ì¥¹°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ *      struct strlist *        Toä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
+ *      struct strlist *        ä¿å­˜ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      struct maildrop *       Àµ¾ï
- *      NULL                    ¥¨¥é¡¼ (°ì»ş¥Õ¥¡¥¤¥ë¤Î¥ª¡¼¥×¥ó¤Ë¼ºÇÔ)
+ * è¿”ã‚Šå€¤
+ *      struct maildrop *       æ­£å¸¸
+ *      NULL                    ã‚¨ãƒ©ãƒ¼ (ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚ªãƒ¼ãƒ—ãƒ³ã«å¤±æ•—)
  */
 struct maildrop *
 maildrop_open(unsigned int s_id, struct config *config,
@@ -93,13 +83,13 @@ maildrop_open(unsigned int s_id, struct config *config,
     mode_t old_umask;
     int temppathlen;
 
-    /* maildrop¹½Â¤ÂÎ¤ò½é´ü²½ */
+    /* maildropæ§‹é€ ä½“ã‚’åˆæœŸåŒ– */
     md = md_struct_init(s_id, config, time, from, to_h, saveaddr_h);
 
-    /* MailDirÇÛ²¼¤Ë¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë */
+    /* MailDiré…ä¸‹ã«ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹ */
     md_makemaildir(s_id, config->cf_maildir);
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹¤òºîÀ® */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ã‚’ä½œæˆ */
     temppathlen = strlen(config->cf_maildir) +
                     strlen(msy_hostname) + TEMPFILEPATH_LEN;
     md->md_tempfilepath = (char *)malloc(temppathlen);
@@ -110,7 +100,7 @@ maildrop_open(unsigned int s_id, struct config *config,
     sprintf(md->md_tempfilepath, TEMPFILEPATH,
             config->cf_maildir, md->md_recvtime, msy_hostname);
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤ò¥ª¡¼¥×¥ó */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚ªãƒ¼ãƒ—ãƒ³ */
     old_umask = umask(0077);
     md->md_tempfile_fd = mkstemp(md->md_tempfilepath);
     umask(old_umask);
@@ -126,18 +116,18 @@ maildrop_open(unsigned int s_id, struct config *config,
 /*
  * maildrop_write_header
  *
- * ¥Ø¥Ã¥À¤ò°ì»ş¥Õ¥¡¥¤¥ë¤Ë½ĞÎÏ¤¹¤ë
- * ¥«¥¹¥¿¥à¥Ø¥Ã¥À¤ò½é¤á¤Ë½ñ¤­¹ş¤à
+ * ãƒ˜ãƒƒãƒ€ã‚’ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã™ã‚‹
+ * ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã‚’åˆã‚ã«æ›¸ãè¾¼ã‚€
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
- *      char *                  ¥Ø¥Ã¥À¥Õ¥£¡¼¥ë¥É (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
- *      char *                  ¥Ø¥Ã¥ÀÃÍ (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct maildrop *       maildropæ§‹é€ ä½“
+ *      char *                  ãƒ˜ãƒƒãƒ€ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
+ *      char *                  ãƒ˜ãƒƒãƒ€å€¤ (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 int
 maildrop_write_header(unsigned int s_id, struct maildrop *md,
@@ -149,7 +139,7 @@ maildrop_write_header(unsigned int s_id, struct maildrop *md,
     int ret;
 
     if (!md->md_writing_header) {
-        /* ¤Ï¤¸¤á¤Ë¥«¥¹¥¿¥à¥Ø¥Ã¥À¤ò½ñ¤­¹ş¤à */
+        /* ã¯ã˜ã‚ã«ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã‚’æ›¸ãè¾¼ã‚€ */
         md->md_writing_header = 1;
         ret = maildrop_write_header(s_id, md, CUSTOMHDR_FROM,
                                     md->md_header_from.ss_str);
@@ -163,8 +153,8 @@ maildrop_write_header(unsigned int s_id, struct maildrop *md,
         }
     }
 
-    /* ¥Ø¥Ã¥À¤Î½ñ¤­¹ş¤ß */
-    header_len = strlen(headerf) + strlen(headerv) + 3; // Ê¸»úÎó + ': ' + '\n'
+    /* ãƒ˜ãƒƒãƒ€ã®æ›¸ãè¾¼ã¿ */
+    header_len = strlen(headerf) + strlen(headerv) + 3; // æ–‡å­—åˆ— + ': ' + '\n'
     header = (char *)malloc(header_len + 1);    // '\0'
     if (header == NULL) {
         SYSLOGERROR(ERR_S_MALLOC, s_id, "maildrop_write_header", E_STR);
@@ -193,19 +183,19 @@ maildrop_write_header(unsigned int s_id, struct maildrop *md,
 /*
  * maildrop_write_body
  *
- * ¥á¡¼¥ë¥Ü¥Ç¥£¤ò°ì»ş¥Õ¥¡¥¤¥ë¤Ë½ĞÎÏ¤¹¤ë
- * ¥Ø¥Ã¥À¤È¥Ü¥Ç¥£¤Î¶èÀÚ¤ê¤ò½é¤á¤Ë½ñ¤­¹ş¤à
- * ²ş¹ÔÊ¸»ú¤ÏCRLF¤òLF¤ËÅı°ì¤¹¤ë
+ * ãƒ¡ãƒ¼ãƒ«ãƒœãƒ‡ã‚£ã‚’ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã™ã‚‹
+ * ãƒ˜ãƒƒãƒ€ã¨ãƒœãƒ‡ã‚£ã®åŒºåˆ‡ã‚Šã‚’åˆã‚ã«æ›¸ãè¾¼ã‚€
+ * æ”¹è¡Œæ–‡å­—ã¯CRLFã‚’LFã«çµ±ä¸€ã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
- *      unsigned char *         ¥Ü¥Ç¥£ (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
- *      size_t                  Ä¹¤µ (¥³¡¼¥ë¥Ğ¥Ã¥¯¤ËÅÏ¤µ¤ì¤¿¤Ş¤Ş)
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct maildrop *       maildropæ§‹é€ ä½“
+ *      unsigned char *         ãƒœãƒ‡ã‚£ (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
+ *      size_t                  é•·ã• (ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã«æ¸¡ã•ã‚ŒãŸã¾ã¾)
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 int
 maildrop_write_body(unsigned int s_id, struct maildrop *md,
@@ -216,7 +206,7 @@ maildrop_write_body(unsigned int s_id, struct maildrop *md,
     int i;
 
     if (!md->md_writing_body) {
-        /* ¤Ï¤¸¤á¤Ë¥Ø¥Ã¥À¤È¥Ü¥Ç¥£¤Î¶èÀÚ¤êÊ¸»ú¤ò½ñ¤­¹ş¤à */
+        /* ã¯ã˜ã‚ã«ãƒ˜ãƒƒãƒ€ã¨ãƒœãƒ‡ã‚£ã®åŒºåˆ‡ã‚Šæ–‡å­—ã‚’æ›¸ãè¾¼ã‚€ */
         md->md_writing_body = 1;
         ret = maildrop_write_body(s_id, md, (unsigned char *) "\n", 1);
         if (ret != R_SUCCESS) {
@@ -224,7 +214,7 @@ maildrop_write_body(unsigned int s_id, struct maildrop *md,
         }
     }
 
-    /* ²ş¹ÔÊ¸»ú¤òLF¤ËÅı°ì¤·¤Ê¤¬¤é¡¢ËÜÊ¸¤ò½ñ¤­¹ş¤à */
+    /* æ”¹è¡Œæ–‡å­—ã‚’LFã«çµ±ä¸€ã—ãªãŒã‚‰ã€æœ¬æ–‡ã‚’æ›¸ãè¾¼ã‚€ */
     for (i = 0; i < len; i++, bodyp++) {
         if (md->md_cr) {
             if (*bodyp != '\n') {
@@ -253,15 +243,15 @@ maildrop_write_body(unsigned int s_id, struct maildrop *md,
 /*
  * maildrop_close
  *
- * °ì»ş¥Õ¥¡¥¤¥ë¤ò¥¯¥í¡¼¥º¤·¡¢ÊİÂ¸¤¹¤ë
+ * ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚¯ãƒ­ãƒ¼ã‚ºã—ã€ä¿å­˜ã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct maildrop *       maildropæ§‹é€ ä½“
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 int
 maildrop_close(unsigned int s_id, struct maildrop *md)
@@ -271,9 +261,9 @@ maildrop_close(unsigned int s_id, struct maildrop *md)
     size_t ret_s;
     int ret;
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤ò¥¯¥í¡¼¥º */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚¯ãƒ­ãƒ¼ã‚º */
     if (md->md_tempfile_fd > 0) {
-        /* ²ş¹ÔÊ¸»ú°·¤¤¤Ç¤Ê¤¤CR¤¬»Ä¤Ã¤Æ¤¤¤ë¾ì¹ç¤Ï½ñ¤­¹ş¤à */
+        /* æ”¹è¡Œæ–‡å­—æ‰±ã„ã§ãªã„CRãŒæ®‹ã£ã¦ã„ã‚‹å ´åˆã¯æ›¸ãè¾¼ã‚€ */
         if (md->md_cr) {
             ret_s = write(md->md_tempfile_fd, "\r", 1);
             if (ret_s < 0) {
@@ -281,34 +271,34 @@ maildrop_close(unsigned int s_id, struct maildrop *md)
             }
             md->md_cr = 0;
         }
-        /* ¥¯¥í¡¼¥º */
+        /* ã‚¯ãƒ­ãƒ¼ã‚º */
         close(md->md_tempfile_fd);
         md->md_tempfile_fd = 0;
     }
 
-    /* ÊİÂ¸Àè¤Î¥Õ¥¡¥¤¥ëÌ¾¤òºîÀ® */
+    /* ä¿å­˜å…ˆã®ãƒ•ã‚¡ã‚¤ãƒ«åã‚’ä½œæˆ */
     ret = md_makesavefilename(s_id, md, filename, sizeof(filename));
     if (ret != R_SUCCESS) {
         return R_ERROR;
     }
 
-    /* É¬Í×¤Ê¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤òºîÀ® */
+    /* å¿…è¦ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã‚’ä½œæˆ */
     ret = md_makedirlist(s_id, md, &list_h);
     if (ret != R_SUCCESS) {
         return R_ERROR;
     }
 
-    /* É¬Í×¤Ê¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+    /* å¿…è¦ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
     ret = md_makedirbylist(s_id, md, list_h);
     if (ret != R_SUCCESS) {
         free_strlist(list_h);
         return R_ERROR;
     }
 
-    /* ¥Õ¥¡¥¤¥ë¥³¥Ô¡¼ */
+    /* ãƒ•ã‚¡ã‚¤ãƒ«ã‚³ãƒ”ãƒ¼ */
     md_makesavefile(s_id, md, filename, list_h);
 
-    /* °ì»ş¥Õ¥¡¥¤¥ëºï½ü */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«å‰Šé™¤ */
     unlink(md->md_tempfilepath);
 
     free_strlist(list_h);
@@ -320,14 +310,14 @@ maildrop_close(unsigned int s_id, struct maildrop *md)
 /*
  * maildrop_abort
  *
- * ¥á¡¼¥ëÊİÂ¸½èÍı¤òÃæ»ß¤¹¤ë
+ * ãƒ¡ãƒ¼ãƒ«ä¿å­˜å‡¦ç†ã‚’ä¸­æ­¢ã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct maildrop *       maildropæ§‹é€ ä½“
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 void
 maildrop_abort(unsigned int s_id, struct maildrop *md)
@@ -337,7 +327,7 @@ maildrop_abort(unsigned int s_id, struct maildrop *md)
     }
 
     if (md->md_tempfile_fd > 0) {
-        /* ¥Õ¥¡¥¤¥ë¤¬¥ª¡¼¥×¥ó¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¤Ï¥¯¥í¡¼¥º¤¹¤ë */
+        /* ãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ªãƒ¼ãƒ—ãƒ³ã•ã‚Œã¦ã„ã‚‹å ´åˆã¯ã‚¯ãƒ­ãƒ¼ã‚ºã™ã‚‹ */
         close(md->md_tempfile_fd);
         md->md_tempfile_fd = 0;
     }
@@ -350,24 +340,24 @@ maildrop_abort(unsigned int s_id, struct maildrop *md)
 
 
 /***** ***** ***** ***** *****
- * ÆâÉô´Ø¿ô
+ * å†…éƒ¨é–¢æ•°
  ***** ***** ***** ***** *****/
 
 /*
  * md_struct_init
  *
- * maildrop¹½Â¤ÂÎ¤Î³ÎÊİ¤È½é´ü²½¤ò¹Ô¤Ê¤¦
+ * maildropæ§‹é€ ä½“ã®ç¢ºä¿ã¨åˆæœŸåŒ–ã‚’è¡Œãªã†
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct config *         config¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
- *      time_t                  ¥á¡¼¥ë¼õ¿®»ş¹ï
- *      struct strset *         Envelope From¥¢¥É¥ì¥¹
- *      struct strlist *        Envelope To¥¢¥É¥ì¥¹°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
- *      struct strlist *        ÊİÂ¸ÂĞ¾İ¥¢¥É¥ì¥¹°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct config *         configæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
+ *      time_t                  ãƒ¡ãƒ¼ãƒ«å—ä¿¡æ™‚åˆ»
+ *      struct strset *         Envelope Fromã‚¢ãƒ‰ãƒ¬ã‚¹
+ *      struct strlist *        Envelope Toã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
+ *      struct strlist *        ä¿å­˜å¯¾è±¡ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
+ * è¿”ã‚Šå€¤
+ *      struct maildrop *       maildropæ§‹é€ ä½“
  */
 static struct maildrop *
 md_struct_init(unsigned int s_id, struct config *config, time_t time,
@@ -377,7 +367,7 @@ md_struct_init(unsigned int s_id, struct config *config, time_t time,
     struct maildrop *md;
     int ret;
 
-    /* ÎÎ°è¤ò³ÎÊİ */
+    /* é ˜åŸŸã‚’ç¢ºä¿ */
     md = (struct maildrop *)malloc(sizeof(struct maildrop));
     if (md == NULL) {
         SYSLOGERROR(ERR_S_MALLOC, s_id, "md_struct_init", E_STR);
@@ -385,18 +375,18 @@ md_struct_init(unsigned int s_id, struct config *config, time_t time,
     }
     memset(md, 0, sizeof(struct maildrop));
 
-    /* ¼õ¿®Æü»ş¤òÊİÂ¸ */
+    /* å—ä¿¡æ—¥æ™‚ã‚’ä¿å­˜ */
     md->md_recvtime = time;
 
-    /* MailDir, MailFolder¤ÎÃÍ¤òÊİÂ¸ */
+    /* MailDir, MailFolderã®å€¤ã‚’ä¿å­˜ */
     strset_set(&md->md_maildir, config->cf_maildir);
     strset_set(&md->md_mailfolder, config->cf_mailfolder);
 
-    /* *Delimiter¤ÎÃÍ¤òÊİÂ¸ */
+    /* *Delimiterã®å€¤ã‚’ä¿å­˜ */
     md->md_dotdelimiter = *(config->cf_dotdelimiter);
     md->md_slashdelimiter = *(config->cf_slashdelimiter);
 
-    /* ¥«¥¹¥¿¥à¥Ø¥Ã¥À¤òºîÀ® */
+    /* ã‚«ã‚¹ã‚¿ãƒ ãƒ˜ãƒƒãƒ€ã‚’ä½œæˆ */
     strset_init(&md->md_header_from);
     ret = strset_catstrset(&md->md_header_from, from);
     if (ret == -1) {
@@ -407,7 +397,7 @@ md_struct_init(unsigned int s_id, struct config *config, time_t time,
     strset_init(&md->md_header_to);
     md_list2str(s_id, &md->md_header_to, to_h);
 
-    /* ÊİÂ¸¥¢¥É¥ì¥¹°ìÍ÷¤òÊİÂ¸ */
+    /* ä¿å­˜ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã‚’ä¿å­˜ */
     md->md_saveaddr_h = saveaddr_h;
 
     return md;
@@ -416,15 +406,15 @@ md_struct_init(unsigned int s_id, struct config *config, time_t time,
 /*
  * md_makedirlist
  *
- * ºîÀ®¤¹¤ëÉ¬Í×¤Î¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤òºîÀ®¤¹¤ë
+ * ä½œæˆã™ã‚‹å¿…è¦ã®ã‚ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct maildrop *       maildropæ§‹é€ ä½“
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_makedirlist(unsigned int s_id, struct maildrop *md, struct strlist **list_h)
@@ -438,7 +428,7 @@ md_makedirlist(unsigned int s_id, struct maildrop *md, struct strlist **list_h)
     struct tm lt, *ret_t;
     int ret;
 
-    /* ¼õ¿®»ş¹ï¤«¤éÃÖ´¹Ê¸»úÎó¤òºîÀ® */
+    /* å—ä¿¡æ™‚åˆ»ã‹ã‚‰ç½®æ›æ–‡å­—åˆ—ã‚’ä½œæˆ */
     ret_t = localtime_r(&md->md_recvtime, &lt);
     if (ret_t == NULL) {
         SYSLOGERROR(ERR_S_LTIME, s_id, E_STR);
@@ -455,15 +445,15 @@ md_makedirlist(unsigned int s_id, struct maildrop *md, struct strlist **list_h)
     sf[2].sf_formatchar = 'd';
     sf[2].sf_replacestr = day;
 
-    /* ÊİÂ¸ÂĞ¾İ¥¢¥É¥ì¥¹Ëè¤Ë¥Ç¥£¥ì¥¯¥È¥êÌ¾¤òºîÀ®¤¹¤ë */
+    /* ä¿å­˜å¯¾è±¡ã‚¢ãƒ‰ãƒ¬ã‚¹æ¯ã«ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªåã‚’ä½œæˆã™ã‚‹ */
     *list_h = list_t = NULL;
     p = md->md_saveaddr_h;
     while (p != NULL) {
-        /* ¥¢¥É¥ì¥¹¤È¥É¥á¥¤¥ó¤«¤éÃÖ´¹Ê¸»úÎó¤òºîÀ®¤¹¤ë */
+        /* ã‚¢ãƒ‰ãƒ¬ã‚¹ã¨ãƒ‰ãƒ¡ã‚¤ãƒ³ã‹ã‚‰ç½®æ›æ–‡å­—åˆ—ã‚’ä½œæˆã™ã‚‹ */
         strncpy(mailaddr, p->ss_data.ss_str, MAX_ADDRESS_LEN + 1);
         ret = check_7bit(mailaddr);
         if (ret != 0) {
-            /* 8bitÊ¸»ú¤¬´Ş¤Ş¤ì¤ë¤¿¤áUNKNOWN¤Ë */
+            /* 8bitæ–‡å­—ãŒå«ã¾ã‚Œã‚‹ãŸã‚UNKNOWNã« */
             addr_p = UNKNOWN;
             domain_p = UNKNOWN;
         } else {
@@ -472,8 +462,8 @@ md_makedirlist(unsigned int s_id, struct maildrop *md, struct strlist **list_h)
 
             domain_p = strchr(mailaddr, '@');
             if (domain_p == NULL) {
-                /* ¥¢¥É¥ì¥¹°ìÍ÷¤ÎºîÀ®»ş¤Ë¥É¥á¥¤¥ó¤¬Êä´°¤µ¤ì¤ë¤Î¤Ç¡¢
-                 * ¤³¤³¤Ë¤ÏÆş¤é¤Ê¤¤¤Ï¤º */
+                /* ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®ä½œæˆæ™‚ã«ãƒ‰ãƒ¡ã‚¤ãƒ³ãŒè£œå®Œã•ã‚Œã‚‹ã®ã§ã€
+                 * ã“ã“ã«ã¯å…¥ã‚‰ãªã„ã¯ãš */
                 domain_p = UNKNOWN;
             } else {
                 domain_p++;
@@ -487,10 +477,10 @@ md_makedirlist(unsigned int s_id, struct maildrop *md, struct strlist **list_h)
         sf[5].sf_formatchar = 'f';
         sf[4].sf_replacestr = sf[5].sf_replacestr = addr_p;
 
-        /* MailFolder¤Î¥Õ¥©¡¼¥Ş¥Ã¥ÈÊ¸»ú¤òÃÖ´¹¤¹¤ë */
+        /* MailFolderã®ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆæ–‡å­—ã‚’ç½®æ›ã™ã‚‹ */
         tmp = str_replace_format(md->md_mailfolder.ss_str, sf, 6);
 
-        /* MailDir, MailFolder (ÃÖ´¹¸å) ¤òÏ¢·ë¤¹¤ë */
+        /* MailDir, MailFolder (ç½®æ›å¾Œ) ã‚’é€£çµã™ã‚‹ */
         strset_init(&path);
         if (strset_catstrset(&path, &md->md_maildir) == -1 ||
             strset_catstr(&path, "/") == -1 ||
@@ -500,8 +490,8 @@ md_makedirlist(unsigned int s_id, struct maildrop *md, struct strlist **list_h)
         }
         free(tmp);
 
-        /* ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤ËÄÉ²Ã¤¹¤ë
-         * ¤Ş¤Ã¤¿¤¯Æ±°ì¤Î¥Ñ¥¹¤¬´û¤Ë°ìÍ÷¤Ë¤¢¤ë¾ì¹ç¤ÏÌµ»ë¤¹¤ë */
+        /* ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã«è¿½åŠ ã™ã‚‹
+         * ã¾ã£ãŸãåŒä¸€ã®ãƒ‘ã‚¹ãŒæ—¢ã«ä¸€è¦§ã«ã‚ã‚‹å ´åˆã¯ç„¡è¦–ã™ã‚‹ */
         uniq_push_strlist(list_h, &list_t, path.ss_str);
 
         strset_free(&path);
@@ -514,16 +504,16 @@ md_makedirlist(unsigned int s_id, struct maildrop *md, struct strlist **list_h)
 /*
  * md_makedirbylist
  *
- * ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤ò¸µ¤Ë¡¢Maildir·Á¼°¤Î¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë
+ * ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã‚’å…ƒã«ã€Maildirå½¢å¼ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
- *      struct strlist *        ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct maildrop *       maildropæ§‹é€ ä½“
+ *      struct strlist *        ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_makedirbylist(unsigned int s_id, struct maildrop *md, struct strlist *list)
@@ -548,49 +538,49 @@ md_makedirbylist(unsigned int s_id, struct maildrop *md, struct strlist *list)
 /*
  * md_makemaildir_tree
  *
- * »ØÄê¤µ¤ì¤¿¥Ç¥£¥ì¥¯¥È¥ê¤Ë»ê¤ë¥Ç¥£¥ì¥¯¥È¥ê¥Ä¥ê¡¼¤òMaildir·Á¼°¤ÇºîÀ®¤¹¤ë
+ * æŒ‡å®šã•ã‚ŒãŸãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«è‡³ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ„ãƒªãƒ¼ã‚’Maildirå½¢å¼ã§ä½œæˆã™ã‚‹
  *
  * /home/archive/Maildir/.2009.10.01
- * ¢ª /home/archive/Maildir/.2009/{new,cur,tmp}
+ * â†’ /home/archive/Maildir/.2009/{new,cur,tmp}
  *    /home/archive/Maildir/.2009.10/{new,cur,tmp}
  *    /home/archive/Maildir/.2009.10.01/{new,cur,tmp}
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      char *                  ¥Ç¥£¥ì¥¯¥È¥êÌ¾
- *                              (ºÇ¤â¿¼¤¤¥Ç¥£¥ì¥¯¥È¥ê¤ò»ØÄê¤¹¤ë)
- *      int                     ¥Ù¡¼¥¹¥Ç¥£¥ì¥¯¥È¥ê¤ÎÄ¹¤µ
- *                              (Maildir·Á¼°¤Î¥Ä¥ê¡¼¤Îµ¯ÅÀ¤ò»ØÄê¤¹¤ë)
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      char *                  ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
+ *                              (æœ€ã‚‚æ·±ã„ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’æŒ‡å®šã™ã‚‹)
+ *      int                     ãƒ™ãƒ¼ã‚¹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®é•·ã•
+ *                              (Maildirå½¢å¼ã®ãƒ„ãƒªãƒ¼ã®èµ·ç‚¹ã‚’æŒ‡å®šã™ã‚‹)
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼ (°ú¿ô¥¨¥é¡¼)
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼ (å¼•æ•°ã‚¨ãƒ©ãƒ¼)
  */
 static int
 md_makemaildir_tree(unsigned int s_id, char *targetdir, int basedir_len)
 {
     char *subtop, *dot;
 
-    /* ¥İ¥¤¥ó¥¿¤ò¥Õ¥©¥ë¥ÀÀèÆ¬¤Î¥É¥Ã¥È¤Ë°ÜÆ°¤µ¤»¤ë
+    /* ãƒã‚¤ãƒ³ã‚¿ã‚’ãƒ•ã‚©ãƒ«ãƒ€å…ˆé ­ã®ãƒ‰ãƒƒãƒˆã«ç§»å‹•ã•ã›ã‚‹
      * /path/to/basedir/.folder
      *                  ^-subtop */
     subtop = targetdir + basedir_len + 1;
     if (strchr(subtop, SLASH) != NULL) {
-        /* Ëü°ì¥Õ¥©¥ë¥ÀÇÛ²¼¤Ë¥¹¥é¥Ã¥·¥å¤¬´Ş¤Ş¤ì¤Æ¤¤¤¿¾ì¹ç¤Ï
-         * ÂĞ±ş¤·¤Æ¤¤¤Ê¤¤¤Î¤Ç¥¨¥é¡¼¤òÊÖ¤¹ */
+        /* ä¸‡ä¸€ãƒ•ã‚©ãƒ«ãƒ€é…ä¸‹ã«ã‚¹ãƒ©ãƒƒã‚·ãƒ¥ãŒå«ã¾ã‚Œã¦ã„ãŸå ´åˆã¯
+         * å¯¾å¿œã—ã¦ã„ãªã„ã®ã§ã‚¨ãƒ©ãƒ¼ã‚’è¿”ã™ */
         return R_ERROR;
     }
 
-    /* ¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë */
+    /* ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹ */
     while ((dot = strchr(subtop, DOT)) != NULL) {
-        /* ¥É¥Ã¥È¤ò\0¤Ë°ì»şÅª¤ËÃÖ¤­´¹¤¨¤Æ¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+        /* ãƒ‰ãƒƒãƒˆã‚’\0ã«ä¸€æ™‚çš„ã«ç½®ãæ›ãˆã¦ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
         *dot = '\0';
         md_makemaildir(s_id, targetdir);
         *dot = DOT;
         subtop = dot + 1;
     }
 
-    /* ºÇ½ªÅª¤Ê¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+    /* æœ€çµ‚çš„ãªãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
     md_makemaildir(s_id, targetdir);
 
     return R_SUCCESS;
@@ -599,22 +589,22 @@ md_makemaildir_tree(unsigned int s_id, char *targetdir, int basedir_len)
 /*
  * md_makemaildir
  *
- * »ØÄê¤µ¤ì¤¿¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤·¡¢¤½¤ÎÇÛ²¼¤Ë
+ * æŒ‡å®šã•ã‚ŒãŸãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã—ã€ãã®é…ä¸‹ã«
  *   /new, /cur, /tmp
- * ¤Î3¤Ä¤Î¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë
- * ¢¨¥Ç¥£¥ì¥¯¥È¥ê¤ÎºîÀ®¤Ë¼ºÇÔ¤·¤¿¾ì¹ç¤â¥¨¥é¡¼¤È¤·¤Ê¤¤
+ * ã®3ã¤ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹
+ * â€»ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ä½œæˆã«å¤±æ•—ã—ãŸå ´åˆã‚‚ã‚¨ãƒ©ãƒ¼ã¨ã—ãªã„
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      char *                  ¥Ç¥£¥ì¥¯¥È¥êÌ¾
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      char *                  ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 md_makemaildir(unsigned int s_id, char *dirname)
 {
-    /* ºîÀ®¤¹¤ë¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷ */
+    /* ä½œæˆã™ã‚‹ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§ */
     char *subdirs[] = {
                        "/new",
                        "/cur",
@@ -626,12 +616,12 @@ md_makemaildir(unsigned int s_id, char *dirname)
     char *tmp;
     int ret, i;
 
-    /* ¥Ù¡¼¥¹¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+    /* ãƒ™ãƒ¼ã‚¹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
     md_mkdir(s_id, dirname);
 
     strset_init(&createpath);
     for (i = 0; subdirs[i] != NULL; i++) {
-        /* MailDir¤ò¥³¥Ô¡¼ */
+        /* MailDirã‚’ã‚³ãƒ”ãƒ¼ */
         tmp = strdup(dirname);
         if (tmp == NULL) {
             SYSLOGERROR(ERR_S_MALLOC, s_id, "md_makemaildir", E_STR);
@@ -639,14 +629,14 @@ md_makemaildir(unsigned int s_id, char *dirname)
         }
         strset_set(&createpath, tmp);
 
-        /* ¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥êÌ¾ (.../new, .../cur, .../tmp) ¤òÉÕ²Ã */
+        /* ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå (.../new, .../cur, .../tmp) ã‚’ä»˜åŠ  */
         ret = strset_catstr(&createpath, subdirs[i]);
         if (ret == -1) {
             SYSLOGERROR(ERR_S_LIBFUNC, s_id, "strset_catstr", E_STR);
             exit(EXIT_MILTER);
         }
          
-        /* ¥µ¥Ö¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ® */
+        /* ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ */
         md_mkdir(s_id, createpath.ss_str);
 
         strset_free(&createpath);
@@ -658,15 +648,15 @@ md_makemaildir(unsigned int s_id, char *dirname)
 /*
  * md_mkdir
  *
- * »ØÄê¤µ¤ì¤¿¥Ç¥£¥ì¥¯¥È¥ê¤òºîÀ®¤¹¤ë
+ * æŒ‡å®šã•ã‚ŒãŸãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      char *                  ¥Ç¥£¥ì¥¯¥È¥êÌ¾
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      char *                  ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï (´û¤Ë¥Ç¥£¥ì¥¯¥È¥ê¤¬Â¸ºß¤·¤¿¾ì¹ç¤â)
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸ (æ—¢ã«ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãŒå­˜åœ¨ã—ãŸå ´åˆã‚‚)
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_mkdir(unsigned int s_id, char *dirname)
@@ -683,7 +673,7 @@ md_mkdir(unsigned int s_id, char *dirname)
             return R_ERROR;
         }
 
-        /* ºîÀ®¤·¤¿ */
+        /* ä½œæˆã—ãŸ */
         return R_SUCCESS;
 
     } else {
@@ -692,28 +682,28 @@ md_mkdir(unsigned int s_id, char *dirname)
             return R_ERROR;
         }
 
-        /* ´û¤ËÂ¸ºß¤·¤¿ */
+        /* æ—¢ã«å­˜åœ¨ã—ãŸ */
         return R_SUCCESS;
     }
 
-    /* Ç°¤Î¤¿¤á */
+    /* å¿µã®ãŸã‚ */
     return R_SUCCESS;
 }
 
 /*
  * md_makesavefilename
  *
- * ÊİÂ¸¥Õ¥¡¥¤¥ëÌ¾ ("/new/.....") ¤òºîÀ®¤¹¤ë
+ * ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«å ("/new/.....") ã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
- *      char *                  ¥Õ¥¡¥¤¥ëÌ¾¤Î³ÊÇ¼Àè
- *      int                     ³ÊÇ¼Àè¤ÎÄ¹¤µ
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct maildrop *       maildropæ§‹é€ ä½“
+ *      char *                  ãƒ•ã‚¡ã‚¤ãƒ«åã®æ ¼ç´å…ˆ
+ *      int                     æ ¼ç´å…ˆã®é•·ã•
  *
- * ÊÖ¤êÃÍ
- *      R_SUCCESS               Àµ¾ï
- *      R_ERROR                 ¥¨¥é¡¼
+ * è¿”ã‚Šå€¤
+ *      R_SUCCESS               æ­£å¸¸
+ *      R_ERROR                 ã‚¨ãƒ©ãƒ¼
  */
 static int
 md_makesavefilename(unsigned int s_id, struct maildrop *md,
@@ -722,14 +712,14 @@ md_makesavefilename(unsigned int s_id, struct maildrop *md,
     struct stat stbuf;
     int ret;
 
-    /* °ì»ş¥Õ¥¡¥¤¥ë¤Îi¥Î¡¼¥ÉÈÖ¹æ¤ò¼è¤ë */
+    /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®iãƒãƒ¼ãƒ‰ç•ªå·ã‚’å–ã‚‹ */
     ret = stat(md->md_tempfilepath, &stbuf);
     if (ret < 0) {
         SYSLOGERROR(ERR_S_STAT, s_id, md->md_tempfilepath, E_STR);
         return R_ERROR;
     }
 
-    /* ¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹ (/new/....) ¤òºîÀ®¤¹¤ë */
+    /* ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ (/new/....) ã‚’ä½œæˆã™ã‚‹ */
     snprintf(filename, filename_len, SAVEFILENAME,
                 md->md_recvtime, stbuf.st_ino, msy_hostname);
 
@@ -739,17 +729,17 @@ md_makesavefilename(unsigned int s_id, struct maildrop *md,
 /*
  * md_makesavefile
  *
- * °ìÍ÷¤Ë´Ş¤Ş¤ì¤ë¥Ç¥£¥ì¥¯¥È¥êÇÛ²¼¤Ë¡¢ÊİÂ¸¥Õ¥¡¥¤¥ë¤ò¥ê¥ó¥¯¤¹¤ë
- * ¢¨¥ê¥ó¥¯¤Ë¼ºÇÔ¤·¤¿¾ì¹ç¤Ï¥¨¥é¡¼¤È¤·¤Ê¤¤
+ * ä¸€è¦§ã«å«ã¾ã‚Œã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªé…ä¸‹ã«ã€ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒªãƒ³ã‚¯ã™ã‚‹
+ * â€»ãƒªãƒ³ã‚¯ã«å¤±æ•—ã—ãŸå ´åˆã¯ã‚¨ãƒ©ãƒ¼ã¨ã—ãªã„
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID
- *      struct maildrop *       maildrop¹½Â¤ÂÎ
- *      char *                  ÊİÂ¸¥Õ¥¡¥¤¥ëÌ¾
- *      struct strlist *        ¥Ç¥£¥ì¥¯¥È¥ê°ìÍ÷
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID
+ *      struct maildrop *       maildropæ§‹é€ ä½“
+ *      char *                  ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«å
+ *      struct strlist *        ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªä¸€è¦§
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤· (¥ê¥ó¥¯¤Ë¼ºÇÔ¤·¤¿¾ì¹ç¤â)
+ * è¿”ã‚Šå€¤
+ *      ãªã— (ãƒªãƒ³ã‚¯ã«å¤±æ•—ã—ãŸå ´åˆã‚‚)
  */
 static void
 md_makesavefile(unsigned int s_id, struct maildrop *md,
@@ -761,7 +751,7 @@ md_makesavefile(unsigned int s_id, struct maildrop *md,
 
     p = dirlist;
     while (p != NULL) {
-        /* ¥ê¥ó¥¯Àè¤Î¥Õ¥¡¥¤¥ë¤Î¥Õ¥ë¥Ñ¥¹¤òºîÀ®¤¹¤ë */
+        /* ãƒªãƒ³ã‚¯å…ˆã®ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ãƒ«ãƒ‘ã‚¹ã‚’ä½œæˆã™ã‚‹ */
         strset_init(&path);
         if (strset_catstr(&path, p->ss_data.ss_str) == -1 ||
             strset_catstr(&path, filename) == -1) {
@@ -769,10 +759,10 @@ md_makesavefile(unsigned int s_id, struct maildrop *md,
             exit(EXIT_MILTER);
         }
 
-        /* ¥Ï¡¼¥É¥ê¥ó¥¯¤òºîÀ®¤¹¤ë */
+        /* ãƒãƒ¼ãƒ‰ãƒªãƒ³ã‚¯ã‚’ä½œæˆã™ã‚‹ */
         ret = link(md->md_tempfilepath, path.ss_str);
         if (ret < 0) {
-            /* ¼ºÇÔ¤·¤¿¾ì¹ç¤Ï¥í¥°½ĞÎÏ¤Î¤ß */
+            /* å¤±æ•—ã—ãŸå ´åˆã¯ãƒ­ã‚°å‡ºåŠ›ã®ã¿ */
             SYSLOGERROR(ERR_S_LINK, s_id, p->ss_data.ss_str, E_STR);
         }
 
@@ -786,15 +776,15 @@ md_makesavefile(unsigned int s_id, struct maildrop *md,
 /*
  * md_list2str
  *
- * strlist·Á¼°¤Î°ìÍ÷¤«¤é¥«¥ó¥Ş¶èÀÚ¤ê¤ÎÊ¸»úÎó¤òºîÀ®¤¹¤ë
+ * strlistå½¢å¼ã®ä¸€è¦§ã‹ã‚‰ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Šã®æ–‡å­—åˆ—ã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *      unsigned int            ¥»¥Ã¥·¥ç¥óID (¥í¥°½ĞÎÏÍÑ)
- *      struct strset *         ³ÊÇ¼Àè¤Îstrset¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
- *      struct strlist *        °ìÍ÷¤ÎÀèÆ¬¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      unsigned int            ã‚»ãƒƒã‚·ãƒ§ãƒ³ID (ãƒ­ã‚°å‡ºåŠ›ç”¨)
+ *      struct strset *         æ ¼ç´å…ˆã®strsetæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
+ *      struct strlist *        ä¸€è¦§ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 md_list2str(unsigned int s_id, struct strset *target, struct strlist *list_h)
@@ -809,7 +799,7 @@ md_list2str(unsigned int s_id, struct strset *target, struct strlist *list_h)
     p = list_h;
     while (p != NULL) {
         if (p != list_h) {
-            /* 2¤ÄÌÜ°Ê¹ß¤Ï ", " ¤Ç·Ò¤²¤ë */
+            /* 2ã¤ç›®ä»¥é™ã¯ ", " ã§ç¹‹ã’ã‚‹ */
             ret = strset_catstr(&str, ", ");
             if (ret < 0) {
                 SYSLOGERROR(ERR_S_LIBFUNC, s_id, "strset_catstr", E_STR);
@@ -832,13 +822,13 @@ md_list2str(unsigned int s_id, struct strset *target, struct strlist *list_h)
 /*
  * md_free
  *
- * maildrop¹½Â¤ÂÎ¤ò²òÊü¤¹¤ë
+ * maildropæ§‹é€ ä½“ã‚’è§£æ”¾ã™ã‚‹
  *
- * °ú¿ô
- *      struct maildrop *       maildrop¹½Â¤ÂÎ¤Î¥İ¥¤¥ó¥¿
+ * å¼•æ•°
+ *      struct maildrop *       maildropæ§‹é€ ä½“ã®ãƒã‚¤ãƒ³ã‚¿
  *
- * ÊÖ¤êÃÍ
- *      ¤Ê¤·
+ * è¿”ã‚Šå€¤
+ *      ãªã—
  */
 static void
 md_free(struct maildrop *md)

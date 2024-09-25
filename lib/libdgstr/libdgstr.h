@@ -10,7 +10,7 @@
 #define _LIBDGSTR_H_
 #include "../../config.h"
 
-/*--- ¹½Â¤ÂÎ ---*/
+/*--- æ§‹é€ ä½“ ---*/
 
 struct strset {
     char   *ss_str;
@@ -24,14 +24,14 @@ struct strtag {
 };
 
 
-/*--- ¥Þ¥¯¥í ---*/
+/*--- ãƒžã‚¯ãƒ­ ---*/
 
 #define strset_catchar(ss, c) strset_catnstr(ss, &c, 1)
 #define ICONV_ERROR           ((iconv_t)-1)
 #define BUFSIZE               1024
 
 
-/*--- ¥×¥í¥È¥¿¥¤¥×Àë¸À ---*/
+/*--- ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ ---*/
 
 extern void strset_init(struct strset *);
 extern void strset_set(struct strset *, char *str);

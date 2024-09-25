@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,17 +12,8 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/*
- * $RCSfile: filter.c,v $
- * $Revision: 1.51 $
- * $Date: 2009/10/29 10:56:27 $
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +35,7 @@
 #include "utils.h"
 #include "log.h"
 
-/* ¥×¥í¥È¥¿¥¤¥×Àë¸À */
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ */
 static int check_domain(char *address, struct config *cfg);
 static int check_mailaddress(char *address, struct config *cfg);
 static int judge_mail(struct strset *checkaddress, struct strlist **savelist_h,
@@ -58,15 +49,15 @@ static int check_ldap(struct strlist *ldaplist, struct strlist **savelist_h,
 /*
  * check_header_regex
  *
- * ¥Ø¥Ã¥À¤ÎÀµµ¬É½¸½¥Ş¥Ã¥Á
+ * ãƒ˜ãƒƒãƒ€ã®æ­£è¦è¡¨ç¾ãƒãƒƒãƒ
  *
- * °ú¿ô
- *      char *          ¥Ø¥Ã¥À¥Õ¥£¡¼¥ë¥É
- *      char *          ¥Ø¥Ã¥ÀÃÍ
- *      regex_t *       Àµµ¬É½¸½
- * ÊÖ¤êÃÍ
- *      R_POSITIVE      ¥Ş¥Ã¥Á¤·¤¿
- *      R_SUCCESS       ¥Ş¥Ã¥Á¤·¤Ê¤«¤Ã¤¿
+ * å¼•æ•°
+ *      char *          ãƒ˜ãƒƒãƒ€ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰
+ *      char *          ãƒ˜ãƒƒãƒ€å€¤
+ *      regex_t *       æ­£è¦è¡¨ç¾
+ * è¿”ã‚Šå€¤
+ *      R_POSITIVE      ãƒãƒƒãƒã—ãŸ
+ *      R_SUCCESS       ãƒãƒƒãƒã—ãªã‹ã£ãŸ
  */
 int
 check_header_regex(char *headerf, char *headerv, regex_t *preg)
@@ -76,7 +67,7 @@ check_header_regex(char *headerf, char *headerv, regex_t *preg)
 
     strset_init(&ss);
 
-    /* ¥Ø¥Ã¥ÀÊ¸»úÎó¤òºîÀ® */
+    /* ãƒ˜ãƒƒãƒ€æ–‡å­—åˆ—ã‚’ä½œæˆ */
     if (strset_catstr(&ss, headerf) == -1 ||
         strset_catstr(&ss, ": ") == -1 ||
         strset_catstr(&ss, headerv) == -1) {
@@ -84,31 +75,31 @@ check_header_regex(char *headerf, char *headerv, regex_t *preg)
         exit(EXIT_MILTER);
     }
 
-    /* ¥Ş¥Ã¥Á */
+    /* ãƒãƒƒãƒ */
     ret = regexec(preg, ss.ss_str, 0, NULL, 0);
     strset_free(&ss);
     if (ret == 0) {
-        /* ¥Ş¥Ã¥Á¤·¤¿ */
+        /* ãƒãƒƒãƒã—ãŸ */
         return R_POSITIVE;
     }
 
-    /* ¥Ş¥Ã¥Á¤·¤Ê¤«¤Ã¤¿ */
+    /* ãƒãƒƒãƒã—ãªã‹ã£ãŸ */
     return R_SUCCESS;
 }
 
 /*
  * check_domain
  *
- * µ¡Ç½
- *    domain¤ò¥Á¥§¥Ã¥¯¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    domainã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    char   *address       ¥Á¥§¥Ã¥¯¤¹¤ë¥á¡¼¥ë¥¢¥É¥ì¥¹
- *    struct config *cfg ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë
+ * å¼•æ•°
+ *    char   *address       ãƒã‚§ãƒƒã‚¯ã™ã‚‹ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
+ *    struct config *cfg ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«
  *
- * ÊÖ¤êÃÍ
- *    R_SUCCESS    ¥Ş¥Ã¥Á¤·¤¿»ş
- *    R_ERROR      ¥Ş¥Ã¥Á¤·¤Ê¤«¤Ã¤¿»ş
+ * è¿”ã‚Šå€¤
+ *    R_SUCCESS    ãƒãƒƒãƒã—ãŸæ™‚
+ *    R_ERROR      ãƒãƒƒãƒã—ãªã‹ã£ãŸæ™‚
  */
 int
 check_domain(char *address, struct config *cfg)
@@ -116,34 +107,34 @@ check_domain(char *address, struct config *cfg)
     struct strlist *check;
     char *ptr;
 
-    /* ¥¢¥É¥ì¥¹¤«¤é@¤òÃµ¤¹ */
+    /* ã‚¢ãƒ‰ãƒ¬ã‚¹ã‹ã‚‰@ã‚’æ¢ã™ */
     ptr = strchr(address, '@');
     
     check = cfg->cf_mydomain_list;
-    /* ¥ê¥¹¥È¤Î¥É¥á¥¤¥ó¤È¥¢¥É¥ì¥¹¤Î¥É¥á¥¤¥óÉô¤ÎÈæ³Ó */
+    /* ãƒªã‚¹ãƒˆã®ãƒ‰ãƒ¡ã‚¤ãƒ³ã¨ã‚¢ãƒ‰ãƒ¬ã‚¹ã®ãƒ‰ãƒ¡ã‚¤ãƒ³éƒ¨ã®æ¯”è¼ƒ */
     while (check != NULL) {
         if (strcasecmp(check->ss_data.ss_str, ptr + 1) == 0) {
             return R_SUCCESS;
        }
         check = check->next;
     }
-    /* °ì·ï¤â°ú¤Ã¤«¤«¤é¤Ê¤¤¾ì¹ç¡¢ÊİÂ¸¤·¤Ê¤¤¡£*/
+    /* ä¸€ä»¶ã‚‚å¼•ã£ã‹ã‹ã‚‰ãªã„å ´åˆã€ä¿å­˜ã—ãªã„ã€‚*/
     return R_ERROR;
 }
 
 /*
  * check_mailaddress
  *
- * µ¡Ç½
- *    mailaddress¤ò¥Á¥§¥Ã¥¯¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    mailaddressã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    char   *address       ¥Á¥§¥Ã¥¯¤¹¤ë¥á¡¼¥ë¥¢¥É¥ì¥¹
- *    struct config *cfg ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë
+ * å¼•æ•°
+ *    char   *address       ãƒã‚§ãƒƒã‚¯ã™ã‚‹ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
+ *    struct config *cfg ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«
  *
- * ÊÖ¤êÃÍ
- *    R_SUCCESS    ¥Ş¥Ã¥Á¤·¤¿»ş
- *    R_ERROR      ¥Ş¥Ã¥Á¤·¤Ê¤«¤Ã¤¿»ş
+ * è¿”ã‚Šå€¤
+ *    R_SUCCESS    ãƒãƒƒãƒã—ãŸæ™‚
+ *    R_ERROR      ãƒãƒƒãƒã—ãªã‹ã£ãŸæ™‚
  *
  */
 int
@@ -157,16 +148,16 @@ check_mailaddress(char *address, struct config *cfg)
 
     list = cfg->cf_savemailaddress_list;
 
-    /* ¥Á¥§¥Ã¥¯½èÍı */
+    /* ãƒã‚§ãƒƒã‚¯å‡¦ç† */
     while (list != NULL) {
-        /* ¥ê¥¹¥È¤Î¥¢¥É¥ì¥¹¤¬²¿¤â¤«¤«¤ì¤Æ¤¤¤Ê¤¤¾ì¹ç¡Ìµ»ë¤·¤Æ¿Ê¤á¤ë¢*/
+        /* ãƒªã‚¹ãƒˆã®ã‚¢ãƒ‰ãƒ¬ã‚¹ãŒä½•ã‚‚ã‹ã‹ã‚Œã¦ã„ãªã„å ´åˆã€”æŠ€è¥ªé´åŒ¿è¦†ç“©è¥¤*/
         if (list->ss_data.ss_str[0] == '\0') {
             list = list->next;
             continue;
         }
-        /* ¥ê¥¹¥È¤Î¥¢¥É¥ì¥¹¤Ë@¤¬¤¢¤ë¤«È½ÊÌ */
+        /* ãƒªã‚¹ãƒˆã®ã‚¢ãƒ‰ãƒ¬ã‚¹ã«@ãŒã‚ã‚‹ã‹åˆ¤åˆ¥ */
         ret = strchr(list->ss_data.ss_str, '@');   
-        /* @¤¬Ìµ¤±¤ì¤Ğ¡¢¥É¥á¥¤¥ó¤Î¸åÊı°ìÃ×¤ò³ÎÇ§ */
+        /* @ãŒç„¡ã‘ã‚Œã°ã€ãƒ‰ãƒ¡ã‚¤ãƒ³ã®å¾Œæ–¹ä¸€è‡´ã‚’ç¢ºèª */
         if (ret == NULL ) {
             list_len = strlen(list->ss_data.ss_str);
             if (address_len < list_len) {
@@ -178,13 +169,13 @@ check_mailaddress(char *address, struct config *cfg)
                 return R_SUCCESS;
             }
         } else {
-            /* @¤¬¤¢¤ê¡¢¤«¤ÄºÇ½é¤Ë@¤¬¤¢¤ë¾ì¹ç¥É¥á¥¤¥ó¤Î´°Á´°ìÃ×¤Î³ÎÇ§ */
+            /* @ãŒã‚ã‚Šã€ã‹ã¤æœ€åˆã«@ãŒã‚ã‚‹å ´åˆãƒ‰ãƒ¡ã‚¤ãƒ³ã®å®Œå…¨ä¸€è‡´ã®ç¢ºèª */
             if (list->ss_data.ss_str[0] == '@') {
                 ptr = strchr(address, '@');
                 if (strcasecmp(list->ss_data.ss_str, ptr) == 0) {
                     return R_SUCCESS;
                 }
-            /* @¤¬¤¢¤ê¡¢@¤¬ºÇ½é¤ËÌµ¤¤¾ì¹ç¡¢¥¢¥É¥ì¥¹¤Î´°Á´°ìÃ×¤Î³ÎÇ§ */
+            /* @ãŒã‚ã‚Šã€@ãŒæœ€åˆã«ç„¡ã„å ´åˆã€ã‚¢ãƒ‰ãƒ¬ã‚¹ã®å®Œå…¨ä¸€è‡´ã®ç¢ºèª */
             } else {
                 if (strcasecmp(list->ss_data.ss_str, address) == 0) {
                     return R_SUCCESS;
@@ -193,28 +184,28 @@ check_mailaddress(char *address, struct config *cfg)
         }
         list = list->next; 
     }
-    /* ³ºÅö¤·¤Ê¤¤¾ì¹ç¡¢ÊİÂ¸¤·¤Ê¤¤¡£*/
+    /* è©²å½“ã—ãªã„å ´åˆã€ä¿å­˜ã—ãªã„ã€‚*/
     return R_ERROR;
 }
 
 /*
  * judge_mail 
  *
- * µ¡Ç½
- *    ¥á¡¼¥ë¤òÊİÂ¸¤¹¤ë¤«È½ÃÇ¤¹¤ë´Ø¿ô(ldap°Ê³°)
+ * æ©Ÿèƒ½
+ *    ãƒ¡ãƒ¼ãƒ«ã‚’ä¿å­˜ã™ã‚‹ã‹åˆ¤æ–­ã™ã‚‹é–¢æ•°(ldapä»¥å¤–)
  *
- * °ú¿ô
- *    struct strlist *checklist    ¥Á¥§¥Ã¥¯¤¹¤ë¥¢¥É¥ì¥¹¤Î¥ê¥¹¥È
- *    struct strlist **savelist_h  ÊİÂ¸¥¢¥É¥ì¥¹¥ê¥¹¥È¤ÎÀèÆ¬
- *    struct strlist **savelist_t  ÊİÂ¸¥¢¥É¥ì¥¹¥ê¥¹¥È¤ÎËöÈø
- *    struct strlist **ldaplist_h  ldap¥Á¥§¥Ã¥¯¥ê¥¹¥È¤ÎÀèÆ¬
- *    struct strlist **ldaplist_t  ldap¥Á¥§¥Ã¥¯¥ê¥¹¥È¤ÎËöÈø
- *    struct config  *cfg          ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë
- *    unsigned int s_id            ¥á¡¼¥ëID 
+ * å¼•æ•°
+ *    struct strlist *checklist    ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã‚¢ãƒ‰ãƒ¬ã‚¹ã®ãƒªã‚¹ãƒˆ
+ *    struct strlist **savelist_h  ä¿å­˜ã‚¢ãƒ‰ãƒ¬ã‚¹ãƒªã‚¹ãƒˆã®å…ˆé ­
+ *    struct strlist **savelist_t  ä¿å­˜ã‚¢ãƒ‰ãƒ¬ã‚¹ãƒªã‚¹ãƒˆã®æœ«å°¾
+ *    struct strlist **ldaplist_h  ldapãƒã‚§ãƒƒã‚¯ãƒªã‚¹ãƒˆã®å…ˆé ­
+ *    struct strlist **ldaplist_t  ldapãƒã‚§ãƒƒã‚¯ãƒªã‚¹ãƒˆã®æœ«å°¾
+ *    struct config  *cfg          ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«
+ *    unsigned int s_id            ãƒ¡ãƒ¼ãƒ«ID 
  *
- * ÊÖ¤êÃÍ
- *    R_SUCCESS    À®¸ù
- *    R_ERROR      ¼ºÇÔ 
+ * è¿”ã‚Šå€¤
+ *    R_SUCCESS    æˆåŠŸ
+ *    R_ERROR      å¤±æ•— 
  */
 int
 judge_mail(struct strset *checkaddress, struct strlist **savelist_h,
@@ -224,17 +215,17 @@ judge_mail(struct strset *checkaddress, struct strlist **savelist_h,
 {
     int ret;     
 
-    /* ¥É¥á¥¤¥ó¤Î¥Á¥§¥Ã¥¯ */
+    /* ãƒ‰ãƒ¡ã‚¤ãƒ³ã®ãƒã‚§ãƒƒã‚¯ */
     ret = check_domain(checkaddress->ss_str, cfg);
     if (ret != R_SUCCESS) {
         SYSLOGINFO(JUDGE_DOMAIN_OUT, s_id, checkaddress->ss_str);
         return R_SUCCESS;
     }
-    /* ¥¢¥É¥ì¥¹¤Î¥Á¥§¥Ã¥¯ */
+    /* ã‚¢ãƒ‰ãƒ¬ã‚¹ã®ãƒã‚§ãƒƒã‚¯ */
     ret = check_mailaddress(checkaddress->ss_str, cfg);
     if (ret != R_SUCCESS) {
-       /* ldap¤Î¥Á¥§¥Ã¥¯(¥¢¥É¥ì¥¹¤Î¥Á¥§¥Ã¥¯¤Ç 
-        * ³ºÅö¤·¤Ê¤«¤Ã¤¿¾ì¹ç¤³¤Á¤é¤ËÍè¤ë¡£¡Ë*/
+       /* ldapã®ãƒã‚§ãƒƒã‚¯(ã‚¢ãƒ‰ãƒ¬ã‚¹ã®ãƒã‚§ãƒƒã‚¯ã§ 
+        * è©²å½“ã—ãªã‹ã£ãŸå ´åˆã“ã¡ã‚‰ã«æ¥ã‚‹ã€‚ï¼‰*/
         if (cfg->cf_ldapcheck == 1) {
             push_strlist(ldaplist_h, ldaplist_t,
                                checkaddress->ss_str);
@@ -253,13 +244,13 @@ judge_mail(struct strset *checkaddress, struct strlist **savelist_h,
 /*
  * complement_address
  *
- * µ¡Ç½
- *    "@"¤ÎÌµ¤¤¥¢¥É¥ì¥¹¤òÊä´°¤¹¤ë½èÍı
+ * æ©Ÿèƒ½
+ *    "@"ã®ç„¡ã„ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’è£œå®Œã™ã‚‹å‡¦ç†
  *
- * °ú¿ô
- *    struct strset *address       ¥Á¥§¥Ã¥¯¤¹¤ë¥á¡¼¥ë¥¢¥É¥ì¥¹
- *    struct strset *comp_address  Êä´°¤·¤¿¥¢¥É¥ì¥¹¤Î³ÊÇ¼Àè 
- *    struct config *cfg           ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë
+ * å¼•æ•°
+ *    struct strset *address       ãƒã‚§ãƒƒã‚¯ã™ã‚‹ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
+ *    struct strset *comp_address  è£œå®Œã—ãŸã‚¢ãƒ‰ãƒ¬ã‚¹ã®æ ¼ç´å…ˆ 
+ *    struct config *cfg           ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«
  *
  */
 void
@@ -276,9 +267,9 @@ complement_address(struct strset *address, struct strset *comp_address, struct c
     }    
     strset_set(comp_address, str);
 
-    /* ¥¢¥É¥ì¥¹¤«¤é@¤òÃµ¤¹ */
+    /* ã‚¢ãƒ‰ãƒ¬ã‚¹ã‹ã‚‰@ã‚’æ¢ã™ */
     ptr = strchr(comp_address->ss_str, '@');
-    /* @ ¤¬Ìµ¤±¤ì¤Ğ¡¢¥³¥ó¥Õ¥£¥°¤ÎDefaultDomain¤òÂ­¤¹ */
+    /* @ ãŒç„¡ã‘ã‚Œã°ã€ã‚³ãƒ³ãƒ•ã‚£ã‚°ã®DefaultDomainã‚’è¶³ã™ */
     if (ptr == NULL) {
         ret = strset_catstr(comp_address, "@");
         if (ret != R_SUCCESS) {
@@ -298,19 +289,19 @@ complement_address(struct strset *address, struct strset *comp_address, struct c
 /*
  * check_ldap
  *
- * µ¡Ç½
- *     ldap¸¡º÷¤ò¤«¤±¤ë´Ø¿ô
+ * æ©Ÿèƒ½
+ *     ldapæ¤œç´¢ã‚’ã‹ã‘ã‚‹é–¢æ•°
  *
- * °ú¿ô
- *    struct strlist *ldaplist    ¸¡º÷¤ò¤«¤±¤ë¥ê¥¹¥È
- *    struct strlist **savelist_h ÊİÂ¸¥ê¥¹¥È¤ÎÀèÆ¬
- *    struct strlist **savelist_t ÊİÂ¸¥ê¥¹¥È¤ÎËöÈø
- *    struct config  *cfg         ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë
- *    unsignet int s_id           ¥á¡¼¥ëID 
+ * å¼•æ•°
+ *    struct strlist *ldaplist    æ¤œç´¢ã‚’ã‹ã‘ã‚‹ãƒªã‚¹ãƒˆ
+ *    struct strlist **savelist_h ä¿å­˜ãƒªã‚¹ãƒˆã®å…ˆé ­
+ *    struct strlist **savelist_t ä¿å­˜ãƒªã‚¹ãƒˆã®æœ«å°¾
+ *    struct config  *cfg         ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«
+ *    unsignet int s_id           ãƒ¡ãƒ¼ãƒ«ID 
  *
- * ÊÖ¤êÃÍ
- *     R_SUCCESS    À®¸ù
- *     R_ERROR      ¼ºÇÔ 
+ * è¿”ã‚Šå€¤
+ *     R_SUCCESS    æˆåŠŸ
+ *     R_ERROR      å¤±æ•— 
  */
 int
 check_ldap(struct strlist *ldaplist, struct strlist **savelist_h,
@@ -324,20 +315,20 @@ check_ldap(struct strlist *ldaplist, struct strlist **savelist_h,
     struct strlist *list;
     struct strlist *now;
 
-    /* ldap¤ò³«»Ï¤¹¤ë */
+    /* ldapã‚’é–‹å§‹ã™ã‚‹ */
     ld = ldap_open(cfg->cf_ldapserver, cfg->cf_ldapport);
     if (ld == NULL) {
         SYSLOGERROR(ERR_LDAP_OPEN);
         return R_ERROR;
     }
-    /* ldap¤Ë¥¿¥¤¥à¥¢¥¦¥È¤òÀßÄê¤¹¤ë */
+    /* ldapã«ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã‚’è¨­å®šã™ã‚‹ */
     ret = ldap_set_option(ld, LDAP_OPT_TIMEOUT, &cfg->cf_ldaptimeout);
     if (ret != 0) {
         SYSLOGERROR(ERR_LDAP_SET, ldap_err2string(ret));
         ldap_unbind(ld);
         return R_ERROR;
     }
-    /* ldap¤Ë¥Ğ¥¤¥ó¥É¤¹¤ë */
+    /* ldapã«ãƒã‚¤ãƒ³ãƒ‰ã™ã‚‹ */
     ret = ldap_simple_bind_s(ld, cfg->cf_ldapbinddn,
                              cfg->cf_ldapbindpassword);
     if (ret != LDAP_SUCCESS) {
@@ -345,14 +336,14 @@ check_ldap(struct strlist *ldaplist, struct strlist **savelist_h,
         ldap_unbind(ld);
         return R_ERROR;
     }
-    /* ldap¤Ë¥µ¡¼¥Á¤ò³İ¤±¤ë */
+    /* ldapã«ã‚µãƒ¼ãƒã‚’æ›ã‘ã‚‹ */
     list = ldaplist;
     while (list != NULL) {
-        /* %M¤òÊÑ´¹¤¹¤ë½èÍı */
+        /* %Mã‚’å¤‰æ›ã™ã‚‹å‡¦ç† */
         sf[0].sf_formatchar = 'M';
         sf[0].sf_replacestr = list->ss_data.ss_str;
         filter = str_replace_format(cfg->cf_ldapmailfilter, sf , 1);
-        /* ¸¡º÷ */
+        /* æ¤œç´¢ */
         ret = ldap_search_s(ld, cfg->cf_ldapbasedn, cfg->cf_ldapscope_conv,
                             filter, NULL, 0, &res);
         if (ret != LDAP_SUCCESS) {
@@ -383,20 +374,20 @@ check_ldap(struct strlist *ldaplist, struct strlist **savelist_h,
 /*
  * make_savelist
  *
- * µ¡Ç½
- *    ÊİÂ¸¤¹¤ë¥á¡¼¥ë¤Î¥ê¥¹¥È¤òºîÀ®¤¹¤ë
+ * æ©Ÿèƒ½
+ *    ä¿å­˜ã™ã‚‹ãƒ¡ãƒ¼ãƒ«ã®ãƒªã‚¹ãƒˆã‚’ä½œæˆã™ã‚‹
  *
- * °ú¿ô
- *    char   *from       ¥Á¥§¥Ã¥¯¤¹¤ëfrom¥á¡¼¥ë¥¢¥É¥ì¥¹
+ * å¼•æ•°
+ *    char   *from       ãƒã‚§ãƒƒã‚¯ã™ã‚‹fromãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
  *    struct strlist *rcptlist
  *    struct strlist **mlfi_addrmatched_h
  *    struct strlist **mlfi_addrmatched_t
- *    struct config *cfg ¥³¥ó¥Õ¥£¥°¥Õ¥¡¥¤¥ë
- *    unsigned int s_id ¥á¡¼¥ëID
+ *    struct config *cfg ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«
+ *    unsigned int s_id ãƒ¡ãƒ¼ãƒ«ID
  *
- * ÊÖ¤êÃÍ
- *    R_SUCCESS             À®¸ù 
- *    R_ERROR               ¼ºÇÔ
+ * è¿”ã‚Šå€¤
+ *    R_SUCCESS             æˆåŠŸ 
+ *    R_ERROR               å¤±æ•—
  */
 int
 make_savelist(struct strset *from, struct strlist *rcptlist,
@@ -409,11 +400,11 @@ make_savelist(struct strset *from, struct strlist *rcptlist,
 
     ldaplist_h = ldaplist_t = NULL;
 
-    /* ¥İ¥ê¥·¡¼È½Äê  */
+    /* ãƒãƒªã‚·ãƒ¼åˆ¤å®š  */
     if (FROM & cfg->cf_savepolicy_conv) {
-        /* ¥¢¥É¥ì¥¹Êä´°½èÍı */
+        /* ã‚¢ãƒ‰ãƒ¬ã‚¹è£œå®Œå‡¦ç† */
         complement_address(from, &checkaddress, cfg);
-        /* ÊİÂ¸¥ê¥¹¥È¤Èldap¥ê¥¹¥È¤Ø¤Î»ÅÊ¬¤±½èÍı */
+        /* ä¿å­˜ãƒªã‚¹ãƒˆã¨ldapãƒªã‚¹ãƒˆã¸ã®ä»•åˆ†ã‘å‡¦ç† */
         ret = judge_mail(&checkaddress, savelist_h, savelist_t,
                          &ldaplist_h, &ldaplist_t, cfg, s_id);
         strset_free(&checkaddress);
@@ -427,9 +418,9 @@ make_savelist(struct strset *from, struct strlist *rcptlist,
     }
     if (TO & cfg->cf_savepolicy_conv) {
         while (rcptlist != NULL) {
-            /* ¥¢¥É¥ì¥¹Êä´°½èÍı */
+            /* ã‚¢ãƒ‰ãƒ¬ã‚¹è£œå®Œå‡¦ç† */
             complement_address(&rcptlist->ss_data, &checkaddress, cfg);
-            /* ÊİÂ¸¥ê¥¹¥È¤Èldap¥ê¥¹¥È¤Ø¤Î»ÅÊ¬¤±½èÍı */
+            /* ä¿å­˜ãƒªã‚¹ãƒˆã¨ldapãƒªã‚¹ãƒˆã¸ã®ä»•åˆ†ã‘å‡¦ç† */
             ret = judge_mail(&checkaddress, savelist_h, savelist_t,
                              &ldaplist_h, &ldaplist_t, cfg, s_id);
             strset_free(&checkaddress);
@@ -445,7 +436,7 @@ make_savelist(struct strset *from, struct strlist *rcptlist,
     }
 
 
-    /* ldapÈ½Äê½èÍı */
+    /* ldapåˆ¤å®šå‡¦ç† */
     if (ldaplist_h != NULL) {
         ret = check_ldap(ldaplist_h, savelist_h, savelist_t, cfg, s_id);
         if (ret != R_SUCCESS) {

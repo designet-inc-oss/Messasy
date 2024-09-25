@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: log.h,v $
- * $Revision: 1.25 $
- * $Date: 2009/10/30 04:03:54 $
  */
 
 #ifndef _LOG_H_
@@ -32,20 +22,20 @@
 /*
  * INFO
  */
-/* ∞˙øÙ§ §∑ */
+/* ÂºïÊï∞„Å™„Åó */
 #define INFO_S_NOSAVEADDRESS    "%08X no address matched"
 /* [ From | To ], address */
 #define INFO_S_ADDRMATCH        "%08X %s addr matched: %s"
 #define INFO_S_ADDRNMATCH       "%08X %s addr not matched: %s"
-/* •ÿ•√•¿•’•£°º•Î•… */
+/* „Éò„ÉÉ„ÉÄ„Éï„Ç£„Éº„É´„Éâ */
 #define INFO_S_IGNOREHEADER     "%08X ignored header found: %s"
 
 /*
- * •®•È°º∞Ï»Ã
+ * „Ç®„É©„Éº‰∏ÄËà¨
  */
-/* ∞˙øÙ§ §∑ */
+/* ÂºïÊï∞„Å™„Åó */
 #define ERR_CONFIG_RELOADING "Already reloading config"
-/* ¥ÿøÙÃæ, E_STR */
+/* Èñ¢Êï∞Âêç, E_STR */
 #define ERR_MALLOC        "Cannot allocate memory: %s: %s"
 #define ERR_S_MALLOC      "%08X Cannot allocate memory: %s: %s"
 #define ERR_THREAD_CREATE "Cannot create thread: %s: %s"
@@ -55,7 +45,7 @@
 #define ERR_S_TIME      "%08X Cannot get current time: %s"
 #define ERR_S_LTIME     "%08X Cannot get local time: %s"
 
-/* •—•π, E_STR */
+/* „Éë„Çπ, E_STR */
 #define ERR_FOPEN       "Cannot open file: %s: %s"
 #define ERR_S_FOPEN     "%08X Cannot open file: %s: %s"
 #define ERR_S_FWRITE    "%08X Cannot write file: %s: %s"
@@ -68,14 +58,14 @@
 #define ERR_S_NDIR      "%08X Not a directory: %s: %s"
 
 /*
- * libdg•®•È°º
+ * libdg„Ç®„É©„Éº
  */
-/* •È•§•÷•È•Í¥ÿøÙÃæ, E_STR */
+/* „É©„Ç§„Éñ„É©„É™Èñ¢Êï∞Âêç, E_STR */
 #define ERR_LIBFUNC     "%s() failed: %s"
 #define ERR_S_LIBFUNC   "%08X %s() failed: %s"
 
 /*
- * libmilter•®•È°º
+ * libmilter„Ç®„É©„Éº
  */
 /* E_STR */
 #define ERR_SETCONN     "smfi_setconn() failed: %s"
@@ -84,7 +74,7 @@
 #define ERR_MLFISTART   "smfi_main() failed: %s"
 
 /*
- * msy_config•®•È°º
+ * msy_config„Ç®„É©„Éº
  */
 #define ERR_CONF_ALLOC                  "config memory allocate error"
 
@@ -121,7 +111,7 @@
 #define ERR_CONF_LDAPPORT               "LdapPort: can not use 0 port"
 
 /*
- * filter•®•È°º
+ * filter„Ç®„É©„Éº
  */
 #define ERR_LDAP_OPEN                   "ldap open error: Can not connect server"
 #define ERR_LDAP_SET                    "ldap set timeout error : %s"
@@ -135,7 +125,7 @@
 #define ERR_CHECK_LDAP                  "check ldap error"
 
 /*
- * filteræ Û
+ * filterÊÉÖÂ†±
  */
 #define JUDGE_LDAP_OUT       "%08X NOT MATCHED (LDAP check): %s"
 #define JUDGE_DOMAIN_OUT     "%08X NOT MATCHED (domain check) : %s"
@@ -143,7 +133,7 @@
 #define JUDGE_CLEARED        "%08X MATCHED: %s"
 
 /*
- * client_side•®•È°º
+ * client_side„Ç®„É©„Éº
  */
 #define ERR_READ_SOCK          "[%s] cannot read socket: %s"
 #define ERR_READ_SOCKTIMEO     "[%s] cannot read socket: Connection timeout"
@@ -160,7 +150,7 @@
 #define ERR_MANY_CONNECT       "Too many connections: %d/%d"
 
 /*
- *ƒ…≤√•·•√•ª°º•∏
+ *ËøΩÂä†„É°„ÉÉ„Çª„Éº„Ç∏
  */
 #define ERR_FILE_EXIST         "nosuch file directory";
 #define ERR_FILE_EXECUTE       "execute permission denied";

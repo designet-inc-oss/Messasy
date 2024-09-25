@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = lib/libdgconfig
+subdir = so/liblda
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -127,9 +127,9 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libdgconfig_la_LIBADD =
-am_libdgconfig_la_OBJECTS = libdgconfig.lo
-libdgconfig_la_OBJECTS = $(am_libdgconfig_la_OBJECTS)
+liblda_la_LIBADD =
+am_liblda_la_OBJECTS = liblda.lo
+liblda_la_OBJECTS = $(am_liblda_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -149,7 +149,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/./shtool/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/libdgconfig.Plo
+am__depfiles_remade = ./$(DEPDIR)/liblda.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -166,8 +166,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libdgconfig_la_SOURCES)
-DIST_SOURCES = $(libdgconfig_la_SOURCES)
+SOURCES = $(liblda_la_SOURCES)
+DIST_SOURCES = $(liblda_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -303,7 +303,7 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-libdir = @libdir@
+libdir = ${exec_prefix}/lib/messasy
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
@@ -323,10 +323,13 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-lib_LTLIBRARIES = libdgconfig.la
-libdgconfig_la_SOURCES = libdgconfig.c
-LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-        $(AM_LDFLAGS) -o $@
+lib_LTLIBRARIES = liblda.la
+liblda_la_SOURCES = liblda.c
+AM_CFLAGS = -DHAVE_STRNDUP @SO_CFLAGS@ -I../../
+AM_LDFLAGS = -shared @SO_LDFLAGS@
+LDADD = -L../../ -fPIC ../../utils.o ../../msy_config.o
+LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) \
+        $(AM_LDFLAGS) $(LDADD) -o $@
 
 all: all-am
 
@@ -341,9 +344,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu lib/libdgconfig/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu so/liblda/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu lib/libdgconfig/Makefile
+	  $(AUTOMAKE) --gnu so/liblda/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -397,8 +400,8 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libdgconfig.la: $(libdgconfig_la_OBJECTS) $(libdgconfig_la_DEPENDENCIES) $(EXTRA_libdgconfig_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libdgconfig_la_OBJECTS) $(libdgconfig_la_LIBADD) $(LIBS)
+liblda.la: $(liblda_la_OBJECTS) $(liblda_la_DEPENDENCIES) $(EXTRA_liblda_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(liblda_la_OBJECTS) $(liblda_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -406,7 +409,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdgconfig.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/liblda.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -569,7 +572,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/libdgconfig.Plo
+		-rm -f ./$(DEPDIR)/liblda.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -615,7 +618,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/libdgconfig.Plo
+		-rm -f ./$(DEPDIR)/liblda.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

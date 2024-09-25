@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: msy_config.h,v $
- * $Revision: 1.23 $
- * $Date: 2009/10/29 09:19:45 $
  */
 
 #ifndef _MSY_CONFIG_H_
@@ -29,25 +19,26 @@
 
 #include <regex.h>
 
-/* ¿ôÃÍ¤ÎÄêµÁ */
+/* æ•°å€¤ã®å®šç¾© */
 #define COUNT (sizeof(cfe) / sizeof(struct cfentry))
+#define MESSASY_OFFSET(x, y) ((ptrdiff_t)&(((x *)NULL)->y))
 #define MAX_TIME INT_MAX
 #define MAX_CONNECTION 65535
 
 #ifdef OLD_CODE
-/* Èæ³ÓÊ¸»ú¤ÎÄêµÁ */
+/* æ¯”è¼ƒæ–‡å­—ã®å®šç¾© */
 #define CHAR_MAILFOLDER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.%,_&-+ "
 #define CHAR_DOT_DELIMITER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,-_ "
 #define CHAR_SLASH_DELIMITER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,-_ "
 #endif    /* OLD_CODE */
 
-/* ¥İ¥ê¥·¡¼ÄêµÁ */
+/* ãƒãƒªã‚·ãƒ¼å®šç¾© */
 #define NONE     0
 #define ONLYFROM 1
 #define ONLYTO   2
 #define BOTH     3
 
-/* ¥×¥í¥È¥¿¥¤¥×Àë¸À */
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ */
 extern void set_environment(char *);
 extern int reload_config();
 extern struct config *config_retrieve();
@@ -56,7 +47,7 @@ extern void free_config(struct config *cfg);
 extern int set_config(char *file, struct config **);
 
 /*****************************
- *  * ¥â¥¸¥å¡¼¥ëÌ¾³ÊÇ¼¹½Â¤ÂÎ
+ *  * ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«åæ ¼ç´æ§‹é€ ä½“
  *   *****************************/
 struct modulelist {
     struct modulelist *mlist_next;
@@ -66,7 +57,7 @@ struct modulelist {
 };
 
 /*****************************
- *  * ¥â¥¸¥å¡¼¥ë¹½Â¤ÂÎ
+ *  * ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«æ§‹é€ ä½“
  *   *****************************/
 struct extra_config {
     struct extra_config *excf_next;
@@ -75,7 +66,7 @@ struct extra_config {
 };
 
 /*****************************
- *  * ¥â¥¸¥å¡¼¥ë¥Ï¥ó¥É¥ë¹½Â¤ÂÎ
+ *  * ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ãƒãƒ³ãƒ‰ãƒ«æ§‹é€ ä½“
  *   *****************************/
 struct modulehandle {
     struct modulehandle *mh_next;
@@ -134,7 +125,7 @@ struct config {
 
 };
 
-/* ¥×¥í¥È¥¿¥¤¥×Àë¸À */
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ */
 extern void set_environment(char *);
 extern int reload_config();
 extern struct config *config_retrieve();
@@ -144,6 +135,7 @@ extern int set_config(char *file, struct config **);
 extern char **cmd_strrep(char *, char, char **, int);
 char * is_usable_password(char *str);
 char * is_executable_file(char *str);
+char * is_executable_file_size(char *str);
 int msy_module_modconfig(struct config **cfg);
 
 #endif // _MSY_CONFIG_H_

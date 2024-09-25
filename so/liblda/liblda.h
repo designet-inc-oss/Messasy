@@ -14,98 +14,58 @@
  * GNU General Public License for more details.
  */
 
-#ifndef _LIBGZIP_H_
-#define _LIBGZIP_H_
 #include <libdgstr.h>
 #include "messasy.h"
 #include "utils.h"
 #include "log.h"
 
-
 #define CUSTOMHDR_FROM  "X-Messasy-From"
 #define CUSTOMHDR_TO    "X-Messasy-To"
 
-/* 圧縮のマクロ*/
-#define EXTEND_PART_OPTION_NUM_ENCZIP 3    //>=1と設定してください
-
-#define TEMPFILEPATH            "%s/tmp/%010ld.%s.XXXXXX"
-#define TEMPFILEPATH_LEN        24      // + maildir_len + hostname_len
-#define ENCZIP_SUFFIX           ".zip"
-#define ENCZIP_SUFFIX_LEN       sizeof(ENCZIP_SUFFIX) - 1
-
-#define ENCZIP_TEMPFILEPATH     "%s" ENCZIP_SUFFIX
-#define ENCZIP_TEMPFILEPATH_LEN TEMPFILEPATH_LEN + ENCZIP_SUFFIX_LEN
-#define ENCZIP_ENV_NAME         "ZIPOPT"
-#define ENCZIP_FIXOPTION        "-qjmP"
-#define OVERWRITE               1
-
-#define SAVEFILENAME            "/new/%010ld.%010ld.%s"
-#define ENCZIPSAVEFILENAME      SAVEFILENAME ENCZIP_SUFFIX
-
-
-#define UNKNOWN "UNKNOWN"
-#define DOT     '.'
-#define SLASH   '/'
-
-#define MAILDROP_CFECOUNT        (sizeof(enczip_cfe) / sizeof(struct cfentry))
+#define MAILDROP_CFECOUNT        (sizeof(lda_cfe) / sizeof(struct cfentry))
 
 /**********************************
  * 構造体
  **********************************/
-struct enczip_config {
-    char 	   *cf_enczipcommand;
-    char 	   *cf_enczippassword;
-    char 	   *cf_enczipmaildir;
-    char 	   *cf_enczipmailfolder;
-    char 	   *cf_enczipdotdelimiter;
-    char 	   *cf_enczipslashdelimiter;
+struct lda_config {
+    char 	   *cf_ldacommand;
 };
 /**********************************
  * 構造体
  **********************************/
 /* モジュール用のプライベートbuf */
-struct enczip_priv {
-    struct enczip     *mypriv; 
-//    struct enczip_config     *myconfig; 
+struct lda_priv {
+    struct lda     *mypriv; 
 };
 
 /**********************************
  * 関数の引数リスト
  **********************************/
-struct enczip {
+struct lda {
     time_t              md_recvtime;            /* 受信日時 */
-    struct strset       md_maildir;             /* MailDir */
-    struct strset       md_mailfolder;          /* MailFolder */
-    char                md_dotdelimiter;        /* DotDelimiter */
-    char                md_slashdelimiter;      /* SlashDelimiter */
-
     char                *md_tempfilepath;       /* 一時ファイルのパス */
     int                 md_tempfile_fd;         /* 一時ファイルのfd */
     int                 md_writing_header;      /* ヘッダ書いてるフラグ */
     int                 md_writing_body;        /* ボディ書いてるフラグ */
     int                 md_cr;                  /* CRを見つけたフラグ
                                                  * (本文の改行文字統一に使用) */
-
     struct strset       md_header_from;         /* X-Messasy-Fromの値 */
     struct strset       md_header_to;           /* X-Messasy-Toの値 */
-
     struct strlist      *md_saveaddr_h;         /* 保存アドレス一覧の先頭 */
 };
 
 /**********************************
  * 関数リスト
  **********************************/
-extern struct enczip *enczip_open(unsigned int, struct enczip_config *,
+extern struct lda *lda_open(unsigned int, struct lda_config *,
                                         time_t, struct strset *, struct strlist *,
                                         struct strlist *, char *);
-extern int enczip_write_header(unsigned int, struct enczip *,
+extern int lda_write_header(unsigned int, struct lda *,
                                     char *, char *);
-extern int enczip_write_body(unsigned int, struct enczip *,
+extern int lda_write_body(unsigned int, struct lda *,
                                 unsigned char *, size_t);
-extern int enczip_close(unsigned int, struct enczip *, struct config *);
-extern void enczip_abort(unsigned int, struct enczip *);
+extern int lda_close(unsigned int, struct lda *, struct config *);
+extern void lda_abort(unsigned int, struct lda *);
 
-extern int enczip_init(struct cfentry **, size_t *, struct config **, size_t *);
-extern int enczip_mod_extra_config(struct config **cfg);
-
-#endif // _LIBDUMMY_H_
+extern int lda_init(struct cfentry **, size_t *, struct config **, size_t *);
+extern int lda_mod_extra_config(struct config **cfg);

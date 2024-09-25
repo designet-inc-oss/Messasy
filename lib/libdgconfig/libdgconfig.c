@@ -20,7 +20,7 @@
 
 #ifdef SOLARIS
 
-/* solaris�ξ�� */
+/* solarisの場合 */
 
 typedef struct _code {
         char    *c_name;
@@ -53,30 +53,30 @@ CODE facilitynames[] =
 #endif /* SOLARIS */
 
 
-/*--- �ץ��ȥ�������� ---*/
+/*--- プロトタイプ宣言 ---*/
 
 static int LOG(int, const char *, ...);
 int dgconfig_loglevel;
 int (*dgconfig_log) (int, const char *, ...) = syslog;
 
 
-/*--- ������Ϣ�ؿ� ---*/
+/*--- ログ関連関数 ---*/
 
 /*
  * syslog_facility
  *
- * ��ǽ
- *      syslog�ե�����ƥ��Υ����å���
- *      ����������syslog�ե�����ƥ��������ͤ��֤���
+ * 機能
+ *      syslogファシリティのチェック。
+ *      正しい場合はsyslogファシリティの整数値を返す。
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      facilitynames[i].c_val     �������Х��ѿ��Ǥ���facilitynames��¤�Τ�
- *                                 ���ꤷ��syslog�ե�����ƥ���������
- *      -1                         �������Х��ѿ��Ǥ���facilitynames��¤�Τ�
- *                                 ���ꤷ��syslog�ե�����ƥ��˰��פ��ʤ��ä�
+ * 返り値
+ *      facilitynames[i].c_val     グローバル変数であるfacilitynames構造体で
+ *                                 設定したsyslogファシリティの整数値
+ *      -1                         グローバル変数であるfacilitynames構造体で
+ *                                 設定したsyslogファシリティに一致しなかった
  *
  */
 int
@@ -95,15 +95,15 @@ syslog_facility(char *str)
 /*
  * is_syslog_facility
  *
- * ��ǽ
- *      ����������Υ����å���
+ * 機能
+ *      ログ出力先のチェック。
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      NULL                            ����
- *      ERR_CONF_SYSLOGFACILITY         ���顼��å�����
+ * 返り値
+ *      NULL                            正常
+ *      ERR_CONF_SYSLOGFACILITY         エラーメッセージ
  *
  */
 char *
@@ -125,14 +125,14 @@ is_syslog_facility(char *str)
 /*
  * dgloginit
  *
- * ��ǽ
- *      ����������ν����(ɸ�२�顼���Ϥˤ���)��
+ * 機能
+ *      ログ出力先の初期化(標準エラー出力にする)。
  *
- * ����
- *      ̵��
+ * 引数
+ *      無し
  *
- * �֤���
- *      ̵��
+ * 返り値
+ *      無し
  *
  */
 void
@@ -144,16 +144,16 @@ dgloginit()
 /*
  * LOG
  *
- * ��ǽ
- *      ɸ�२�顼����(stderr)�ؤν񤭹��ߡ�
+ * 機能
+ *      標準エラー出力(stderr)への書き込み。
  *
- * ����
- *      int         type         �������碌
- *      const char *fmt          ���ϥե����ޥå�
- *      ����                     ���ϥե����ޥåȤΰ���
+ * 引数
+ *      int         type         引数あわせ
+ *      const char *fmt          出力フォーマット
+ *      不定                     出力フォーマットの引数
  *
- * �֤���
- *      0                        ����
+ * 返り値
+ *      0                        正常
  *
  */
 static int
@@ -171,16 +171,16 @@ LOG(int type, const char *fmt, ...)
 /*
  * NoLOG
  *
- * ��ǽ
- *      �������Ϥʤ�(none)�μ��Ρ�
+ * 機能
+ *      ログ出力なし(none)の実体。
  *
- * ����
- *      int         type         �������碌
- *      const char *fmt          ���ϥե����ޥå�
- *      ����                     ���ϥե����ޥåȤΰ���
+ * 引数
+ *      int         type         引数あわせ
+ *      const char *fmt          出力フォーマット
+ *      不定                     出力フォーマットの引数
  *
- * �֤���
- *      0                        ����
+ * 返り値
+ *      0                        正常
  *
  */
 static int
@@ -192,15 +192,15 @@ NoLOG(int type, const char *fmt, ...)
 /*
  * dglogchange
  *
- * ��ǽ
- *      ���������������(*log������) syslog�ξ���openlog��Ԥ���
+ * 機能
+ *      ログ出力先の設定(*logの切替) syslogの場合はopenlogを行う。
  *
- * ����
- *      char *name              �ץ������̾��openlog�ؿ�����������
- *      char *facility_name     ����������⤷����syslog�ե�����ƥ�
+ * 引数
+ *      char *name              プログラム名（openlog関数の第一引数）
+ *      char *facility_name     ログ出力先もしくはsyslogファシリティ
  *
- * �֤���
- *      ̵��
+ * 返り値
+ *      無し
  *
  */
 void
@@ -227,28 +227,28 @@ dglogchange(char *name, char *facility_name)
 }
 
 
-/*--- ����ե������Ϣ�ؿ� ---*/
+/*--- 設定ファイル関連関数 ---*/
 
 /*
  * read_config
  *
- * ��ǽ
- *      �ե������open��������ե�������ɤ߹���
- *      ���顼��SYSLOG(�ޥ���)�˽��Ϥ��롣
+ * 機能
+ *      ファイルをopenし、設定ファイルを読み込む
+ *      エラーはSYSLOG(マクロ)に出力する。
  *
- * ����
- *      char           *file      �ե�����̾
- *      struct cfentry *fmt       ������ܤι�¤��
- *      int             count     �����ͤ��Ǽ���빽¤�ΤΥ�����
- *                                 (sizeof([������ܤι�¤��̾]) / 
+ * 引数
+ *      char           *file      ファイル名
+ *      struct cfentry *fmt       設定項目の構造体
+ *      int             count     設定値を格納する構造体のサイズ
+ *                                 (sizeof([設定項目の構造体名]) / 
  *                                                      sizeof(struct cfentry))
- *      void           *data      �����ͤ��Ǽ���빽¤��
+ *      void           *data      設定値を格納する構造体
  *
- * �֤���
- *      -1             �ɹ���̵����fopen���ԡ����������ȥ��顼��
- *       1             ����ե������1�Ԥ�Ĺ�������
- *      error          0�����顼�ʤ�
- *                     1�ʾ塧�����ʹԤ�����
+ * 返り値
+ *      -1             読込権無し、fopen失敗、アロケートエラー。
+ *       1             設定ファイルの1行が長すぎる時
+ *      error          0：エラーなし
+ *                     1以上：不正な行がある
  *
  */
 int
@@ -451,15 +451,15 @@ read_config(char *file, struct cfentry *cfe, int count, void *data)
 /*
  * is_writable_directory
  *
- * ��ǽ
- *      �ǥ��쥯�ȥ�ν񤭹��߸������å���
+ * 機能
+ *      ディレクトリの書き込み権チェック。
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      NULL           ����
- *      errbuf         ���顼��å�����
+ * 返り値
+ *      NULL           正常
+ *      errbuf         エラーメッセージ
  *
  */
 char *
@@ -489,15 +489,15 @@ is_writable_directory(char *str)
 /*
  * is_readable_file
  *
- * ��ǽ
- *      �ե�������ɤ߹��߸������å���
+ * 機能
+ *      ファイルの読み込み権チェック。
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      NULL           ����
- *      errbuf         ���顼��å�����
+ * 返り値
+ *      NULL           正常
+ *      errbuf         エラーメッセージ
  *
  */
 char *
@@ -527,16 +527,16 @@ is_readable_file(char *str)
 /*
  * is_inetaddr
  *
- * ��ǽ
- *      IP���ɥ쥹�񼰥����å���
- *      (inet_aton�ؿ�������[1,1.1,1.1.1���Υ���ब­��ʤ����Ǥ�������֤�])
+ * 機能
+ *      IPアドレス書式チェック。
+ *      (inet_aton関数利用版[1,1.1,1.1.1等のカラムが足りない場合でも正常を返す])
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      NULL                    ����
- *      ERR_CONF_IPADDR         ���顼��å�����
+ * 返り値
+ *      NULL                    正常
+ *      ERR_CONF_IPADDR         エラーメッセージ
  *
  */
 char *
@@ -553,16 +553,16 @@ is_inetaddr(char *str)
 /*
  * is_ipaddr
  *
- * ��ǽ
- *      IP���ɥ쥹�񼰥����å���
- *      (1,1.1,1.1.1���Υ���ब­��ʤ����ˤ⥨�顼�Ȥ�����])
+ * 機能
+ *      IPアドレス書式チェック。
+ *      (1,1.1,1.1.1等のカラムが足りない場合にもエラーとする版])
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      NULL                    ����
- *      ERR_CONF_IPADDR         ���顼��å�����
+ * 返り値
+ *      NULL                    正常
+ *      ERR_CONF_IPADDR         エラーメッセージ
  *
  */
 char *
@@ -576,7 +576,7 @@ is_ipaddr(char *str)
         return (ERR_CONF_IPADDR);
     }
 
-    // �����ο���Ĵ�٤�
+    // カラムの数を調べる
     po1 = str;
     count = 0;
     while ((po1 = strchr(po1, '.')) != NULL) {
@@ -584,7 +584,7 @@ is_ipaddr(char *str)
         po1++;
     }
 
-    // �ԥꥪ�ɤ�3�ĤǤʤ����ϥ��顼
+    // ピリオドが3つでない場合はエラー
     if (count != 3) {
         return (ERR_CONF_IPADDR);
     }
@@ -595,15 +595,15 @@ is_ipaddr(char *str)
 /*
  * is_port
  *
- * ��ǽ
- *      �ݡ����ֹ�Υ����å���0��65535�ˡ�
+ * 機能
+ *      ポート番号のチェック（0〜65535）。
  *
- * ����
- *      int value      �����å�����
+ * 引数
+ *      int value      チェック数値
  *
- * �֤���
- *      NULL                  ����
- *      ERR_CONF_PORT         ���顼��å�����
+ * 返り値
+ *      NULL                  正常
+ *      ERR_CONF_PORT         エラーメッセージ
  *
  */
 char *
@@ -618,15 +618,15 @@ is_port(int value)
 /*
  * is_boolean
  *
- * ��ǽ
- *      0,1�Υ����å���
+ * 機能
+ *      0,1のチェック。
  *
- * ����
- *      int value      �����å�����
+ * 引数
+ *      int value      チェック数値
  *
- * �֤���
- *      NULL                  ����
- *      ERR_CONF_BOOL         ���顼��å�����
+ * 返り値
+ *      NULL                  正常
+ *      ERR_CONF_BOOL         エラーメッセージ
  *
  */
 char *
@@ -641,16 +641,16 @@ is_boolean(int value)
 /*
  * is_mailaddr
  *
- * ��ǽ
- *      �᡼�륢�ɥ쥹�Υ����å���
- *      (@���ޤޤ�Ƥ��ꡢ����.���ޤޤ�Ƥ��뤫������å�)
+ * 機能
+ *      メールアドレスのチェック。
+ *      (@が含まれており、かつ.が含まれているかをチェック)
  *
- * ����
- *      char *str                  �����å�ʸ����
+ * 引数
+ *      char *str                  チェック文字列
  *
- * �֤���
- *      NULL                       ����
- *      ERR_CONF_MAILADDR          ���顼��å�����
+ * 返り値
+ *      NULL                       正常
+ *      ERR_CONF_MAILADDR          エラーメッセージ
  *
  */
 char *
@@ -665,15 +665,15 @@ is_mailaddr(char *str)
 /*
  * is_ldapversion
  *
- * ��ǽ
- *      LDAP�ΥС����������å�(2, 3)��
+ * 機能
+ *      LDAPのバージョンチェック(2, 3)。
  *
- * ����
- *      int value      �����å�����
+ * 引数
+ *      int value      チェック数値
  *
- * �֤���
- *      NULL                     ����
- *      ERR_CONF_LDAPVER         ���顼��å�����
+ * 返り値
+ *      NULL                     正常
+ *      ERR_CONF_LDAPVER         エラーメッセージ
  *
  */
 char *
@@ -688,15 +688,15 @@ is_ldapversion(int value)
 /*
  * is_ldapscope
  *
- * ��ǽ
- *      LDAP�������פΥ����å�("onelevel", "subtree")��
+ * 機能
+ *      LDAPスコープのチェック("onelevel", "subtree")。
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      NULL                       ����
- *      ERR_CONF_LDAPSCAPE         ���顼��å�����
+ * 返り値
+ *      NULL                       正常
+ *      ERR_CONF_LDAPSCAPE         エラーメッセージ
  *
  */
 char *
@@ -711,15 +711,15 @@ is_ldapscope(char *str)
 /*
  * is_oneattr
  *
- * ��ǽ
- *     �ͤ�Ⱦ�Ѷ��򤬴ޤޤ�Ƥ��ʤ����Ȥ�����å���
+ * 機能
+ *     値に半角空白が含まれていないことをチェック。
  *
- * ����
- *      char *str      �����å�ʸ����
+ * 引数
+ *      char *str      チェック文字列
  *
- * �֤���
- *      NULL                     ����
- *      ERR_CONF_ONEATTR         ���顼��å�����
+ * 返り値
+ *      NULL                     正常
+ *      ERR_CONF_ONEATTR         エラーメッセージ
  *
  */
 char *

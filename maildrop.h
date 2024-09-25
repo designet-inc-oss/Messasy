@@ -1,7 +1,7 @@
 /*
  * messasy
  *
- * Copyright (C) 2006,2007,2008,2009 DesigNET, INC.
+ * Copyright (C) 2006-2024 DesigNET, INC.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,16 +12,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
- * $RCSfile: maildrop.h,v $
- * $Revision: 1.13 $
- * $Date: 2009/10/22 02:10:39 $
  */
 
 #ifdef OLD_CODE
@@ -42,23 +32,23 @@
 #define SLASH   '/'
 
 struct maildrop {
-    time_t              md_recvtime;            /* ¼õ¿®Æü»ş */
+    time_t              md_recvtime;            /* å—ä¿¡æ—¥æ™‚ */
     struct strset       md_maildir;             /* MailDir */
     struct strset       md_mailfolder;          /* MailFolder */
     char                md_dotdelimiter;        /* DotDelimiter */
     char                md_slashdelimiter;      /* SlashDelimiter */
 
-    char                *md_tempfilepath;       /* °ì»ş¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹ */
-    int                 md_tempfile_fd;         /* °ì»ş¥Õ¥¡¥¤¥ë¤Îfd */
-    int                 md_writing_header;      /* ¥Ø¥Ã¥À½ñ¤¤¤Æ¤ë¥Õ¥é¥° */
-    int                 md_writing_body;        /* ¥Ü¥Ç¥£½ñ¤¤¤Æ¤ë¥Õ¥é¥° */
-    int                 md_cr;                  /* CR¤ò¸«¤Ä¤±¤¿¥Õ¥é¥°
-                                                 * (ËÜÊ¸¤Î²ş¹ÔÊ¸»úÅı°ì¤Ë»ÈÍÑ) */
+    char                *md_tempfilepath;       /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ */
+    int                 md_tempfile_fd;         /* ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã®fd */
+    int                 md_writing_header;      /* ãƒ˜ãƒƒãƒ€æ›¸ã„ã¦ã‚‹ãƒ•ãƒ©ã‚° */
+    int                 md_writing_body;        /* ãƒœãƒ‡ã‚£æ›¸ã„ã¦ã‚‹ãƒ•ãƒ©ã‚° */
+    int                 md_cr;                  /* CRã‚’è¦‹ã¤ã‘ãŸãƒ•ãƒ©ã‚°
+                                                 * (æœ¬æ–‡ã®æ”¹è¡Œæ–‡å­—çµ±ä¸€ã«ä½¿ç”¨) */
 
-    struct strset       md_header_from;         /* X-Messasy-From¤ÎÃÍ */
-    struct strset       md_header_to;           /* X-Messasy-To¤ÎÃÍ */
+    struct strset       md_header_from;         /* X-Messasy-Fromã®å€¤ */
+    struct strset       md_header_to;           /* X-Messasy-Toã®å€¤ */
 
-    struct strlist      *md_saveaddr_h;         /* ÊİÂ¸¥¢¥É¥ì¥¹°ìÍ÷¤ÎÀèÆ¬ */
+    struct strlist      *md_saveaddr_h;         /* ä¿å­˜ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸€è¦§ã®å…ˆé ­ */
 };
 
 extern struct maildrop *maildrop_open(unsigned int, struct config *,

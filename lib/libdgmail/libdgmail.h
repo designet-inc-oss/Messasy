@@ -9,7 +9,7 @@
 #ifndef _LIBDGMAIL_H_
 #define _LIBDGMAIL_H_
 
-/*--- ¥Þ¥¯¥í ---*/
+/*--- ãƒžã‚¯ãƒ­ ---*/
 
 #ifdef SOLARIS
 
@@ -94,7 +94,7 @@
 #define ADD_BRA  1
 #define ADD_NAME 2
 
-/*--- ¥×¥í¥È¥¿¥¤¥×Àë¸À ---*/
+/*--- ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€ ---*/
 extern char *get_field(char *, char **);
 extern char *get_subject(char *, char **, char **);
 extern char *decode_mime(char *);
