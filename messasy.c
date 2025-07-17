@@ -30,28 +30,15 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 
-#if 0
-#include <lib/libdgstr/libdgstr.h>
-#include <lib/libdgmail/libdgmail.h>
-#include <lib/libdgconfig/libdgconfig.h>
-#include "./lib/libdgstr/libdgstr.h"
-#include "./lib/libdgmail/libdgmail.h"
-#include "./lib/libdgconfig/libdgconfig.h"
-#else
 #include <libdgstr.h>
 #include <libdgmail.h>
 #include <libdgconfig.h>
-#endif
 
 #include "messasy.h"
 #include "client_side.h"
 #include "msy_config.h"
 #include "msy_readmodule.h"
 #include "so/lib_lm.h"
-
-#ifdef OLD_CODE
-    #include "maildrop.h"
-#endif    /* OLD_CODE */
 
 #include "filter.h"
 #include "utils.h"
@@ -281,23 +268,15 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
             /* マッチしたので保存対象外として中止 */
             SYSLOGINFO(INFO_S_IGNOREHEADER, s_id, headerf);
 
-#ifdef OLD_CODE
-            maildrop_abort(s_id, priv->md);
-#endif    /* OLD_CODE */
-
             mlfi_abort(ctx);
             return SMFIS_ACCEPT;
         }
     }
 
     /* オープン */
-#ifdef OLD_CODE
-    if (priv->md == NULL) {
-#else    /* OLD_CODE */
     if (priv->header_existence == FALSE) {
         /* ヘッダが一度読み込まれた時 */
         priv->header_existence = TRUE;
-#endif    /* OLD_CODE */
 
         /* 保存対象アドレス一覧の作成 */
         ret = make_savelist(&priv->mlfi_envfrom, priv->mlfi_rcptto_h,
@@ -315,37 +294,11 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
             return SMFIS_ACCEPT;
         }
 
-#ifdef OLD_CODE
-        /* メール保存処理を開始 */
-        priv->md = maildrop_open(s_id, priv->config, priv->mlfi_recvtime,
-                                    &(priv->mlfi_envfrom), priv->mlfi_rcptto_h,
-                                    priv->mlfi_addrmatched_h);
-        }
-#endif    /* OLD_CODE */
-
-#ifdef OLD_CODE
-        if (priv->md == NULL) {
-            mlfi_abort(ctx);
-            return error_action;
-        }
-#else    /* OLD_CODE */
         if (priv->header_existence == FALSE) {
             mlfi_abort(ctx);
             return error_action;
         }
-#endif   /* OLD_CODE */
     }
-
-#ifdef OLD_CODE
-    /* ヘッダ書き込み */
-    ret = maildrop_write_header(s_id, priv->md, headerf, headerv);
-    if (ret != R_SUCCESS) {
-        maildrop_abort(s_id, priv->md);
-        mlfi_cleanup(ctx);
-        return error_action;
-    }
-
-#endif     /* OLD_CODE */
 
     /* モジュール内の関数を実行する関数の呼び出し */
     ret = msy_exec_header(priv, headerf, headerv);
@@ -368,23 +321,8 @@ mlfi_body(SMFICTX *ctx, u_char *bodyp, size_t bodylen)
 {
     struct mlfiPriv *priv = MLFIPRIV;
 
-#ifdef OLC_CODE
-    unsigned int s_id = priv->mlfi_sid;
-#endif    /* OLD_CODE */
-
     int error_action = priv->config->cf_erroraction_conv;
     int ret;
-
-#ifdef OLD_CODE
-
-    /* ボディ書き込み */
-    ret = maildrop_write_body(s_id, priv->md, bodyp, bodylen);
-    if (ret != R_SUCCESS) {
-        maildrop_abort(s_id, priv->md);
-        mlfi_cleanup(ctx);
-        return error_action;
-    }
-#endif    /* OLD_CODE */
 
     /* モジュール内の関数を実行する関数の呼び出し */
     ret = msy_exec_body(priv,bodyp, bodylen);
@@ -432,23 +370,8 @@ mlfi_eom(SMFICTX *ctx)
 {
     struct mlfiPriv *priv = MLFIPRIV;
 
-#ifdef OLD_CODE
-    unsigned int s_id = priv->mlfi_sid;
-#endif    /* OLD_CODE */
-
     int error_action = priv->config->cf_erroraction_conv;
     int ret;
-
-#ifdef OLD_CODE
-
-    /* クローズ */
-    ret = maildrop_close(s_id, priv->md);
-    if (ret != R_SUCCESS) {
-        maildrop_abort(s_id, priv->md);
-        mlfi_cleanup(ctx);
-        return error_action;
-    }
-#endif    /* OLD_CODE */
 
     /* モジュール内の関数を実行する関数の呼び出し */
     ret = msy_exec_eom(priv);
@@ -472,18 +395,8 @@ mlfi_abort(SMFICTX *ctx)
 {
     struct mlfiPriv *priv = MLFIPRIV;
 
-#ifdef OLD_CODE
-    unsigned int s_id = priv->mlfi_sid;
-#endif    /* OLD_CODE */
-
     int error_action;
     int ret;
-
-#ifdef OLD_CODE
-
-    maildrop_abort(s_id, priv->md);
-#endif    /* OLD_CODE */
-
 
     /* モジュール内の関数を実行する関数の呼び出し */
     if (priv != NULL) {
@@ -498,7 +411,7 @@ mlfi_abort(SMFICTX *ctx)
         return error_action;
     }
 
-    return mlfi_cleanup(ctx);
+    return eom_cleanup(ctx);
 }
 
 /*
@@ -510,10 +423,6 @@ mlfi_abort(SMFICTX *ctx)
 sfsistat
 mlfi_close(SMFICTX *ctx)
 {
-#ifdef OLD_CODE
-    return SMFIS_ACCEPT;
-#endif    /* OLD_CODE */
-
     return mlfi_freepriv(ctx);
 }
 

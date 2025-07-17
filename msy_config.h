@@ -25,13 +25,6 @@
 #define MAX_TIME INT_MAX
 #define MAX_CONNECTION 65535
 
-#ifdef OLD_CODE
-/* 比較文字の定義 */
-#define CHAR_MAILFOLDER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.%,_&-+ "
-#define CHAR_DOT_DELIMITER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,-_ "
-#define CHAR_SLASH_DELIMITER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,-_ "
-#endif    /* OLD_CODE */
-
 /* ポリシー定義 */
 #define NONE     0
 #define ONLYFROM 1
@@ -92,13 +85,6 @@ struct config {
     char                *cf_savemailaddress;
     char                *cf_saveignoreheader;
     char                *cf_defaultdomain;
-
-#ifdef OLD_CODE
-    char                *cf_maildir;
-    char                *cf_mailfolder;
-    char                *cf_dotdelimiter;
-    char                *cf_slashdelimiter;  
-#endif    /* OLD_CODE */
 
     int                  cf_ldapcheck;
     char                *cf_ldapserver;

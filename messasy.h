@@ -64,11 +64,7 @@ struct mlfiPriv {
     struct config       *config;                /* 設定ファイル */
     struct extrapriv    *mlfi_extrapriv;        /* モジュール領域へのポインタ */
 
-#ifdef OLD_CODE
-    struct maildrop     *md;                    /* maildrop */
-#else    /* OLD_CODE */
     int                 header_existence;      /* header1行目かのフラグ */
-#endif   /* OLD_CODE */
 };
 
 /* モジュール名とそのプライベートbuf */

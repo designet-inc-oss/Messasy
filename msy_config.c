@@ -46,12 +46,6 @@ static char * is_commandmaxclients(int value);
 static char * is_erroraction(char *str);
 static char * is_savepolicy(char *str);
 
-#ifdef OLD_CODE
-static char * is_mailfolder(char *str);
-static char * is_dotdelimiter(char *str);
-static char * is_slashdelimiter(char *str);
-#endif     /* OLD_CODE */
-
 static char * is_not_null(char *str);
 static int conv_erroraction(struct config *cfg);
 static int conv_savepolicy(struct config *cfg);
@@ -117,26 +111,6 @@ struct cfentry cfe[] = {
         "DefaultDomain", CF_STRING, "localhost.localdomain",
         MESSASY_OFFSET(struct config, cf_defaultdomain), is_not_null
     },
-
-#ifdef OLD_CODE
-    {
-        "MailDir", CF_STRING, NULL,
-        MESSASY_OFFSET(struct config, cf_maildir), is_writable_directory
-    },
-    {
-        "MailFolder", CF_STRING, NULL,
-        MESSASY_OFFSET(struct config, cf_mailfolder), is_mailfolder
-    },
-    {
-        "DotDelimiter", CF_STRING, ",",
-        MESSASY_OFFSET(struct config, cf_dotdelimiter), is_dotdelimiter
-    },
-    {
-        "SlashDelimiter", CF_STRING, "_",
-        MESSASY_OFFSET(struct config, cf_slashdelimiter), is_slashdelimiter
-    },
-#endif    /* OLD_CODE */
-
     {
         "LdapCheck", CF_INTEGER, "0",
         MESSASY_OFFSET(struct config, cf_ldapcheck), is_boolean
@@ -369,22 +343,6 @@ free_config(struct config *cfg)
     if (cfg->cf_saveignoreheader != NULL) {
         free(cfg->cf_saveignoreheader);
     }
-
-#ifdef OLD_CODE
-    if (cfg->cf_maildir != NULL) {
-        free(cfg->cf_maildir);
-    }
-    if (cfg->cf_mailfolder != NULL) {
-        free(cfg->cf_mailfolder);
-    }
-    if (cfg->cf_dotdelimiter != NULL) {
-        free(cfg->cf_dotdelimiter);
-    }
-    if (cfg->cf_slashdelimiter != NULL) {
-        free(cfg->cf_slashdelimiter);
-    }
-#endif    /* OLD_CODE */
-
     if (cfg->cf_ldapserver != NULL) {
         free(cfg->cf_ldapserver);
     }
@@ -643,131 +601,6 @@ is_savepolicy(char *str)
     return ERR_CONF_SAVEPOLICY;
 }
 
-#ifdef OLD_CODE
-
-/*
- * is_mailforder
- *
- * 機能
- *    メールフォルダーのチェック 
- *
- * 引数
- *      char *str   チェックする文字列    
- *
- * 返り値
- *      NULL                   正常
- *      ERR_CONF_MAILFOLDER    エラーメッセージ
- */
-char *
-is_mailfolder(char *str)
-{
-    char string[] = CHAR_MAILFOLDER;
-    int  i, j;
-
-    /* 文字列の先頭が「.」でないことの確認 */
-    if (str[0] != '.') {
-        return ERR_CONF_MAILFOLDER);
-    }
-
-    for (i = 0; str[i] != '\0'; i++) {
-        /*「.」が連続していないことの確認 */
-        if ((str[i] == '.') && (str[i+1] == '.')) {
-            return ERR_CONF_MAILFOLDER);
-        }
-        /* メールフォルダの名前として適切な文字が使われていることの確認 */
-        for (j = 0; string[j] != '\0'; j++) {
-            if (str[i] == string[j]) {
-                break;
-            }
-        }
-        /* 文字が合致することなく抜けた場合、エラー */
-        if (string[j] == '\0') {
-            return ERR_CONF_MAILFOLDER);
-        }
-    }
-    /* 文字列の最後がドットでないことの確認 */
-    if (str[i-1] == '.') {
-        return ERR_CONF_MAILFOLDER);
-    }
-    return NULL;
-} 
-
-/*
- * is_dotdelimiter
- *
- * 機能
- *    .の置き換え文字のチェック 
- *
- * 引数
- *      char *str   チェックする文字列    
- *
- * 返り値
- *      NULL                     正常 
- *      ERR_CONF_DOTDELIMITER    エラーメッセージ
- */
-char *
-is_dotdelimiter(char *str)
-{
-    char string[] = CHAR_DOT_DELIMITER;
-    int i;
-
-    /* 一文字であるか */
-    if (str[1] != '\0') {
-        return ERR_CONF_DOTDELIMITER);
-    }
-
-    /* 文字チェック */
-    for (i = 0; string[i] != '\0'; i++ ) {
-        if (str[0] == string[i]) {
-            break;
-        }
-    }
-    /* 合致することなく抜けてしまった場合は、違反した文字 */
-    if (string[i] == '\0' ) {
-        return ERR_CONF_DOTDELIMITER);
-    }
-    return NULL;
-} 
-
-/*
- * is_slashdelimiter
- *
- * 機能
- *    /の置き換え文字のチェック 
- *
- * 引数
- *      char *str   チェックする文字列    
- *
- * 返り値
- *      NULL                       正常
- *      ERR_CONF_SLASHDELIMITER    エラーメッセージ
- */
-char *
-is_slashdelimiter(char *str)
-{
-    char string[] = CHAR_SLASH_DELIMITER;
-    int i;
-
-    /* 一文字であるか */
-    if (str[1] != '\0') {
-        return ERR_CONF_SLASHDELIMITER);
-    }
-
-    /* 文字チェック */
-    for (i = 0; string[i] != '\0'; i++ ) {
-        if (str[0] == string[i]) {
-            break;
-        }
-    }
-    /* 合致することなく抜けてしまった場合は、違反した文字 */
-    if (string[i] == '\0' ) {
-        return ERR_CONF_SLASHDELIMITEn;
-    }
-    return NULL;
-}
-
-#endif    /* OLD_CODE */
-
 /*
  * is_not_null
  *
@@ -921,11 +754,6 @@ conv_saveignoreheader(struct config *cfg)
     ret = regcomp(cfg->cf_saveignoreheader_regex, cfg->cf_saveignoreheader,
                   REG_EXTENDED);
     if (ret != 0) {
-
-#ifdef OLD_CODE
-        SYSLOGWARNING(ERR_CONF_CONV_SAVEIGNOREHEADER);
-#endif    /* OLD_CODE */
-
         free(cfg->cf_saveignoreheader_regex);
         cfg->cf_saveignoreheader_regex = NULL;
         return R_ERROR;

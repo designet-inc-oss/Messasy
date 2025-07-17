@@ -82,12 +82,6 @@
 #define ERR_CONF_ERRORACTION            "invalid erroraction value"
 #define ERR_CONF_SAVEPOLICY             "invalid savepolicy value"
 
-#ifdef OLD_CODE
-#define ERR_CONF_MAILFOLDER             "invalid mailfolder value"
-#define ERR_CONF_DOTDELIMITER           "invalid dotdelimiter value"
-#define ERR_CONF_SLASHDELIMITER         "invalid slashdelimiter value"
-#endif
-
 #define ERR_CONF_NULL                   "must be set"
 #define ERR_CONF_COMMANDMAXCLIENTS      "invalid commandmaxclients value"
 #define ERR_CONF_ADMINPASSWORD          "invalid adminpassword value"
